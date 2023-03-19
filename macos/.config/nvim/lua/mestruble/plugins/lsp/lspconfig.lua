@@ -8,7 +8,7 @@ if not cmp_nvim_lsp_status then
 	return
 end
 
-local py = require("mstru3.lang.python")
+local py = require("mestruble.lang.python")
 
 local keymap = vim.keymap
 
