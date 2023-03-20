@@ -52,19 +52,19 @@ cellar_targets := $(foreach wrd, $(brew_cellar), $(CELLAR)/$(wrd))
 # Transform zsh_cask into target directories
 cask_targets := $(foreach wrd, $(brew_cask), $(CASK)/$(wrd))
 
-# Transform zsh user plugins into target directories 
-zsh_user_targets := $(foreach wrd, $(zsh_users), $(ZSH)/custom/plugins/$(wrd))
-
 active_plugins := $(zsh_builtin)  $(notdir $(basename $(zsh_custom_plugins)))
+
+# Set up name_REPO variables and the associated target directory
+$(foreach repo, $(zsh_custom_plugins), $($(notdir $(basename $(repo)))_REPO)=$(repo))
+zsh_custom_targets := $(foreach repo, $(zsh_custom_plugins), $(ZSH)/custom/plugins/$(notdir $(basename $(repo))))
 
 ## TODO: 
 # - Make singular function for enabling the plugins by doing a sed replace of the plugins in zshrc 
-# - Create a lookup for the custom plugin repositories to their respective install targets 
 # - Clean call to delete custom plugins? 
 
 ### Make targets
 
-all: $(cellar_targets) $(cask_targets) $(zsh_user_targets) $(zsh_builtin)
+all: $(cellar_targets) $(cask_targets) $(zsh_custom_targets) $(zsh_builtin)
 	$(info $(active_plugins))
 .PHONY: all $(zsh_builtin)
 
@@ -77,26 +77,14 @@ $(cask_targets): $(BREW)
 	$(info "Installing $(@F)...")
 	brew install --cask $(@F) 
 
-$(zsh_user_targets): $(ZSH)
+$(zsh_custom_targets): $(ZSH)
 	$(info "Installing $(@F)...")
-	#git clone https://github.com/zsh-users/$(@F).git $(ZSH)/custom/plugins/$(@F)
+	git clone https://github.com/zsh-users/$(@F).git $@
 	
 $(zsh_builtin): $(ZSH)
 	$(info "Enabling $(@F)...")
 
 #all: $(CELLAR)/git $(ZSH)/custom/themes/powerlevel10k
-
-#$(ZSH)/custom/plugins/zsh-history-substring-search: $(ZSH)/custom/plugins/zsh-syntax-hightlingting
-#	echo "Installing zsh-history-substring-search"
-#	git clone https://github.com/zsh-users/zsh-history-substring-search.git $(ZSH)/custom/plugins/zsh-history-substring-search
-
-#$(ZSH)/custom/plugins/zsh-syntax-highlighting: $(ZSH)
-#	echo "Installing zsh-syntax-highlighting"
-#	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $(ZSH)/custom/plugins/zsh-syntax-highlighting
-
-#$(ZSH)/custom/plugins/zsh-autosuggestions: $(ZSH)
-#	echo "Installing zsh-autosuggestions"
-#	git clone https://github.com/zsh-users/zsh-autosuggestions.git $(ZSH)/custom/plugins/zsh-autosuggestions
 
 #$(ZSH)/custom/themes/powerlevel10k: $(ZSH)
 #	echo "Installing powerlevel10k theme"
