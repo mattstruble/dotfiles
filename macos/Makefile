@@ -16,11 +16,14 @@ ZSH=$(HOME)/.oh-my-zsh
 ###
 
 ### BREW TARGETS ###
-brew_cellar = git 
+brew_cellar = git curl ripgrep yaml-language-server
 brew_cask = iterm2
 
 ### ZSH-USERS TARGETS https://github.com/zsh-users/ ###
 zsh_users = zsh-history-substring-search zsh-syntax-highlighting zsh-autosuggestions
+
+### ZSH BUILT IN TARGETS ###
+zsh_builtin = bazel history web-search tmux terraform ripgrep pyenv poetry macos git
 
 ###
 ### MAKE LOGIC 
@@ -36,20 +39,24 @@ cask_targets := $(foreach wrd, $(brew_cask), $(CASK)/$(wrd))
 zsh_user_targets := $(foreach wrd, $(zsh_users), $(ZSH)/custom/plugins/$(wrd))
 
 
-all: $(cellar_targets) $(cask_targets) $(zsh_user_targets)
-.PHONY: all 
+
+all: $(cellar_targets) $(cask_targets) $(zsh_user_targets) $(zsh_builtin)
+.PHONY: all $(zsh_builtin)
 
 $(cellar_targets): $(BREW)
-	@echo "Installing $(@F)"
+	@echo "Installing $(@F)..."
 	brew install $(@F)
 
 $(cask_targets): $(BREW) 
-	@echo "Installing $(@F)"
+	@echo "Installing $(@F)..."
 	brew install --cask $(@F) 
 
 $(zsh_user_targets): $(ZSH)
-	@echo "$(@F)"
+	@echo "Installing $(@F)..."
+	#git clone https://github.com/zsh-users/$(@F).git $(ZSH)/custom/plugins/$(@F)
 	
+$(zsh_builtin): 
+	@echo "Enabling $(@F)..."
 
 #all: $(CELLAR)/git $(ZSH)/custom/themes/powerlevel10k
 
