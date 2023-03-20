@@ -52,21 +52,21 @@ cellar_targets := $(foreach wrd, $(brew_cellar), $(CELLAR)/$(wrd))
 # Transform zsh_cask into target directories
 cask_targets := $(foreach wrd, $(brew_cask), $(CASK)/$(wrd))
 
-active_plugins := $(zsh_builtin)  $(notdir $(basename $(zsh_custom_plugins)))
+active_plugins := $(zsh_builtin) $(notdir $(basename $(zsh_custom_plugins)))
 
 # Set up name_REPO variables and the associated target directory
 $(foreach repo, $(zsh_custom_plugins), $($(notdir $(basename $(repo)))_REPO)=$(repo))
 zsh_custom_targets := $(foreach repo, $(zsh_custom_plugins), $(ZSH)/custom/plugins/$(notdir $(basename $(repo))))
 
 ## TODO: 
-# - Make singular function for enabling the plugins by doing a sed replace of the plugins in zshrc 
-# - Clean call to delete custom plugins? 
+# - Clean call to delete custom plugins?
+# - Make themes configurable above 
 
 ### Make targets
 
-all: $(cellar_targets) $(cask_targets) $(zsh_custom_targets) $(zsh_builtin)
-	$(info $(active_plugins))
-.PHONY: all $(zsh_builtin)
+.PHONY: all zsh_enable_plugins zsh_install brew_install install
+
+all: install
 
 $(cellar_targets): $(BREW)
 	$(info "Installing $(@F)...")
@@ -77,12 +77,20 @@ $(cask_targets): $(BREW)
 	$(info "Installing $(@F)...")
 	brew install --cask $(@F) 
 
+brew_install: $(cellar_targets) $(cask_targets)
+
 $(zsh_custom_targets): $(ZSH)
 	$(info "Installing $(@F)...")
 	git clone https://github.com/zsh-users/$(@F).git $@
 	
-$(zsh_builtin): $(ZSH)
-	$(info "Enabling $(@F)...")
+zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
+	$(info "Enabling plugins...")
+	@sed -i '' 's|^plugins=\(.*\)|plugins=\($(active_plugins)\)|g' $(HOME)/.zshrc
+	@grep "^plugins" $(HOME)/.zshrc
+
+zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets)
+
+install: zsh_install brew_install
 
 #all: $(CELLAR)/git $(ZSH)/custom/themes/powerlevel10k
 
