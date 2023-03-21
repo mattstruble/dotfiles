@@ -1,6 +1,7 @@
 ###
 ### GLOBALS 
 ###
+
 LDFLAGS="-L/opt/homebrew/opt/lapack/lib"
 CPPFLAGS="-I/opt/homebrew/opt/lapack/include"
 
@@ -18,7 +19,7 @@ ZSH=$(HOME)/.oh-my-zsh
 ###
 
 ### BREW TARGETS ###
-brew_cellar = git curl ripgrep yaml-language-server
+brew_cellar = git curl ripgrep yaml-language-server tmux
 brew_cask = iterm2
 
 ### ZSH CUSTOM PLUGINS ###
@@ -40,23 +41,52 @@ zsh_builtin = \
 	macos \
 	git
 
+### TMUX PLUGINS ###
+tmux_plugins = \
+	https://github.com/tmux-plugins/tpm.git \
+	https://foo.git
+	
+
 ###
 ### MAKE LOGIC 
 ###
 
+### functions ###
+
+# strip out the directories and extension from the provided variable $(call strip_fn, var)
+strip_fn = $(notdir $(basename $(1)))
+
+# Returns the filter that matches a git url (http%.git)
+git_filter_fn = $(filter http%.git, $(1))
+
+# Filter the variable to match http%.git, strip out the domain to just the repository, map it to name_REPO=<URL>
+repo_map_fn = $(foreach repo, $(repo_list), $($(call strip_fn, $(repo))_REPO)=$(repo))
+
+# Transforms a repo into the target $(call repo_to_target_fn, repo, target_dir)
+repo_to_target_fn = $(foreach repo, $(call git_filter_fn, $(1)), $(2)/$(call strip_fn, $(repo)))
+
 ### Convert user defined targets into filepaths ###
 
+### BREW 
 # Transform zsh_cellar into target directories
 cellar_targets := $(foreach wrd, $(brew_cellar), $(CELLAR)/$(wrd)) 
 
 # Transform zsh_cask into target directories
 cask_targets := $(foreach wrd, $(brew_cask), $(CASK)/$(wrd))
 
-active_plugins := $(zsh_builtin) $(notdir $(basename $(zsh_custom_plugins)))
+### Oh-My-Zsh
+active_plugins := $(zsh_builtin) $(call strip_fn, $(zsh_custom_plugins))
 
 # Set up name_REPO variables and the associated target directory
-$(foreach repo, $(zsh_custom_plugins), $($(notdir $(basename $(repo)))_REPO)=$(repo))
-zsh_custom_targets := $(foreach repo, $(zsh_custom_plugins), $(ZSH)/custom/plugins/$(notdir $(basename $(repo))))
+#$(foreach repo, $(zsh_custom_plugins), $($(call strip_fn, $(repo))_REPO)=$(repo))
+$(call repo_map_fn, $(zsh_custom_plugins))
+zsh_custom_targets := $(call repo_to_target_fn, $(zsh_custom_plugins), $(ZSH)/custom/plugins) 
+
+### TMUX
+$(call repo_map_fn, $(tmux_plugins))
+tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/plugins)
+#$(foreach repo, $(tmux_plugins), $($(call strip_fn, $(repo))_REPO)=$(repo))
+#tmux_custom_targets := $(foreach repo, $(tmux_plugins), $(HOME)/.tmux/plugins/$(call strip_fn, $(repo)))
 
 ## TODO: 
 # - Clean call to delete custom plugins?
@@ -67,6 +97,9 @@ zsh_custom_targets := $(foreach repo, $(zsh_custom_plugins), $(ZSH)/custom/plugi
 .PHONY: all zsh_enable_plugins zsh_install brew_install install
 
 all: install
+	$(info $(tmux_custom_targets))
+	$(info $(tmux_plugins))
+	$(info $(zsh_custom_targets))
 
 $(cellar_targets): $(BREW)
 	$(info "Installing $(@F)...")
@@ -81,7 +114,7 @@ brew_install: $(cellar_targets) $(cask_targets)
 
 $(zsh_custom_targets): $(ZSH)
 	$(info "Installing $(@F)...")
-	git clone https://github.com/zsh-users/$(@F).git $@
+	git clone $($(@F)_REPO) $@
 	
 zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
 	$(info "Enabling plugins...")
@@ -90,7 +123,13 @@ zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
 
 zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets)
 
-install: zsh_install brew_install
+#$(tmux_custom_targets): $(CELLAR)/tmux
+#	$(info "Installing $(@F)..." )
+#	git clone $($(@F)_REPO) $@
+
+tmux_install: $(CELLAR)/tmux #$(tmux_custom_targets)
+
+install: zsh_install brew_install tmux_install
 
 #all: $(CELLAR)/git $(ZSH)/custom/themes/powerlevel10k
 
@@ -100,20 +139,10 @@ install: zsh_install brew_install
 #	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' ~/.zshrc	
 
 $(ZSH): 
-	$(info $@)
 	$(info "Installing oh-my-zsh")
 	sh -c "$$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-#$(CELLAR)/git: 
-#	echo "Installing git..." 
-#	brew install git 
-
-#$(CASK)/iterm2:  
-#	echo "Installing iterm2..."
-#	brew install --cask iterm2 
-
 $(BREW):
-	$(info $@) 
 	$(info "Installing homebrew..") 
 	@/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 	@echo 'eval "$$(/opt/homebrew/bin/brew shellenv)"' >> $(HOME)/.zprofile
