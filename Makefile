@@ -53,7 +53,9 @@ brew_cellar = \
 	checkmake \
 	gh
 
-brew_cask = iterm2
+brew_cask = \
+	iterm2 \
+	1password/tap/1password-cli
 
 ### ZSH CUSTOM PLUGINS ###
 zsh_custom_plugins = \
@@ -72,7 +74,8 @@ zsh_builtin = \
 	pyenv \
 	poetry \
 	macos \
-	git
+	git \
+	1password
 
 ### TMUX PLUGINS ###
 tmux_plugins = \
