@@ -39,7 +39,8 @@ brew_cellar = \
 	nvim \
 	python3 \
 	pyenv \
-	checkmake
+	checkmake \
+	gh
 
 brew_cask = iterm2
 
