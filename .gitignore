@@ -31,3 +31,6 @@ Thumbs.db
 .weechat/sec.conf
 .weechat/script/
 .weechat/certs/
+
+# 1password
+.op/
