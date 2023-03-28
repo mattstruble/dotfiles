@@ -102,6 +102,8 @@ return packer.startup(function(use)
 	-- git signs
 	use("lewis6991/gitsigns.nvim")
 
+	use("TheZoq2/neovim-auto-autoread")
+
 	if packer_boostrap then
 		require("packer").sync()
 	end

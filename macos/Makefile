@@ -1,4 +1,4 @@
-###
+
 ### GLOBALS 
 ###
 
@@ -44,7 +44,7 @@ zsh_builtin = \
 ### TMUX PLUGINS ###
 tmux_plugins = \
 	https://github.com/tmux-plugins/tpm.git \
-	https://foo.git
+	https://github.com/tmux-plugins/tmux-resurrect.git
 	
 
 ###
@@ -78,15 +78,12 @@ cask_targets := $(foreach wrd, $(brew_cask), $(CASK)/$(wrd))
 active_plugins := $(zsh_builtin) $(call strip_fn, $(zsh_custom_plugins))
 
 # Set up name_REPO variables and the associated target directory
-#$(foreach repo, $(zsh_custom_plugins), $($(call strip_fn, $(repo))_REPO)=$(repo))
 $(call repo_map_fn, $(zsh_custom_plugins))
 zsh_custom_targets := $(call repo_to_target_fn, $(zsh_custom_plugins), $(ZSH)/custom/plugins) 
 
 ### TMUX
 $(call repo_map_fn, $(tmux_plugins))
 tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/plugins)
-#$(foreach repo, $(tmux_plugins), $($(call strip_fn, $(repo))_REPO)=$(repo))
-#tmux_custom_targets := $(foreach repo, $(tmux_plugins), $(HOME)/.tmux/plugins/$(call strip_fn, $(repo)))
 
 ## TODO: 
 # - Clean call to delete custom plugins?
@@ -97,9 +94,16 @@ tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/
 .PHONY: all zsh_enable_plugins zsh_install brew_install install
 
 all: install
-	$(info $(tmux_custom_targets))
-	$(info $(tmux_plugins))
-	$(info $(zsh_custom_targets))
+
+$(ZSH): 
+	$(info "Installing oh-my-zsh")
+	sh -c "$$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+$(BREW) $(CELLAR) $(CASK):
+	$(info "Installing homebrew..") 
+	@/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+	@echo 'eval "$$(/opt/homebrew/bin/brew shellenv)"' >> $(HOME)/.zprofile
+	@eval "$$(/opt/homebrew/bin/brew shellenv)"
 
 $(cellar_targets): $(BREW)
 	$(info "Installing $(@F)...")
@@ -123,9 +127,10 @@ zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
 
 zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets)
 
-#$(tmux_custom_targets): $(CELLAR)/tmux
-#	$(info "Installing $(@F)..." )
-#	git clone $($(@F)_REPO) $@
+$(tmux_custom_targets): $(CELLAR)/tmux
+	$(info "Installing $(@F)..." )
+	mkdir -p $@
+	git clone $($(@F)_REPO) $@
 
 tmux_install: $(CELLAR)/tmux #$(tmux_custom_targets)
 
@@ -138,12 +143,4 @@ install: zsh_install brew_install tmux_install
 #	git clone https://github.com/romkatv/powerlevel10k.git $(ZSH)/custom/themes/powerlevel10k
 #	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' ~/.zshrc	
 
-$(ZSH): 
-	$(info "Installing oh-my-zsh")
-	sh -c "$$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-$(BREW):
-	$(info "Installing homebrew..") 
-	@/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-	@echo 'eval "$$(/opt/homebrew/bin/brew shellenv)"' >> $(HOME)/.zprofile
-	@eval "$$(/opt/homebrew/bin/brew shellenv)"
