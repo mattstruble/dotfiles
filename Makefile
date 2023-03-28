@@ -161,7 +161,7 @@ $(zsh_custom_targets): $(ZSH)
 zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
 	$(info "Enabling plugins...")
 	@sed -i '' 's|^plugins=\(.*\)|plugins=\($(active_plugins)\)|g' zsh/.zshrc
-	@grep "^plugins" $(HOME)/.zshrc
+	@grep "^plugins" zsh/.zshrc
 
 $(ZSH)/custom/themes/powerlevel10k: $(ZSH)
 	echo "Installing powerlevel10k theme"
