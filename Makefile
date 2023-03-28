@@ -109,12 +109,12 @@ tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/
 ## TODO:
 # - Clean call to delete custom plugins?
 # - Make themes configurable above
-
+# - BREW pathing is no longer working and everything is installing
 ### Make targets
 
-.PHONY: all zsh_enable_plugins zsh_install brew_install install $(stow_dirs) stow start
+.PHONY: all zsh_install brew_install install zsh_enable_plugins $(stow_dirs) stow start
 
-all: install stow
+all: install stow start
 
 ### INSTALL
 
@@ -173,7 +173,7 @@ stow: $(stow_dirs)
 
 ### START
 start_zsh: $(stow_dirs)
-	source ~/.zshrc
+	/bin/zsh ~/.zshrc
 
 start_yabai: start_zsh
 	brew services restart yabai
