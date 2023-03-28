@@ -5,9 +5,20 @@
 LDFLAGS="-L/opt/homebrew/opt/lapack/lib"
 CPPFLAGS="-I/opt/homebrew/opt/lapack/include"
 
-BREW=/opt/homebrew
-CELLAR=$(BREW)/Cellar
-CASK=$(BREW)/Caskroom
+BREW=/usr/local/Homebrew
+CELLAR=/usr/local/Cellar
+CASK=/usr/local/Caskroom
+
+
+# if running on apple silicon (M1 mac)
+if [[ $(uname -p) == 'arm']]; then \
+	BREW=/opt/homebrew; \
+	CELLAR=/opt/homebrew/Cellar; \
+	CASK=/opt/homebrew/Caskroom; \
+fi
+
+$(info cellar $(CELLAR))
+$(info cask $(CASK))
 
 HOME=/Users/${USER}
 
@@ -82,10 +93,10 @@ strip_fn = $(notdir $(basename $(1)))
 git_filter_fn = $(filter http%.git, $(1))
 
 # Filter the variable to match http%.git, strip out the domain to just the repository, map it to name_REPO=<URL>
-repo_map_fn = $(foreach repo, $(repo_list), $($(call strip_fn, $(repo))_REPO)=$(repo))
+repo_map_fn = $(foreach repo, $(1), $(eval $(call strip_fn, $(repo))_REPO := $(repo)))
 
 # Transforms a repo into the target $(call repo_to_target_fn, repo, target_dir)
-repo_to_target_fn = $(foreach repo, $(call git_filter_fn, $(1)), $(2)/$(call strip_fn, $(repo)))
+repo_to_target_fn = $(foreach repo, $(1), $(2)/$(call strip_fn, $(repo)))
 
 ### Convert user defined targets into filepaths ###
 
@@ -129,6 +140,7 @@ $(BREW) $(CELLAR) $(CASK):
 	@eval "$$(/opt/homebrew/bin/brew shellenv)"
 
 $(cellar_targets): $(BREW)
+	$(info $@)
 	$(info "Installing $(@F)...")
 	@brew install $(subst $(CELLAR)/,, $@)
 
@@ -156,7 +168,7 @@ $(ZSH)/custom/themes/powerlevel10k: $(ZSH)
 zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
 
 $(tmux_custom_targets): $(CELLAR)/tmux
-	$(info "Installing $(@F) from $($(@F)_REPO)..." )
+	$(info "Installing $(@F) from $($(@F)_REPO) to $@..." )
 	@mkdir -p $@
 	git clone $($(@F)_REPO) $@
 

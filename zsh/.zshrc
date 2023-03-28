@@ -2,7 +2,7 @@
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+    source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
 # If you come from bash you might have to change your $PATH.
@@ -35,9 +35,9 @@ source $ZSH/oh-my-zsh.sh
 
 #Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
-   export EDITOR='vim'
+    export EDITOR='vim'
 else
-   export EDITOR='mvim'
+    export EDITOR='nvim'
 fi
 
 # Compilation flags
@@ -55,3 +55,9 @@ fi
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 export PATH="/usr/local/sbin:$PATH"
+export PATH="/usr/local/opt/curl/bin:$PATH"
+
+export LDFLAGS="-L/usr/local/opt/curl/lib"
+export CPPFLAGS="-I/usr/local/opt/curl/include"
+
+export PKG_CONFIG_PATH="/usr/local/opt/curl/lib/pkgconfig"
