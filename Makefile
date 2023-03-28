@@ -35,7 +35,7 @@ stow_dirs = \
 	zsh \
 	skhd \
 	yabai \
-	zsh
+	vim
 
 ### BREW TARGETS ###
 brew_cellar = \
