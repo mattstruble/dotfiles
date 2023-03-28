@@ -1,4 +1,4 @@
-
+###
 ### GLOBALS 
 ###
 
@@ -125,7 +125,12 @@ zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
 	@sed -i '' 's|^plugins=\(.*\)|plugins=\($(active_plugins)\)|g' $(HOME)/.zshrc
 	@grep "^plugins" $(HOME)/.zshrc
 
-zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets)
+$(ZSH)/custom/themes/powerlevel10k: $(ZSH)
+	echo "Installing powerlevel10k theme"
+	git clone https://github.com/romkatv/powerlevel10k.git $(ZSH)/custom/themes/powerlevel10k
+	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' ~/.zshrc	
+
+zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
 
 $(tmux_custom_targets): $(CELLAR)/tmux
 	$(info "Installing $(@F)..." )
@@ -135,12 +140,5 @@ $(tmux_custom_targets): $(CELLAR)/tmux
 tmux_install: $(CELLAR)/tmux #$(tmux_custom_targets)
 
 install: zsh_install brew_install tmux_install
-
-#all: $(CELLAR)/git $(ZSH)/custom/themes/powerlevel10k
-
-#$(ZSH)/custom/themes/powerlevel10k: $(ZSH)
-#	echo "Installing powerlevel10k theme"
-#	git clone https://github.com/romkatv/powerlevel10k.git $(ZSH)/custom/themes/powerlevel10k
-#	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' ~/.zshrc	
 
 
