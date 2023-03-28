@@ -1,15 +1,32 @@
-require("mestruble.plugins-setup")
 require("mestruble.core.options")
 require("mestruble.core.keymaps")
-require("mestruble.core.colorscheme")
-require("mestruble.plugins.comment")
-require("mestruble.plugins.nvim-tree")
-require("mestruble.plugins.lualine")
-require("mestruble.plugins.telescope")
-require("mestruble.plugins.nvim-cmp")
-require("mestruble.plugins.lsp.mason")
-require("mestruble.plugins.lsp.lspconfig")
-require("mestruble.plugins.lsp.null-ls")
-require("mestruble.plugins.autopairs")
-require("mestruble.plugins.treesitter")
-require("mestruble.plugins.gitsigns")
+
+--------------------------
+-- LAZY SETUP
+--------------------------
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+	vim.fn.system({
+		"git",
+		"clone",
+		"--filter=blob:none",
+		"https://github.com/folke/lazy.nvim.git",
+		"--branch=stable", -- latest stable release
+		lazypath,
+	})
+end
+vim.opt.rtp:prepend(lazypath)
+
+-- NOTE: This is in the wrong place but I don't want to keep fighting with it, tbh (lowercase global error).
+opts = {
+	ui = {
+		border = "rounded",
+	},
+}
+
+require("lazy").setup("plugins", opts)
+
+--------------------------
+-- COLOR SCHEME
+--------------------------
+vim.cmd([[ colorscheme nightfly ]])
