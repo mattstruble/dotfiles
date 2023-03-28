@@ -197,4 +197,7 @@ start_yabai: start_zsh
 start_skhd: start_zsh
 	brew services restart skhd
 
+start_tmux: start_zsh 
+	tmux source-file ~/.tmux.conf 
+
 start: start_zsh start_yabai start_skhd
