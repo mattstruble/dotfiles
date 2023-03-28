@@ -19,7 +19,7 @@ ZSH=$(HOME)/.oh-my-zsh
 ###
 
 ### BREW TARGETS ###
-brew_cellar = git curl ripgrep yaml-language-server tmux
+brew_cellar = git curl ripgrep yaml-language-server tmux stow
 brew_cask = iterm2
 
 ### ZSH CUSTOM PLUGINS ###
