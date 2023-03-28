@@ -18,8 +18,26 @@ ZSH=$(HOME)/.oh-my-zsh
 ### USER INPUT
 ###
 
+stow_dirs = \
+	nvim \
+	p10k \
+	zsh \
+	skhd \
+	yabai \
+	zsh
+
 ### BREW TARGETS ###
-brew_cellar = git curl ripgrep yaml-language-server tmux stow
+brew_cellar = \
+	git \
+	curl \
+	ripgrep \
+	yaml-language-server \
+	tmux \
+	stow \
+	koekeishiya/formulae/yabai \
+	koekeishiya/formulae/skhd \
+	nvim
+
 brew_cask = iterm2
 
 ### ZSH CUSTOM PLUGINS ###
@@ -91,9 +109,11 @@ tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/
 
 ### Make targets
 
-.PHONY: all zsh_enable_plugins zsh_install brew_install install
+.PHONY: all zsh_enable_plugins zsh_install brew_install install $(stow_dirs)
 
-all: install
+all: install stow
+
+### INSTALL
 
 $(ZSH): 
 	$(info "Installing oh-my-zsh")
@@ -102,17 +122,16 @@ $(ZSH):
 $(BREW) $(CELLAR) $(CASK):
 	$(info "Installing homebrew..") 
 	@/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-	@echo 'eval "$$(/opt/homebrew/bin/brew shellenv)"' >> $(HOME)/.zprofile
 	@eval "$$(/opt/homebrew/bin/brew shellenv)"
 
 $(cellar_targets): $(BREW)
 	$(info "Installing $(@F)...")
-	brew install $(@F)
+	brew install $(subst $(CELLAR)/,, $@)
 
 $(cask_targets): $(BREW) 
 	$(info $@)
 	$(info "Installing $(@F)...")
-	brew install --cask $(@F) 
+	brew install --cask $(subst $(CASK)/,, $@) 
 
 brew_install: $(cellar_targets) $(cask_targets)
 
@@ -122,13 +141,13 @@ $(zsh_custom_targets): $(ZSH)
 	
 zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
 	$(info "Enabling plugins...")
-	@sed -i '' 's|^plugins=\(.*\)|plugins=\($(active_plugins)\)|g' $(HOME)/.zshrc
+	@sed -i '' 's|^plugins=\(.*\)|plugins=\($(active_plugins)\)|g' zsh/.zshrc
 	@grep "^plugins" $(HOME)/.zshrc
 
 $(ZSH)/custom/themes/powerlevel10k: $(ZSH)
 	echo "Installing powerlevel10k theme"
 	git clone https://github.com/romkatv/powerlevel10k.git $(ZSH)/custom/themes/powerlevel10k
-	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' ~/.zshrc	
+	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' zsh/.zshrc	
 
 zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
 
@@ -140,5 +159,25 @@ $(tmux_custom_targets): $(CELLAR)/tmux
 tmux_install: $(CELLAR)/tmux #$(tmux_custom_targets)
 
 install: zsh_install brew_install tmux_install
+
+### CONFIGURE 
+
+$(stow_dirs): install 
+	stow -D $@
+	stow $@
+
+stow: $(stow_dirs)
+
+### START
+start_zsh: $(stow_dirs)
+	source ~/.zshrc
+
+start_yabai: start_zsh
+	brew services restart yabai 
+
+start_skhd: start_zsh
+	brew services restart skhd 
+
+start: start_zsh start_yabai start_skhd
 
 
