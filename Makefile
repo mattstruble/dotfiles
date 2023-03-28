@@ -112,7 +112,7 @@ tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/
 
 ### Make targets
 
-.PHONY: all zsh_enable_plugins zsh_install brew_install install $(stow_dirs)
+.PHONY: all zsh_enable_plugins zsh_install brew_install install $(stow_dirs) stow start
 
 all: install stow
 
@@ -166,7 +166,7 @@ install: zsh_install brew_install tmux_install
 ### CONFIGURE
 
 $(stow_dirs): install
-	stow -D $@
+	@stow -D $@
 	stow $@
 
 stow: $(stow_dirs)
