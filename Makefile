@@ -129,12 +129,12 @@ $(BREW) $(CELLAR) $(CASK):
 
 $(cellar_targets): $(BREW)
 	$(info "Installing $(@F)...")
-	brew install $(subst $(CELLAR)/,, $@)
+	@brew install $(subst $(CELLAR)/,, $@)
 
 $(cask_targets): $(BREW)
 	$(info $@)
 	$(info "Installing $(@F)...")
-	brew install --cask $(subst $(CASK)/,, $@)
+	@brew install --cask $(subst $(CASK)/,, $@)
 
 brew_install: $(cellar_targets) $(cask_targets)
 
@@ -155,11 +155,11 @@ $(ZSH)/custom/themes/powerlevel10k: $(ZSH)
 zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
 
 $(tmux_custom_targets): $(CELLAR)/tmux
-	$(info "Installing $(@F)..." )
-	mkdir -p $@
+	$(info "Installing $(@F) from $($(@F)_REPO)..." )
+	@mkdir -p $@
 	git clone $($(@F)_REPO) $@
 
-tmux_install: $(CELLAR)/tmux #$(tmux_custom_targets)
+tmux_install: $(CELLAR)/tmux $(tmux_custom_targets)
 
 install: zsh_install brew_install tmux_install
 
