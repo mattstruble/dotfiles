@@ -1,5 +1,5 @@
 ###
-### GLOBALS 
+### GLOBALS
 ###
 
 LDFLAGS="-L/opt/homebrew/opt/lapack/lib"
@@ -36,7 +36,10 @@ brew_cellar = \
 	stow \
 	koekeishiya/formulae/yabai \
 	koekeishiya/formulae/skhd \
-	nvim
+	nvim \
+	python3 \
+	pyenv \
+	checkmake
 
 brew_cask = iterm2
 
@@ -45,7 +48,7 @@ zsh_custom_plugins = \
 	https://github.com/zsh-users/zsh-history-substring-search.git \
 	https://github.com/zsh-users/zsh-syntax-highlighting.git \
 	https://github.com/zsh-users/zsh-autosuggestions.git
-	
+
 ### ZSH BUILT IN PLUGINS ###
 zsh_builtin = \
 	bazel \
@@ -63,10 +66,10 @@ zsh_builtin = \
 tmux_plugins = \
 	https://github.com/tmux-plugins/tpm.git \
 	https://github.com/tmux-plugins/tmux-resurrect.git
-	
+
 
 ###
-### MAKE LOGIC 
+### MAKE LOGIC
 ###
 
 ### functions ###
@@ -85,9 +88,9 @@ repo_to_target_fn = $(foreach repo, $(call git_filter_fn, $(1)), $(2)/$(call str
 
 ### Convert user defined targets into filepaths ###
 
-### BREW 
+### BREW
 # Transform zsh_cellar into target directories
-cellar_targets := $(foreach wrd, $(brew_cellar), $(CELLAR)/$(wrd)) 
+cellar_targets := $(foreach wrd, $(brew_cellar), $(CELLAR)/$(wrd))
 
 # Transform zsh_cask into target directories
 cask_targets := $(foreach wrd, $(brew_cask), $(CASK)/$(wrd))
@@ -97,15 +100,15 @@ active_plugins := $(zsh_builtin) $(call strip_fn, $(zsh_custom_plugins))
 
 # Set up name_REPO variables and the associated target directory
 $(call repo_map_fn, $(zsh_custom_plugins))
-zsh_custom_targets := $(call repo_to_target_fn, $(zsh_custom_plugins), $(ZSH)/custom/plugins) 
+zsh_custom_targets := $(call repo_to_target_fn, $(zsh_custom_plugins), $(ZSH)/custom/plugins)
 
 ### TMUX
 $(call repo_map_fn, $(tmux_plugins))
 tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/plugins)
 
-## TODO: 
+## TODO:
 # - Clean call to delete custom plugins?
-# - Make themes configurable above 
+# - Make themes configurable above
 
 ### Make targets
 
@@ -115,12 +118,12 @@ all: install stow
 
 ### INSTALL
 
-$(ZSH): 
+$(ZSH):
 	$(info "Installing oh-my-zsh")
 	sh -c "$$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 $(BREW) $(CELLAR) $(CASK):
-	$(info "Installing homebrew..") 
+	$(info "Installing homebrew..")
 	@/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 	@eval "$$(/opt/homebrew/bin/brew shellenv)"
 
@@ -128,17 +131,17 @@ $(cellar_targets): $(BREW)
 	$(info "Installing $(@F)...")
 	brew install $(subst $(CELLAR)/,, $@)
 
-$(cask_targets): $(BREW) 
+$(cask_targets): $(BREW)
 	$(info $@)
 	$(info "Installing $(@F)...")
-	brew install --cask $(subst $(CASK)/,, $@) 
+	brew install --cask $(subst $(CASK)/,, $@)
 
 brew_install: $(cellar_targets) $(cask_targets)
 
 $(zsh_custom_targets): $(ZSH)
 	$(info "Installing $(@F)...")
 	git clone $($(@F)_REPO) $@
-	
+
 zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
 	$(info "Enabling plugins...")
 	@sed -i '' 's|^plugins=\(.*\)|plugins=\($(active_plugins)\)|g' zsh/.zshrc
@@ -147,7 +150,7 @@ zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
 $(ZSH)/custom/themes/powerlevel10k: $(ZSH)
 	echo "Installing powerlevel10k theme"
 	git clone https://github.com/romkatv/powerlevel10k.git $(ZSH)/custom/themes/powerlevel10k
-	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' zsh/.zshrc	
+	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' zsh/.zshrc
 
 zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
 
@@ -160,9 +163,9 @@ tmux_install: $(CELLAR)/tmux #$(tmux_custom_targets)
 
 install: zsh_install brew_install tmux_install
 
-### CONFIGURE 
+### CONFIGURE
 
-$(stow_dirs): install 
+$(stow_dirs): install
 	stow -D $@
 	stow $@
 
@@ -173,11 +176,9 @@ start_zsh: $(stow_dirs)
 	source ~/.zshrc
 
 start_yabai: start_zsh
-	brew services restart yabai 
+	brew services restart yabai
 
 start_skhd: start_zsh
-	brew services restart skhd 
+	brew services restart skhd
 
 start: start_zsh start_yabai start_skhd
-
-
