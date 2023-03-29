@@ -32,6 +32,7 @@
   "telescope.nvim": { "branch": "master", "commit": "942fe5faef47b21241e970551eba407bc10d9547" },
   "todo-comments.nvim": { "branch": "main", "commit": "0874bda6848ff6f3da3ffdf4bd8297a5c951c5d4" },
   "undotree": { "branch": "master", "commit": "485f01efde4e22cb1ce547b9e8c9238f36566f21" },
+  "vim-fugitive": { "branch": "master", "commit": "9acbad1335ee6f30a8497733dcb2373c4550c8a2" },
   "vim-maximizer": { "branch": "master", "commit": "2e54952fe91e140a2e69f35f22131219fcd9c5f1" },
   "vim-nightfly-guicolors": { "branch": "master", "commit": "0c163ac5304582372e11bcb918e1d3e760d8619b" },
   "vim-surround": { "branch": "master", "commit": "3d188ed2113431cf8dac77be61b842acb64433d9" },
