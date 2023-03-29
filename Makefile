@@ -56,7 +56,9 @@ brew_cellar = \
 	npm \
 	yarn \
 	write-good \
-	markdown-toc
+	markdown-toc \
+	vulture \
+	ruff
 
 brew_cask = \
 	iterm2 \
