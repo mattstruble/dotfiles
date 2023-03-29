@@ -5,6 +5,8 @@
 return {
 	"nvim-tree/nvim-tree.lua",
 	config = function()
+		vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>")
+
 		vim.g.loaded = 1
 		vim.g.loaded_netrwPlugin = 1
 
