@@ -36,7 +36,7 @@ user experience.
 
 ## References
 
-This repository wouldn't be made possible without the use and help of others
+This repository wouldn't be made possible without the help of others
 and their own dotfile repositories.
 
 - https://github.com/dorrajmachai/nvim
