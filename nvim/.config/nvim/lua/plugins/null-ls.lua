@@ -30,7 +30,7 @@ return {
 			formatting.markdown_toc,
 			formatting.markdownlint,
 			formatting.prettier,
-			formatting.pyflyby,
+			-- formatting.pyflyby,
 			formatting.remark,
 			formatting.ruff,
 			formatting.shellharden,

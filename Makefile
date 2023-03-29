@@ -54,7 +54,9 @@ brew_cellar = \
 	checkmake \
 	gh \
 	npm \
-	yarn
+	yarn \
+	write-good \
+	markdown-toc
 
 brew_cask = \
 	iterm2 \
