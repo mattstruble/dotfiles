@@ -21,9 +21,6 @@ return {
 		-- snippets
 		{ "L3MON4D3/LuaSnip" },
 		{ "rafamadriz/friendly-snippets" },
-
-		--{ "jose-elias-alvarez/null-ls.nvim" },
-		--{ "jayp0521/mason-null-ls.nvim" },
 	},
 	config = function()
 		local lsp = require("lsp-zero").preset({

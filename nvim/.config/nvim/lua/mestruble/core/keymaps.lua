@@ -41,6 +41,8 @@ keymap.set("n", "N", "Nzzzv")
 
 keymap.set("x", "<leader>p", [["_dP]])
 
+keymap.set("n", "Q", "<nop>")
+
 -- Copy to clipboard
 keymap.set({ "n", "v" }, "<leader>y", [["+y]])
 keymap.set("n", "<leader>Y", [["+Y]])
