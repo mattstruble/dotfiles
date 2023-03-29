@@ -58,7 +58,8 @@ brew_cellar = \
 	write-good \
 	markdown-toc \
 	vulture \
-	ruff
+	ruff \
+	black
 
 brew_cask = \
 	iterm2 \
