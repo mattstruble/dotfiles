@@ -19,32 +19,58 @@ return {
 		local spell = null_ls.builtins.completion.spell -- spelling sources
 
 		local sources = {
-			formatting.prettier,
-			formatting.stylua,
-			formatting.black,
-			formatting.isort,
-			formatting.autoflake,
 			formatting.beautysh,
+			formatting.black,
+			formatting.buildifier,
 			formatting.codespell,
+			formatting.fixjson,
 			formatting.json_tool,
 			formatting.latexindent,
+			formatting.lua_format,
+			formatting.markdown_toc,
+			formatting.markdownlint,
+			formatting.prettier,
+			formatting.pyflyby,
+			formatting.remark,
+			formatting.ruff,
+			formatting.shellharden,
+			formatting.sqlfluff.with({
+				extra_args = { "--dialect", "snowflake" },
+			}),
+			formatting.stylua,
 			formatting.terraform_fmt,
 			formatting.trim_whitespace,
-			formatting.sqlfluff,
-			diagnostics.pydocstyle,
+			formatting.yamlfmt,
+
+			diagnostics.actionlint,
+			diagnostics.buildifier,
 			diagnostics.checkmake,
 			diagnostics.chktex,
 			diagnostics.codespell,
-			diagnostics.flake8,
 			diagnostics.hadolint,
 			diagnostics.markdownlint,
-			diagnostics.sqlfluff,
-			diagnostics.actionlint,
-			diagnostics.buildifier,
 			diagnostics.mypy,
-			diagnostics.pylint,
+			diagnostics.ruff,
+			diagnostics.shellcheck,
+			diagnostics.sqlfluff.with({
+				extra_args = { "--dialect", "snowflake" },
+			}),
 			diagnostics.terraform_validate,
+			diagnostics.vulture,
+			diagnostics.write_good,
+			diagnostics.yamllint,
 		}
+
+		local lsp_formatting = function(bufnr)
+			vim.lsp.buf.format({
+				filter = function(client)
+					return client.name == "null-ls"
+				end,
+				bufnr = bufnr,
+			})
+		end
+
+		local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
 		null_ls.setup({
 			sources = sources,
@@ -56,12 +82,7 @@ return {
 						group = augroup,
 						buffer = bufnr,
 						callback = function()
-							vim.lsp.buf.format({
-								filter = function(client)
-									return client.name == "null-ls"
-								end,
-								bufnr = bufnr,
-							})
+							lsp_formatting(bufnr)
 						end,
 					})
 				end

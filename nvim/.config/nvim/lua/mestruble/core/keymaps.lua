@@ -26,6 +26,7 @@ keymap.set("n", "<leader>tp", ":tabp<CR>") -- go to previous tab
 ---
 -- The Primeagen
 ---
+keymap.set("n", "<leader>f", vim.lsp.buf.format)
 
 -- Allow highlighting and moving blocks of code in visual mode
 keymap.set("v", "J", ":m '>+1<CR>gv=gv")
