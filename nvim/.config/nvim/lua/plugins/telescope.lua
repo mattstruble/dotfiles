@@ -2,17 +2,17 @@
 -- TELESCOPE
 --------------------------
 return {
-    "nvim-telescope/telescope.nvim",
-    dependencies = {
-        { "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
-        {"nvim-telescope/telescope-ui-select.nvim"}, 
-    },
-    config = function()
-        local actions = require("telescope.actions")
-        local themes = require("telescope.themes")
+	"nvim-telescope/telescope.nvim",
+	dependencies = {
+		{ "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
+		{ "nvim-telescope/telescope-ui-select.nvim" },
+	},
+	config = function()
+		local actions = require("telescope.actions")
+		local themes = require("telescope.themes")
 
-        require("telescope").setup {
-            mappings = {
+		require("telescope").setup({
+			mappings = {
 				i = {
 					["<C-n>"] = actions.cycle_history_next,
 					["<C-p>"] = actions.cycle_history_prev,
@@ -75,16 +75,26 @@ return {
 					["?"] = actions.which_key,
 				},
 				defaults = {
-					file_ignore_patterns = { "node_modules" }
+					file_ignore_patterns = { "node_modules", "build", "dist", "*.lock" },
+					vimgrep_arguments = {
+						"rg",
+						"--color=never",
+						"--no-heading",
+						"--with-filename",
+						"--line-number",
+						"--column",
+						"--smart-case",
+						"--hidden",
+					},
 				},
-                extensions = {
-		            ["ui-select"] = {
-			            themes.get_dropdown({}),
-		            },
-	            },
-            }  
-        }
-        require("telescope").load_extension("fzf")
-        require("telescope").load_extension("ui-select")
-    end
+				extensions = {
+					["ui-select"] = {
+						themes.get_dropdown({}),
+					},
+				},
+			},
+		})
+		require("telescope").load_extension("fzf")
+		require("telescope").load_extension("ui-select")
+	end,
 }
