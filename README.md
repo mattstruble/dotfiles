@@ -3,10 +3,9 @@
 This repository contains the dotfiles which I use in my development environment
 to install download the repository to your root dir (`~`) and call `make`.
 
-## Additional Configurations
+## External Configurations
 
-Additional steps that couldn't be encapsulated within dotfiles to make a better
-user experience.
+Independent application configurations to make a better unified user experience.
 
 ### macos
 
@@ -36,10 +35,10 @@ user experience.
 
 ## References
 
-This repository wouldn't be made possible without the help of others
+This repository wouldn't be possible without the help of others
 and their own dotfile repositories.
 
-- https://github.com/dorrajmachai/nvim
-- https://github.com/ThePrimeagen/.dotfiles
-- https://github.com/josean-dev/dev-environment-files
-- https://github.com/younger-1/nvim/
+- <https://github.com/dorrajmachai/nvim>
+- <https://github.com/ThePrimeagen/.dotfiles>
+- <https://github.com/josean-dev/dev-environment-files>
+- <https://github.com/younger-1/nvim/>
