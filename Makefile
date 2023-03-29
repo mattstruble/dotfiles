@@ -53,7 +53,8 @@ brew_cellar = \
 	pyenv \
 	checkmake \
 	gh \
-	npm
+	npm \
+	yarn
 
 brew_cask = \
 	iterm2 \
