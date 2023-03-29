@@ -75,7 +75,7 @@ return {
 					["?"] = actions.which_key,
 				},
 				defaults = {
-					file_ignore_patterns = { "node_modules", "build", "dist", "*.lock" },
+					file_ignore_patterns = { "node_modules", "build", "dist", "*.lock", ".venv" },
 					vimgrep_arguments = {
 						"rg",
 						"--color=never",

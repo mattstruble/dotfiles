@@ -46,26 +46,26 @@ return {
 			diagnostics.terraform_validate,
 		}
 
-		null_ls.setup({ 
-            sources = sources, 
-            -- configure format on save
-	        on_attach = function(curr_client, bufnr)
-		        if curr_client.supports_method("textDocument/formatting") then
-			        vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
-			        vim.api.nvim_create_autocmd("BufWritePre", {
-				        group = augroup,
-				        buffer = bufnr,
-				        callback = function()
-					        vim.lsp.buf.format({
-						        filter = function(client)
-							        return client.name == "null-ls"
-						        end,
-						        bufnr = bufnr,
-					        })
-				        end,
-			        })
-		        end
-            end
-        })
+		null_ls.setup({
+			sources = sources,
+			-- configure format on save
+			on_attach = function(curr_client, bufnr)
+				if curr_client.supports_method("textDocument/formatting") then
+					vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+					vim.api.nvim_create_autocmd("BufWritePre", {
+						group = augroup,
+						buffer = bufnr,
+						callback = function()
+							vim.lsp.buf.format({
+								filter = function(client)
+									return client.name == "null-ls"
+								end,
+								bufnr = bufnr,
+							})
+						end,
+					})
+				end
+			end,
+		})
 	end,
 }

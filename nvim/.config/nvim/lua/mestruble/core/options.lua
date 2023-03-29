@@ -11,14 +11,14 @@ opt.shiftwidth = 4
 opt.expandtab = true
 opt.autoindent = true
 
-opt.smartindent = true 
+opt.smartindent = true
 opt.scrolloff = 8
 
--- swap files 
-opt.swapfile = false 
-opt.backup = false 
-opt.undodir = os.getenv("HOME") .. "/.vim/undodir" 
-opt.undofile = true 
+-- swap files
+opt.swapfile = false
+opt.backup = false
+opt.undodir = os.getenv("HOME") .. "/.vim/undodir"
+opt.undofile = true
 
 -- line wrapping
 opt.wrap = false
@@ -26,7 +26,7 @@ opt.wrap = false
 -- search settings
 opt.ignorecase = true
 opt.smartcase = true
-opt.hlsearch = false 
+opt.hlsearch = false
 opt.incsearch = true
 
 -- cursor line
@@ -37,7 +37,6 @@ opt.termguicolors = true
 opt.background = "dark"
 opt.signcolumn = "yes"
 opt.isfname:append("@-@")
-
 
 -- backspace
 opt.backspace = "indent,eol,start"
