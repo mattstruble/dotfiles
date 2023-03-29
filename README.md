@@ -33,3 +33,13 @@ user experience.
 
 1. Open up iterm2 settings and navigate to Profiles > Text.
 2. Set the font size to be around `18`
+
+## References
+
+This repository wouldn't be made possible without the use and help of others
+and their own dotfile repositories.
+
+- https://github.com/dorrajmachai/nvim
+- https://github.com/ThePrimeagen/.dotfiles
+- https://github.com/josean-dev/dev-environment-files
+- https://github.com/younger-1/nvim/
