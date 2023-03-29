@@ -132,9 +132,6 @@ return {
 			vim.keymap.set("n", "[d", function()
 				vim.diagnostic.goto_next()
 			end, opts)
-			vim.keymap.set("n", "<C-h>", function()
-				vim.lsp.buf.signature_help()
-			end, opts)
 		end)
 
 		lsp.nvim_workspace()
