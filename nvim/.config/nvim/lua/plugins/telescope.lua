@@ -4,8 +4,8 @@
 return {
 	"nvim-telescope/telescope.nvim",
 	dependencies = {
-		{ "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
-		{ "nvim-telescope/telescope-ui-select.nvim" },
+		"telescope-fzf",
+		"nvim-telescope/telescope-ui-select.nvim",
 	},
 	config = function()
 		local actions = require("telescope.actions")
