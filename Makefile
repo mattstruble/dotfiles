@@ -52,7 +52,8 @@ brew_cellar = \
 	python3 \
 	pyenv \
 	checkmake \
-	gh
+	gh \
+	npm
 
 brew_cask = \
 	iterm2 \
