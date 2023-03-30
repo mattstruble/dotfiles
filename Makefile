@@ -60,7 +60,11 @@ brew_cellar = \
 	vulture \
 	ruff \
 	black \
-	pyenv-virtualenv
+	pyenv-virtualenv \
+	shellharden \
+	terraform \
+	yamllint \
+	shellcheck
 
 brew_cask = \
 	iterm2 \
