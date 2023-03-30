@@ -16,8 +16,8 @@ return {
 		require("code_runner").setup({
 			mode = "toggleterm",
 			filetype = {
-				python = "python $fileName",
-				lua = "lua $fileName",
+				python = "python $dir/$fileName",
+				lua = "lua $dir/$fileName",
 				c = "cd . && gcc $fileName -o $fileNameWithoutExt && $dir\\$fileNameWithoutExt",
 				cpp = "cd . && g++ $fileName -o $fileNameWithoutExt && $dir\\$fileNameWithoutExt",
 			},
