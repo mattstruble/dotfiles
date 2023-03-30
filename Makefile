@@ -64,7 +64,8 @@ brew_cellar = \
 	shellharden \
 	terraform \
 	yamllint \
-	shellcheck
+	shellcheck \
+	wget
 
 brew_cask = \
 	iterm2 \
