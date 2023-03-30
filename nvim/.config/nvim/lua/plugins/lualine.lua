@@ -4,7 +4,7 @@
 
 return {
 	"nvim-lualine/lualine.nvim",
-	dependences = { "bluz71/vim-nightfly-guicolors" },
+	dependencies = { "bluz71/vim-nightfly-guicolors" },
 	config = function()
 		local nightfly = require("lualine.themes.nightfly")
 		local new_colors = {
