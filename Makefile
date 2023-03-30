@@ -59,7 +59,8 @@ brew_cellar = \
 	markdown-toc \
 	vulture \
 	ruff \
-	black
+	black \
+	pyenv-virtualenv
 
 brew_cask = \
 	iterm2 \
