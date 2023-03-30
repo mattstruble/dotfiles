@@ -49,7 +49,9 @@ return {
 			diagnostics.codespell,
 			diagnostics.hadolint,
 			diagnostics.markdownlint,
-			diagnostics.mypy,
+			diagnostics.mypy.with({
+				prefer_local = vim.env.VIRTUAL_ENV,
+			}),
 			diagnostics.ruff,
 			diagnostics.shellcheck,
 			diagnostics.sqlfluff.with({

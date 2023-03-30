@@ -40,32 +40,33 @@ stow_dirs = \
 
 ### BREW TARGETS ###
 brew_cellar = \
-	git \
-	curl \
-	ripgrep \
-	yaml-language-server \
-	tmux \
-	stow \
-	koekeishiya/formulae/yabai \
-	koekeishiya/formulae/skhd \
-	nvim \
-	python3 \
-	pyenv \
-	checkmake \
-	gh \
-	npm \
-	yarn \
-	write-good \
-	markdown-toc \
-	vulture \
-	ruff \
 	black \
+	checkmake \
+	curl \
+	gh \
+	git \
+	koekeishiya/formulae/skhd \
+	koekeishiya/formulae/yabai \
+	markdown-toc \
+	npm \
+	nvim \
+	pyenv \
 	pyenv-virtualenv \
-	shellharden \
-	terraform \
-	yamllint \
+	python3 \
+	ripgrep \
+	ruff \
 	shellcheck \
-	wget
+	shellharden \
+	stow \
+	terraform \
+	tmux \
+	uncrustify \
+	vulture \
+	wget \
+	write-good \
+	yaml-language-server \
+	yamllint \
+	yarn
 
 brew_cask = \
 	iterm2 \
