@@ -11,6 +11,8 @@ return {
 	config = function()
 		local null_ls = require("null-ls")
 
+		local py = require("mestruble.lang.python")
+
 		local code_actions = null_ls.builtins.code_actions -- code actions sources
 		local diagnostics = null_ls.builtins.diagnostics -- diagnostics sources
 		local formatting = null_ls.builtins.formatting -- formatting sources
@@ -50,7 +52,7 @@ return {
 			diagnostics.hadolint,
 			diagnostics.markdownlint,
 			diagnostics.mypy.with({
-				prefer_local = vim.env.VIRTUAL_ENV,
+				extra_args = { "--ignore-missing-imports" },
 			}),
 			diagnostics.ruff,
 			diagnostics.shellcheck,
