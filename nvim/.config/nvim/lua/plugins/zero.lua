@@ -37,18 +37,22 @@ return {
 		lsp.ensure_installed({
 			"bashls",
 			"cmake",
-			"dockerls",
 			"docker_compose_language_service",
-			-- "groovyls",
+			"dockerls",
 			"ltex",
+			"lua_ls",
 			"marksman",
 			"pylsp",
 			"pyright",
 			"sqlls",
 			"taplo",
 			"terraformls",
+			"yamlfmt",
+			"yamllint",
 			"yamlls",
-			"lua_ls",
+			-- "groovyls",
+			"black",
+			"ruff",
 		})
 
 		lsp.set_preferences({
