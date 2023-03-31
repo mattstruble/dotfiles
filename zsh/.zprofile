@@ -1,4 +1,8 @@
-eval "$(/opt/homebrew/bin/brew shellenv)"
+if [[ $(uname -p) = 'arm' ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+    eval "$(/usr/local/Homebrew/bin/brew shellenv)"
+fi
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init --path)"
