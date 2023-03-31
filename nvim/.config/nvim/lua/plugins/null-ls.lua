@@ -42,7 +42,10 @@ return {
 			formatting.stylua,
 			formatting.terraform_fmt,
 			formatting.trim_whitespace,
-			formatting.yamlfmt,
+			formatting.yamlfmt.with({
+				args = "",
+				extra_args = { "-formatter", "indent=4,retain_line_breaks=true" },
+			}),
 
 			diagnostics.actionlint,
 			diagnostics.buildifier,
@@ -62,7 +65,7 @@ return {
 			diagnostics.terraform_validate,
 			diagnostics.vulture,
 			diagnostics.write_good,
-			diagnostics.yamllint,
+			-- diagnostics.yamllint,
 		}
 
 		local lsp_formatting = function(bufnr)
