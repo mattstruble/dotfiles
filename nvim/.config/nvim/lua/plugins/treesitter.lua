@@ -4,6 +4,7 @@
 
 return {
 	"nvim-treesitter/nvim-treesitter",
+	"nvim-treesitter/nvim-treesitter-context",
 	lazy = false,
 	config = function()
 		require("nvim-treesitter.install").compilers = { "clang" }
@@ -25,6 +26,7 @@ return {
 				"sql",
 				"terraform",
 			},
+			sync_install = false,
 			auto_install = true,
 			highlight = {
 				enable = true,
