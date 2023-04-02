@@ -40,6 +40,8 @@ stow_dirs = \
 
 ### BREW TARGETS ###
 brew_cellar = \
+	awscli \
+	aws-shell \
 	black \
 	checkmake \
 	curl \
