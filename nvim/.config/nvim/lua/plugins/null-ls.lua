@@ -21,6 +21,12 @@ return {
 		local spell = null_ls.builtins.completion.spell -- spelling sources
 
 		local sources = {
+			code_actions.refactoring,
+			code_actions.gitsigns,
+
+			completion.luasnip,
+			completion.spell,
+
 			formatting.beautysh,
 			formatting.black,
 			formatting.buildifier,
