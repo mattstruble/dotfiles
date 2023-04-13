@@ -64,6 +64,8 @@ brew_cellar = \
 	terraform \
 	tmux \
 	uncrustify \
+	vagrant \
+	virtualbox \
 	vulture \
 	wget \
 	write-good \
