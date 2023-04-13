@@ -40,6 +40,7 @@ stow_dirs = \
 
 ### BREW TARGETS ###
 brew_cellar = \
+	ansible \
 	awscli \
 	aws-shell \
 	black \
