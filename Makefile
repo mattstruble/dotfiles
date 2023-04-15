@@ -145,6 +145,7 @@ tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/
 # - Clean call to delete custom plugins?
 # - Make themes configurable above
 # - BREW pathing is no longer working and everything is installing
+
 ### Make targets
 
 .PHONY: all zsh_install brew_install install zsh_enable_plugins $(stow_dirs) stow start
@@ -175,7 +176,7 @@ $(cask_targets): $(BREW)
 brew_install: $(cellar_targets) $(cask_targets)
 
 $(zsh_custom_targets): $(ZSH)
-	$(info "Installing $(@F)...")
+	$(info "Installing $@...")
 	git clone $($(@F)_REPO) $@
 
 zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
@@ -188,7 +189,7 @@ $(ZSH)/custom/themes/powerlevel10k: $(ZSH)
 	git clone https://github.com/romkatv/powerlevel10k.git $(ZSH)/custom/themes/powerlevel10k
 	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' zsh/.zshrc
 
-zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
+zsh_install: $(ZSH) #zsh_enable_plugins #$(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
 
 $(tmux_custom_targets): $(CELLAR)/tmux
 	$(info "Installing $(@F) from $($(@F)_REPO) to $@..." )
