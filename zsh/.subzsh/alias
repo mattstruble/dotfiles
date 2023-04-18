@@ -58,3 +58,5 @@ alias gg='git grep'
 # Fast diff for large files.
 alias fdiff='diff --speed-large-files'
 
+# Kill tmux 
+alias tkill='tmux kill-server'
