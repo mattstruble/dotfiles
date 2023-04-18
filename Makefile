@@ -37,11 +37,12 @@ stow_dirs = \
 	yabai \
 	vim \
 	tmux \
-	gitconfig
+	git
 
 ### BREW TARGETS ###
 brew_cellar = \
 	ansible \
+	ansible-lint \
 	awscli \
 	aws-shell \
 	black \
@@ -178,7 +179,9 @@ brew_install: $(cellar_targets) $(cask_targets)
 
 $(zsh_custom_targets): $(ZSH)
 	$(info "Installing $@...")
-	git clone $($(@F)_REPO) $@
+	if [ ! -d $@ ]; then \
+		git clone $($(@F)_REPO) $@; \
+	fi
 
 zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
 	$(info "Enabling plugins...")
@@ -187,15 +190,19 @@ zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
 
 $(ZSH)/custom/themes/powerlevel10k: $(ZSH)
 	echo "Installing powerlevel10k theme"
-	git clone https://github.com/romkatv/powerlevel10k.git $(ZSH)/custom/themes/powerlevel10k
-	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' zsh/.zshrc
+	if [ ! -d $(ZSH)/custom/themes/powerlevel10k ]; then \
+		git clone https://github.com/romkatv/powerlevel10k.git $(ZSH)/custom/themes/powerlevel10k; \
+		sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' zsh/.zshrc; \
+	fi
 
 zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
 
 $(tmux_custom_targets): $(CELLAR)/tmux
 	$(info "Installing $(@F) from $($(@F)_REPO) to $@..." )
 	@mkdir -p $@
-	git clone $($(@F)_REPO) $@
+	if [ ! -d $@ ]; then \
+		git clone $($(@F)_REPO) $@; \
+	fi
 
 tmux_install: $(CELLAR)/tmux $(tmux_custom_targets)
 
