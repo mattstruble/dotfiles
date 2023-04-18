@@ -1,0 +1,22 @@
+[core]
+    editor = nvim
+    excludesfile = ~/.gitignore
+    autocrlf = input
+
+[push]
+    default = simple
+
+[web]
+    browser = firefox
+
+[color]
+    branch = auto
+    diff = auto
+    interactive = auto
+    status = auto
+
+[alias]
+    l = log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit
+
+[pull]
+    rebase = true

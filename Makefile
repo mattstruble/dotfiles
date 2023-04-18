@@ -36,7 +36,8 @@ stow_dirs = \
 	skhd \
 	yabai \
 	vim \
-	tmux
+	tmux \
+	gitconfig
 
 ### BREW TARGETS ###
 brew_cellar = \
@@ -65,7 +66,7 @@ brew_cellar = \
 	tmux \
 	uncrustify \
 	vagrant \
-	virtualbox \
+	# virtualbox \
 	vulture \
 	wget \
 	write-good \
@@ -189,7 +190,7 @@ $(ZSH)/custom/themes/powerlevel10k: $(ZSH)
 	git clone https://github.com/romkatv/powerlevel10k.git $(ZSH)/custom/themes/powerlevel10k
 	sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' zsh/.zshrc
 
-zsh_install: $(ZSH) #zsh_enable_plugins #$(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
+zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
 
 $(tmux_custom_targets): $(CELLAR)/tmux
 	$(info "Installing $(@F) from $($(@F)_REPO) to $@..." )
