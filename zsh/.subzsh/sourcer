@@ -1,0 +1,19 @@
+so() { [ -s $1 ] && source $1; }
+
+#so ~/.subzsh/profile                  ## main configuration
+
+
+so ~/.subzsh/export                    ## Exports
+so ~/.subzsh/shopt                     ## Shopts
+#so ~/.subzsh/installcheck              ## Checks for installs, $MISSING_PROGRAMS
+#so ~/.subzsh/sshagent                  ## SSH agent, have before settings
+
+### Interactive ### {{{
+if [[ $- == *i* ]]; then
+	so ~/.subzsh/prompt                ## COMMAND_PROMPT function
+	so ~/.subzsh/alias                 ## Alias
+	so ~/.subzsh/function              ## Functions
+fi
+### End Interactive }}}
+
+return 0
