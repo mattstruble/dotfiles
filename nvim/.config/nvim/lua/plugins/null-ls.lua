@@ -24,8 +24,8 @@ return {
 			code_actions.refactoring,
 			code_actions.gitsigns,
 
-			completion.luasnip,
-			completion.spell,
+			-- completion.luasnip,
+			-- completion.spell,
 
 			formatting.beautysh,
 			formatting.black,

@@ -51,7 +51,7 @@ return {
 			-- "vim-language-server",
 			-- "yamlfmt",
 			-- "yamllint",
-			"yamlls",
+			-- "yamlls",
 			-- "groovyls",
 			-- "black",
 			-- "ruff",
