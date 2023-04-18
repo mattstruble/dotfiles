@@ -40,7 +40,9 @@ return {
 			formatting.prettier,
 			-- formatting.pyflyby,
 			-- formatting.remark,
-			formatting.ruff,
+			formatting.ruff.with({
+				extra_args = { "--select", "ALL" },
+			}),
 			formatting.shellharden,
 			formatting.sqlfluff.with({
 				extra_args = { "--dialect", "snowflake" },
