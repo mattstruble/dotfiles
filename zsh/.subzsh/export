@@ -5,10 +5,7 @@ if [ $(command -v fortune) ] && [ $UID != '0' ] && [[ $- == *i* ]] && [ $TERM !=
 	if [ $(command -v cowsay) ]; then
 		fortune -a | cowsay
 	else
-		MISSING_ITEMS+="cowsay, "
 		fortune -a
 	fi
-  else
-	MISSING_ITEMS+="fortune, "
 fi
 ### End Fortune ### }}}
