@@ -91,7 +91,6 @@ zsh_builtin = \
 	bazel \
 	history \
 	web-search \
-	tmux \
 	terraform \
 	ripgrep \
 	pyenv \
