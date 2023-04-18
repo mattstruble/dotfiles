@@ -58,6 +58,7 @@ brew_cellar = \
 	pyenv \
 	pyenv-virtualenv \
 	python3 \
+	reattach-to-user-namespace \
 	ripgrep \
 	ruff \
 	shellcheck \
