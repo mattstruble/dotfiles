@@ -30,6 +30,9 @@ return {
 					},
 				},
 			},
+			git = {
+				ignore = false, -- show gitignore files
+			},
 		})
 	end,
 }
