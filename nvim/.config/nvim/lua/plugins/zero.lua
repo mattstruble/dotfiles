@@ -54,7 +54,7 @@ return {
 			"yamlls",
 			-- "groovyls",
 			-- "black",
-			-- "ruff",
+			"ruff-lsp",
 		})
 
 		lsp.set_preferences({
