@@ -71,7 +71,7 @@ return {
 				extra_args = { "--dialect", "snowflake" },
 			}),
 			diagnostics.terraform_validate,
-			diagnostics.vulture,
+			-- diagnostics.vulture,
 			diagnostics.write_good,
 			-- diagnostics.yamllint,
 		}
