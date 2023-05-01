@@ -100,12 +100,6 @@ return {
 				yaml = {
 					keyOrdering = false,
 					validate = true,
-					completion = true,
-					format = {
-						enable = true,
-						singleQuote = false,
-						bracketSpacing = true,
-					},
 				},
 			},
 		})
