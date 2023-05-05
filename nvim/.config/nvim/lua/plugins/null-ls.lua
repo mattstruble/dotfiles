@@ -41,11 +41,11 @@ return {
 			-- formatting.pyflyby,
 			-- formatting.remark,
 			formatting.ruff.with({
-				extra_args = { "--select", "ALL" },
+				extra_args = { "--select", "E,F,I,PL" },
 			}),
 			formatting.shellharden,
 			formatting.sqlfluff.with({
-				extra_args = { "--dialect", "snowflake" },
+				extra_args = { "--dialect", "snowflake", "--disable-progress-bar", "--quiet" },
 			}),
 			formatting.stylua,
 			formatting.terraform_fmt,
@@ -65,10 +65,12 @@ return {
 			diagnostics.mypy.with({
 				extra_args = { "--ignore-missing-imports" },
 			}),
-			diagnostics.ruff,
+			diagnostics.ruff.with({
+				extra_args = { "--ignore", "E501" },
+			}),
 			diagnostics.shellcheck,
 			diagnostics.sqlfluff.with({
-				extra_args = { "--dialect", "snowflake" },
+				extra_args = { "--dialect", "snowflake", "--show-lint-violations" },
 			}),
 			diagnostics.terraform_validate,
 			-- diagnostics.vulture,
