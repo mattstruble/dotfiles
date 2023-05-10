@@ -24,6 +24,10 @@ return {
 				apdaptive_size = false,
 				preserve_window_proportions = true,
 			},
+			filters = {
+				custom = { ".git" },
+				exclude = { ".gitignore" },
+			},
 			renderer = {
 				indent_markers = {
 					enable = true,
