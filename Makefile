@@ -79,6 +79,7 @@ brew_cellar = \
 brew_cask = \
 	iterm2 \
 	1password/tap/1password-cli
+	cask-fonts/tap/font-meslo-lg-nerd-font
 
 ### ZSH CUSTOM PLUGINS ###
 zsh_custom_plugins = \

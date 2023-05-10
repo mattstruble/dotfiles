@@ -9,6 +9,7 @@ return {
 		"rcarriga/nvim-dap-ui",
 		"mfussenegger/nvim-dap-python",
 		"nvim-telescope/telescope-dap.nvim",
+		"mortepau/codicons.nvim",
 	},
 	config = function()
 		local dap = require("dap")
@@ -17,9 +18,27 @@ return {
 
 		-- additional setups
 		require("nvim-dap-virtual-text").setup()
+
 		dapui.setup({
-			sidebar = {
-				position = "right",
+			layouts = {
+				{
+					elements = {
+						{ id = "scopes", size = 0.25 },
+						{ id = "breakpoints", size = 0.25 },
+						{ id = "stacks", size = 0.25 },
+						{ id = "watches", size = 0.25 },
+					},
+					size = 40,
+					position = "right",
+				},
+				{
+					elements = {
+						{ id = "repl", size = 0.5 },
+						{ id = "console", size = 0.5 },
+					},
+					size = 10,
+					position = "bottom",
+				},
 			},
 		})
 
