@@ -26,7 +26,7 @@ return {
 			},
 			filters = {
 				custom = { ".git" },
-				exclude = { ".gitignore" },
+				exclude = { ".gitignore", ".github" },
 			},
 			renderer = {
 				indent_markers = {
