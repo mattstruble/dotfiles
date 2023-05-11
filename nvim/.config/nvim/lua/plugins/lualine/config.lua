@@ -24,8 +24,8 @@ lualine.setup({
 	icons_enabled = true,
 	options = {
 		component_separators = {
-			left = "",
-			right = "",
+			left = "|",
+			right = "|",
 		},
 		section_separators = {
 			left = "",
@@ -42,37 +42,21 @@ lualine.setup({
 				end,
 			},
 		},
-		lualine_b = {},
-		lualine_c = {
-			{
-				"branch",
-				icon = " ",
-			},
-			{
-				"diff",
-				symbols = {
-					added = " ",
-					modified = " ",
-					removed = " ",
-				},
-			},
-			{
-				"diagnostics",
-				update_in_insert = true,
-			},
-			components.lsp,
+		lualine_b = {
+			{ "fancy_branch" },
+			{ "fancy_diff" },
 		},
+		lualine_c = {},
 		lualine_x = {
-			-- components.location,
-			-- components.spaces,
-			"encoding",
-			"fileformat",
-			"filetype",
+			{ "fancy_diagnostics" },
+			{ "fancy_searchcount" },
+			{ "fancy_location" },
 		},
-		lualine_y = {},
+		lualine_y = {
+			{ "fancy_filetype", ts_icon = "" },
+		},
 		lualine_z = {
-			{ "progress", icon = "" },
-			components.location,
+			components.lsp,
 		},
 	},
 	extensions = {
