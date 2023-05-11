@@ -1,4 +1,5 @@
 return {
 	"bluz71/vim-nightfly-guicolors",
-	lazy = true,
+	lazy = false,
+	priority = 1000,
 }

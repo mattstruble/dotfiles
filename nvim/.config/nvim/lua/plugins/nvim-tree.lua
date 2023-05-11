@@ -20,7 +20,7 @@ return {
 				enable = true,
 			},
 			view = {
-				apdaptive_size = false,
+				adaptive_size = false,
 				preserve_window_proportions = true,
 			},
 			filters = {

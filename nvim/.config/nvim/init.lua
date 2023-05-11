@@ -30,3 +30,5 @@ require("lazy").setup("plugins", opts)
 -- COLOR SCHEME
 --------------------------
 vim.cmd([[ colorscheme nightfly ]])
+
+vim.g.nightflyItalics = true
