@@ -31,10 +31,8 @@ require("lazy").setup("plugins", opts)
 --------------------------
 vim.cmd([[ colorscheme nightfly ]])
 vim.g.nightflyItalics = true
-vim.cmd(
-	[[highlight Comment ctermfg=lightgrey ctermbg=black guifg=lightgrey guibg=black cterm=italic term=italic gui=italic]]
-)
 vim.api.nvim_set_hl(0, "Comment", {
-	ctermfg = LightGrey,
+	fg = "#666666",
 	ctermbg = Black,
+	bold = false,
 })
