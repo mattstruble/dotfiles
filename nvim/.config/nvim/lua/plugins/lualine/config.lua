@@ -67,8 +67,9 @@ lualine.setup({
 			-- components.spaces,
 			"encoding",
 			"fileformat",
+			"filetype",
 		},
-		lualine_y = {}
+		lualine_y = {},
 		lualine_z = {
 			{ "progress", icon = "" },
 			components.location,

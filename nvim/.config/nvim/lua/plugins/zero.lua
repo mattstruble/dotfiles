@@ -54,7 +54,7 @@ return {
 			"yamlls",
 			-- "groovyls",
 			-- "black",
-			"ruff-lsp",
+			-- "ruff-lsp",
 		})
 
 		vim.diagnostic.config({

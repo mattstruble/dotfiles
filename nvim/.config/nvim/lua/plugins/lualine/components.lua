@@ -19,19 +19,19 @@ M.filetype = function()
 	return vim.bo.ft == "" and "{} plain text" or "{} " .. vim.bo.ft .. " "
 end
 
-M.lsp = function()
-	-- local result = " "
-	--
-	-- if rawget(vim, "lsp") then
-	-- 	for _, client in ipairs(vim.lsp.get_active_clients()) do
-	-- 		if client.attached_buffers[vim.api.nvim_get_current_buf()] and client.name ~= "null-ls" then
-	-- 			return (vim.o.columns > 100 and " " .. client.name .. " ") or " LSP"
-	-- 		end
-	-- 	end
-	-- end
-	--
-	-- return result
-	return { "fancy_lsp_servers", icon = "󰅡", separator = "·" }
-end
+M.lsp = { "fancy_lsp_servers", icon = "󰅡", separator = "·" } --function()
+-- local result = " "
+--
+-- if rawget(vim, "lsp") then
+-- 	for _, client in ipairs(vim.lsp.get_active_clients()) do
+-- 		if client.attached_buffers[vim.api.nvim_get_current_buf()] and client.name ~= "null-ls" then
+-- 			return (vim.o.columns > 100 and " " .. client.name .. " ") or " LSP"
+-- 		end
+-- 	end
+-- end
+--
+-- return result
+-- 	return { "fancy_lsp_servers", icon = "󰅡", separator = "·" }
+-- end
 
 return M
