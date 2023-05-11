@@ -43,5 +43,9 @@ return {
 				},
 			})
 		end,
+		keys = {
+			{ "<leader>bp", ":BufferLinePick", desc = "Pick buffer to open" },
+			{ "<leader>bc", ":BufferLineClose", desc = "Pick buffer to close" },
+		},
 	},
 }
