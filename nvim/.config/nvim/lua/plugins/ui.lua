@@ -1,5 +1,16 @@
 return {
 	{
+		"nvim-lualine/lualine.nvim",
+		dependencies = {
+			"nvim-tree/nvim-web-devicons",
+			"bluz71/vim-nightfly-guicolors",
+			"meuter/lualine-so-fancy.nvim",
+		},
+		config = function()
+			require("plugins.lualine.config")
+		end,
+	},
+	{
 		"rcarriga/nvim-notify",
 		lazy = true,
 		event = "VeryLazy",
