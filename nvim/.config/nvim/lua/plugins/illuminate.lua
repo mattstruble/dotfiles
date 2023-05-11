@@ -1,5 +1,6 @@
 return {
 	"RRethy/vim-illuminate",
+	lazy = true,
 	config = function()
 		require("illuminate").configure({
 			-- providers: provider used to get references in the buffer, ordered by priority

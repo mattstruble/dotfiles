@@ -1,5 +1,6 @@
 return {
 	"danymat/neogen",
+	lazy = true,
 	dependencies = "nvim-treesitter/nvim-treesitter",
 	config = function()
 		local opts = { noremap = true, silent = true }

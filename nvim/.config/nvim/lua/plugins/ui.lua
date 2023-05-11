@@ -1,6 +1,7 @@
 return {
 	{
 		"nvim-lualine/lualine.nvim",
+		lazy = true,
 		dependencies = {
 			"nvim-tree/nvim-web-devicons",
 			"bluz71/vim-nightfly-guicolors",
@@ -45,6 +46,7 @@ return {
 
 	{
 		"folke/noice.nvim",
+		lazy = true,
 		dependencies = {
 			"MunifTanjim/nui.nvim",
 			"rcarriga/nvim-notify",

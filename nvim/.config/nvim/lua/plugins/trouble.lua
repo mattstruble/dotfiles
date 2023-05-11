@@ -1,6 +1,7 @@
 return {
 	{
 		"folke/trouble.nvim",
+		lazy = true,
 		requires = "nvim-tree/nvim-web-devicons",
 		cmd = {
 			"TroubleToggle",

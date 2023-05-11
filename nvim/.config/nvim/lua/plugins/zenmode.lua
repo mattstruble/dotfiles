@@ -4,6 +4,8 @@
 
 return {
 	"folke/zen-mode.nvim",
+	lazy = true,
+	events = "VeryLazy",
 	config = function()
 		vim.keymap.set("n", "<leader>zz", function()
 			require("zen-mode").setup({
@@ -31,4 +33,8 @@ return {
 			vim.wo.rnu = false
 		end)
 	end,
+	keys = {
+		{ "<leader>zz", desc = "Zen Mode with line numbers" },
+		{ "<leader>zZ", desc = "Zen Mode without line numbers" },
+	},
 }

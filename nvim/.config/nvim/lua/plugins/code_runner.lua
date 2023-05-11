@@ -4,15 +4,9 @@
 
 return {
 	"CRAG666/code_runner.nvim",
+	lazy = true,
+	events = "VeryLazy",
 	config = function()
-		vim.keymap.set("n", "<leader>r", ":RunCode<CR>", { noremap = true, silent = false })
-		vim.keymap.set("n", "<leader>rf", ":RunFile<CR>", { noremap = true, silent = false })
-		vim.keymap.set("n", "<leader>rft", ":RunFile tab<CR>", { noremap = true, silent = false })
-		vim.keymap.set("n", "<leader>rp", ":RunProject<CR>", { noremap = true, silent = false })
-		vim.keymap.set("n", "<leader>rc", ":RunClose<CR>", { noremap = true, silent = false })
-		vim.keymap.set("n", "<leader>crf", ":CRFiletype<CR>", { noremap = true, silent = false })
-		vim.keymap.set("n", "<leader>crp", ":CRProjects<CR>", { noremap = true, silent = false })
-
 		require("code_runner").setup({
 			mode = "toggleterm",
 			filetype = {
@@ -27,4 +21,13 @@ return {
 			},
 		})
 	end,
+	keys = {
+		{ "<leader>rc", ":RunCode<cr>", desc = "Run Code" },
+		{ "<leader>rf", ":RunFile<cr>", desc = "Run File" },
+		{ "<leader>rft", ":RunFile tab<cr>", desc = "Run File Tab" },
+		{ "<leader>rp", ":RunProject<cr>", desc = "Run Project" },
+		{ "<leader>rC", ":RunClose<cr>", desc = "Run Close" },
+		{ "<leader>crf", ":CRFiletype<cr>", desc = "CR File Type" },
+		{ "<leader>crp", ":CRProjects<cr>", desc = "CR Projects" },
+	},
 }
