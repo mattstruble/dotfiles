@@ -42,3 +42,4 @@ and their own dotfile repositories.
 - <https://github.com/ThePrimeagen/.dotfiles>
 - <https://github.com/josean-dev/dev-environment-files>
 - <https://github.com/younger-1/nvim/>
+- <https://github.com/avocadeys/NVCat>
