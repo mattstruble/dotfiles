@@ -5,7 +5,6 @@
 return {
 	"abeleinin/papyrus",
 	lazy = true,
-	event = "VeryLazy",
 	config = function()
 		vim.g.papyrus_latex_engine = "pdflatex"
 		vim.g.papyrus_viewer = "zathura"

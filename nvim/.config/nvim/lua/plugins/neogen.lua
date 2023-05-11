@@ -3,7 +3,6 @@ return {
 	lazy = true,
 	dependencies = "nvim-treesitter/nvim-treesitter",
 	config = function()
-		local opts = { noremap = true, silent = true }
 		require("neogen").setup({
 			snippet_engine = "luasnip",
 			languages = {
@@ -14,8 +13,9 @@ return {
 				},
 			},
 		})
-
-		vim.keymap.set("n", "<leader>nf", ":lua require('neogen').generate()<CR>", opts)
-		vim.keymap.set("n", "<leader>nc", ":lua require('neogen').generate({type = 'class'})<CR>", opts)
 	end,
+	keys = {
+		{ "<leader>nf", ":lua require('neogen').generate()<cr>", desc = "Generate function docs" },
+		{ "<leader>nc", ":lua require('neogen').generate({type = 'class'})<cr>", desc = "Generate class docs" },
+	},
 }

@@ -5,25 +5,12 @@
 return {
 	"ThePrimeagen/harpoon",
 	lazy = true,
-	config = function()
-		local mark = require("harpoon.mark")
-		local ui = require("harpoon.ui")
-		require("harpoon").setup({
-			vim.keymap.set("n", "<leader>a", mark.add_file),
-			vim.keymap.set("n", "<C-e>", ui.toggle_quick_menu),
-
-			vim.keymap.set("n", "<C-o>", function()
-				ui.nav_file(1)
-			end),
-			vim.keymap.set("n", "<C-t>", function()
-				ui.nav_file(2)
-			end),
-			vim.keymap.set("n", "<C-i>", function()
-				ui.nav_file(3)
-			end),
-			vim.keymap.set("n", "<C-f>", function()
-				ui.nav_file(4)
-			end),
-		})
-	end,
+	keys = {
+		{ "<leader>a", ":lua require('harpoon.mark').add_file<cr>", desc = "Harpoon add file" },
+		{ "<C-e>", ":lua require('harpoon.ui').toggle_quick_menu<cr>", desc = "Toggle Harpoon menu" },
+		{ "<C-o>", ":lua require('harpoon.ui').nav_file(1)<cr>", desc = "Harpoon File 1" },
+		{ "<C-t>", ":lua require('harpoon.ui').nav_file(2)<cr>", desc = "Harpoon File 2" },
+		{ "<C-i>", ":lua require('harpoon.ui').nav_file(3)<cr>", desc = "Harpoon File 3" },
+		{ "<C-f>", ":lua require('harpoon.ui').nav_file(4)<cr>", desc = "Harpoon File 4" },
+	},
 }

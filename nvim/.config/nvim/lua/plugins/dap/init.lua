@@ -5,6 +5,7 @@
 return {
 	{
 		"rcarriga/nvim-dap-ui",
+		lazy = true,
 		dependencies = "mortepau/codicons.nvim",
 		keys = {
 			{
@@ -80,6 +81,7 @@ return {
 	},
 	{
 		"mfussenegger/nvim-dap-python",
+		lazy = true,
 		config = function()
 			local adapter_python_path = require("plugins.dap.adapters").debugpy.path
 			require("dap-python").setup(adapter_python_path)
@@ -87,12 +89,14 @@ return {
 	},
 	{
 		"theHamsta/nvim-dap-virtual-text",
+		lazy = true,
 		config = function()
 			require("nvim-dap-virtual-text").setup({})
 		end,
 	},
 	{
 		"mfussenegger/nvim-dap",
+		lazy = true,
 		dependencies = {
 			"theHamsta/nvim-dap-virtual-text",
 			"rcarriga/nvim-dap-ui",

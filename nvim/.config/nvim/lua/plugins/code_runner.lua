@@ -5,7 +5,6 @@
 return {
 	"CRAG666/code_runner.nvim",
 	lazy = true,
-	events = "VeryLazy",
 	config = function()
 		require("code_runner").setup({
 			mode = "toggleterm",

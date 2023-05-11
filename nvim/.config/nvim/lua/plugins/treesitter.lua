@@ -5,15 +5,16 @@
 return {
 	{
 		"nvim-treesitter/nvim-treesitter-context",
-		lazy = false,
+		lazy = true,
 	},
 	{
 		"nvim-treesitter/nvim-treesitter",
-		lazy = false,
+		lazy = true,
 		module = true,
 		event = { "BufReadPost", "BufNewFile" },
 		dependencies = {
 			"mrjones2014/nvim-ts-rainbow",
+			"nvim-treesitter/nvim-treesitter-context",
 		},
 		cmd = {
 			"TSInstall",

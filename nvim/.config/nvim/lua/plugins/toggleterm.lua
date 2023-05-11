@@ -10,6 +10,8 @@
 return {
 	"akinsho/toggleterm.nvim",
 	version = "*",
+	lazy = true,
+	cmd = "ToggleTerm",
 	config = function()
 		local opts = { noremap = true, silent = true }
 
@@ -55,4 +57,7 @@ return {
 		vim.keymap.set("n", "<leader>tp", "<cmd>lua _PYTHON_TOGGLE()<CR>", opts)
 		vim.keymap.set("n", "<leader>tl", "<cmd>lua _LUA_TOGGLE()<CR>", opts)
 	end,
+	keys = {
+		{ "<c->", desc = "Toggle Term" },
+	},
 }
