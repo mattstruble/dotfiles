@@ -41,11 +41,13 @@ return {
 	{
 		"MunifTanjim/nui.nvim",
 		lazy = true,
+		event = "VeryLazy",
 	},
 
 	{
 		"folke/noice.nvim",
 		lazy = true,
+		event = "VeryLazy",
 		dependencies = {
 			"MunifTanjim/nui.nvim",
 			"rcarriga/nvim-notify",
