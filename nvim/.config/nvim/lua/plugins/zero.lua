@@ -57,12 +57,25 @@ return {
 			"ruff-lsp",
 		})
 
+		vim.diagnostic.config({
+			virtual_text = {
+				spaces = 4,
+				prefix = "●",
+			},
+			float = {
+				source = "always",
+				border = "rounded",
+			},
+			underline = false,
+			update_in_insert = true,
+		})
+
 		lsp.set_preferences({
 			sign_icons = {
 				error = " ",
-				warn = " ",
-				hint = "ﴞ ",
-				info = " ",
+				warn = " ",
+				hint = " ",
+				info = " ",
 			},
 		})
 

@@ -9,22 +9,35 @@
 
 return {
 	"akinsho/toggleterm.nvim",
-	lazy = false,
+	version = "*",
 	config = function()
 		local opts = { noremap = true, silent = true }
 
 		require("toggleterm").setup({
-			size = 20,
+			size = 10,
 			open_mapping = [[<c-\>]],
 			hide_numbers = true,
 			shade_filetypes = {},
-			shade_terminals = true,
+			shade_terminals = false,
+			insert_mappings = true,
 			start_in_insert = true,
 			autochdir = true,
 			persist_size = true,
 			close_on_exit = true,
 			shell = vim.o.shell,
-			direction = "horizontal",
+			direction = "float",
+			highlights = {
+				NormalFloat = {
+					link = "Normal",
+				},
+				FloatBorder = {
+					link = "FloatBorder",
+				},
+				float_opts = {
+					border = "rounded",
+					winblend = 0,
+				},
+			},
 		})
 
 		local Terminal = require("toggleterm.terminal").Terminal

@@ -1,7 +1,35 @@
 return {
-	"folke/trouble.nvim",
-	requires = "nvim-tree/nvim-web-devicons",
-	config = function()
-		require("trouble").setup({})
-	end,
+	{
+		"folke/trouble.nvim",
+		requires = "nvim-tree/nvim-web-devicons",
+		cmd = {
+			"TroubleToggle",
+			"Trouble",
+		},
+		opts = {
+			use_diagnostic_signs = true,
+		},
+		keys = {
+			{
+				"<leader>xx",
+				"<cmd>TroubleToggle document_diagnostics<cr>",
+				desc = "Document Diagnostics (Trouble)",
+			},
+			{
+				"<leader>xX",
+				"<cmd>TroubleToggle workspace_diagnotistics<cr>",
+				desc = "Workspace Diagnostics (Trouble)",
+			},
+			{
+				"<leader>xL",
+				"<cmd>TroubleToggle loclist<cr>",
+				desc = "Location List (Trouble)",
+			},
+			{
+				"<leader>xQ",
+				"<cmd>TroubleToggle quickfix<cr>",
+				desc = "Quickfix List (Trouble)",
+			},
+		},
+	},
 }

@@ -4,9 +4,8 @@
 
 return {
 	"nvim-tree/nvim-tree.lua",
+	lazy = true,
 	config = function()
-		vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>")
-
 		vim.g.loaded = 1
 		vim.g.loaded_netrwPlugin = 1
 
@@ -54,8 +53,11 @@ return {
 				},
 			},
 			git = {
-				ignore = false, -- show gitignore files
+				ignore = true, -- show gitignore files
 			},
 		})
 	end,
+	keys = {
+		{ "<leader>e", ":NvimTreeToggle<CR>", desc = "NvimTree" },
+	},
 }

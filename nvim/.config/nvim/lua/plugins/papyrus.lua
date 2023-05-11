@@ -4,15 +4,18 @@
 
 return {
 	"abeleinin/papyrus",
+	lazy = true,
+	event = "VeryLazy",
 	config = function()
-		local opts = { noremap = true }
-
 		vim.g.papyrus_latex_engine = "pdflatex"
 		vim.g.papyrus_viewer = "zathura"
-
-		vim.keymap.set("n", "<leader>pc", ":PapyrusCompile<cr>", opts)
-		vim.keymap.set("n", "<leader>pa", ":PapyrusAutoCompile<cr>", opts)
-		vim.keymap.set("n", "<leader>pv", ":PapyrusView<cr>", opts)
-		vim.keymap.set("n", "<leader>ps", ":PapyrusStart<cr>", opts)
 	end,
+    -- stylua: ignore
+    keys = {
+        { "<leader>pc", ":PapyrusCompile<cr>", desc = "Papyrus Compile"},
+        { "<leader>pa", ":PapyrusAutoCompile<cr>", desc = "Papyrus Auto Compile"},
+        { "<leader>pv", ":PapyrusView<cr>", desc = "Papyrus View"},
+        { "<leader>ps", ":PapyrusStart<cr>", desc = "Papyrus Start"}
+    }
+,
 }
