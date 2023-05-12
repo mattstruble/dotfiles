@@ -84,9 +84,9 @@ return {
 
 			lsp.set_preferences({
 				sign_icons = {
-					error = " ",
-					warn = " ",
-					hint = " ",
+					error = " ",
+					warn = " ",
+					hint = "󰌶 ",
 					info = " ",
 				},
 			})
