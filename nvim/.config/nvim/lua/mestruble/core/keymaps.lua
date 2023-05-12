@@ -49,4 +49,4 @@ keymap.set({ "n", "v" }, "<leader>y", [["+y]])
 keymap.set("n", "<leader>Y", [["+Y]])
 
 -- Delete without overwriting buffer
-keymap.set({ "n", "v" }, "<leader>d", [["_d]])
+-- keymap.set({ "n", "v" }, "<leader>d", [["_d]])

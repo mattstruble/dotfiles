@@ -2,11 +2,6 @@
 -- TOGGLETERM
 --------------------------
 
--- as seen in "init.lua," here is the Vim way:
--- vim.cmd('autocmd! TermOpen term://* lua set_terminal_keymaps()')
-
--- ...and the way you do it in Lua:
-
 return {
 	"akinsho/toggleterm.nvim",
 	version = "*",
@@ -58,6 +53,6 @@ return {
 		vim.keymap.set("n", "<leader>tl", "<cmd>lua _LUA_TOGGLE()<CR>", opts)
 	end,
 	keys = {
-		{ "<c->", desc = "Toggle Term" },
+		{ "<c-\\>", desc = "Toggle Term" },
 	},
 }

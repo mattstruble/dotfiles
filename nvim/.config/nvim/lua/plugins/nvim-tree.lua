@@ -5,6 +5,13 @@
 return {
 	"nvim-tree/nvim-tree.lua",
 	lazy = true,
+	cmd = {
+		"NvimTreeToggle",
+		"NvimTreeOpen",
+		"NvimTreeFindFile",
+		"NvimTreeFindFileToggle",
+		"NvimTreeRefresh",
+	},
 	config = function()
 		vim.g.loaded = 1
 		vim.g.loaded_netrwPlugin = 1
