@@ -21,7 +21,7 @@ return {
 				no_italic = false,
 				no_bold = false,
 				styles = {
-					comments = {},
+					comments = { "italic" },
 					properties = {},
 					functions = { "bold" },
 					keywords = {},
@@ -51,7 +51,7 @@ return {
 							information = { "undercurl" },
 						},
 					},
-					indent_blankline = { enabled = true, colored_indent_levels = false },
+					indent_blankline = { enabled = true, colored_indent_levels = true },
 					nvimtree = true,
 					which_key = true,
 					cmp = true,
