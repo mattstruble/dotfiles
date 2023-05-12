@@ -25,14 +25,3 @@ opts = {
 }
 
 require("lazy").setup("plugins", opts)
-
---------------------------
--- COLOR SCHEME
---------------------------
-vim.cmd([[ colorscheme nightfly ]])
-vim.g.nightflyItalics = true
-vim.api.nvim_set_hl(0, "Comment", {
-	fg = "#666666",
-	ctermbg = Black,
-	bold = false,
-})
