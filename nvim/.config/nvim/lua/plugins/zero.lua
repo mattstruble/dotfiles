@@ -3,24 +3,32 @@
 --------------------------
 
 return {
-	{
-		"hrsh7th/nvim-cmp",
-		event = "InsertEnter",
-		dependencies = {
-			{ "hrsh7th/cmp-buffer" },
-			{ "hrsh7th/cmp-path" },
-			{ "saadparwaiz1/cmp_luasnip" },
-			{ "hrsh7th/cmp-nvim-lsp" },
-			{ "hrsh7th/cmp-nvim-lua" },
-		},
-	},
+	-- {
+	-- 	"hrsh7th/nvim-cmp",
+	-- 	event = "InsertEnter",
+	-- 	dependencies = {
+	-- 		{ "hrsh7th/cmp-buffer" },
+	-- 		{ "hrsh7th/cmp-path" },
+	-- 		{ "saadparwaiz1/cmp_luasnip" },
+	-- 		{ "hrsh7th/cmp-nvim-lsp" },
+	-- 		{ "hrsh7th/cmp-nvim-lua" },
+	-- 	},
+	-- },
 	{
 		"VonHeikemen/lsp-zero.nvim",
+		event = "InsertEnter",
 		branch = "v1.x",
 		dependencies = {
 			{ "neovim/nvim-lspconfig" },
 			{ "williamboman/mason.nvim" },
 			{ "williamboman/mason-lspconfig.nvim" },
+
+			{ "hrsh7th/nvim-cmp" },
+			{ "hrsh7th/cmp-buffer" },
+			{ "hrsh7th/cmp-path" },
+			{ "saadparwaiz1/cmp_luasnip" },
+			{ "hrsh7th/cmp-nvim-lsp" },
+			{ "hrsh7th/cmp-nvim-lua" },
 
 			-- snippets
 			{ "L3MON4D3/LuaSnip" },
@@ -28,7 +36,7 @@ return {
 		},
 		config = function()
 			local lsp = require("lsp-zero").preset({
-				name = "minimal",
+				name = "recommended",
 				set_lsp_keymaps = true,
 				manage_nvim_cmp = true,
 				suggest_lsp_servers = true,
@@ -71,7 +79,7 @@ return {
 					border = "rounded",
 				},
 				underline = false,
-				update_in_insert = true,
+				update_in_insert = false,
 			})
 
 			lsp.set_preferences({
