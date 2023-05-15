@@ -53,6 +53,6 @@ return {
 		vim.keymap.set("n", "<leader>tl", "<cmd>lua _LUA_TOGGLE()<CR>", opts)
 	end,
 	keys = {
-		{ "<c-\\>", desc = "Toggle Term" },
+		{ "<leader>tt", ":ToggleTerm", desc = "Toggle Term" },
 	},
 }

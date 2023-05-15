@@ -5,7 +5,7 @@
 return {
 	"folke/neodev.nvim",
 	lazy = true,
-	event = "VeryLazy",
+	event = "InsertEnter",
 	config = function()
 		require("neodev").setup({
 			library = {
