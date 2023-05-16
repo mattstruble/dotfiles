@@ -84,7 +84,12 @@ return {
 		lazy = true,
 		config = function()
 			local adapter_python_path = require("plugins.dap.adapters").debugpy.path
+			local py = require("mestruble.lang.python")
 			require("dap-python").setup(adapter_python_path)
+			require("dap-python").resolve_python = function()
+				py.env(vim.fn.getcwd())
+				return py.pep582(vim.fn.getcwd())
+			end
 		end,
 	},
 	{
@@ -119,6 +124,13 @@ return {
 				{ text = " ", texthl = "DiagnosticWarn", linehl = "", numhl = "" }
 			)
 			vim.fn.sign_define("DapLogPoint", { text = " ", texthl = "DiagnosticInfo", linehl = "", numhl = "" })
+
+			table.insert(require("dap").configurations.python, {
+				type = "python",
+				request = "launch",
+				name = "Launch with venv",
+				program = "${file}",
+			})
 		end,
         -- stylua: ignore
         keys = {
