@@ -112,7 +112,7 @@ return {
 			vim.api.nvim_set_hl(0, "DapStoppedLine", { default = true, link = "Visual" })
 			vim.fn.sign_define(
 				"DapStopped",
-				{ text = " ", texthl = "DiagnosticWarn", linehl = "DapStoppedLine", numhl = "" }
+				{ text = "󰧂 ", texthl = "DiagnosticWarn", linehl = "DapStoppedLine", numhl = "" }
 			)
 			vim.fn.sign_define("DapBreakpoint", { text = " ", texthl = "DiagnosticError", linehl = "", numhl = "" })
 			vim.fn.sign_define(
@@ -124,13 +124,6 @@ return {
 				{ text = " ", texthl = "DiagnosticWarn", linehl = "", numhl = "" }
 			)
 			vim.fn.sign_define("DapLogPoint", { text = " ", texthl = "DiagnosticInfo", linehl = "", numhl = "" })
-
-			table.insert(require("dap").configurations.python, {
-				type = "python",
-				request = "launch",
-				name = "Launch with venv",
-				program = "${file}",
-			})
 		end,
         -- stylua: ignore
         keys = {
@@ -143,8 +136,8 @@ return {
             { "<leader>di", function() require("dap").step_into() end, desc = "Step Into" },
             { "<leader>dj", function() require("dap").down() end, desc = "Down" },
             { "<leader>dk", function() require("dap").up() end, desc = "Up" },
-            { "<leader>do", function() require("dap").step_out() end, desc = "Step Out" },
-            { "<leader>dO", function() require("dap").step_over() end, desc = "Step Over" },
+            { "<leader>dO", function() require("dap").step_out() end, desc = "Step Out" },
+            { "<leader>do", function() require("dap").step_over() end, desc = "Step Over" },
             { "<leader>dp", function() require("dap").pause() end, desc = "Pause" },
             { "<leader>dr", function() require("dap").repl.toggle() end, desc = "Toggle REPL" },
             { "<leader>ds", function() require("dap").session() end, desc = "Session" },
