@@ -4,34 +4,100 @@
 return {
 	{
 		"nvim-telescope/telescope-fzf-native.nvim",
+		lazy = true,
 		build = "make",
 		name = "telescope-fzf",
 	},
 	{
 		"nvim-telescope/telescope.nvim",
+		lazy = false,
 		dependencies = {
+			"nvim-lua/plenary.nvim",
 			"telescope-fzf",
 			"nvim-telescope/telescope-ui-select.nvim",
 		},
+		keys = {
+			{ "<leader>ff", "<cmd>Telescope find_files hidden=true no_ignore=true<cr>", desc = "Find files" },
+			{ "<leader>fs", "<cmd>Telescope live_grep<cr>", desc = "Live Grep" },
+			{ "<leader>fc", "<cmd>Telescope grep_string<cr>", desc = "Grep String" },
+			{ "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Telescope buffers" },
+			{ "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "Telescope help tags" },
+
+			{ "<leader>gc", "<cmd>Telescope git_commits<cr>", desc = "List all git commits" },
+			{ "<leader>gfc", "<cmd>Telescope git_bcommits<cr>", desc = "List git commits for current file/buffer" },
+			{ "<leader>gb", "<cmd>Telescope git_branches<cr>", desc = "List git branches" },
+		},
 		config = function()
-			vim.keymap.set("n", "<leader>ff", "<cmd>Telescope find_files hidden=true no_ignore=true<cr>")
-			vim.keymap.set("n", "<leader>fs", "<cmd>Telescope live_grep<cr>")
-			vim.keymap.set("n", "<leader>fc", "<cmd>Telescope grep_string<cr>")
-			vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<cr>")
-			vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<cr>")
-
-			-- telescope git commands
-			vim.keymap.set("n", "<leader>gc", "<cmd>Telescope git_commits<cr>") -- list all git commits (use <cr> to checkout) ["gc" for git commits]
-			vim.keymap.set("n", "<leader>gfc", "<cmd>Telescope git_bcommits<cr>") -- list git commits for current file/buffer (use <cr> to checkout) ["gfc" for git file commits]
-			vim.keymap.set("n", "<leader>gb", "<cmd>Telescope git_branches<cr>") -- list git branches (use <cr> to checkout) ["gb" for git branch]
-			-- vim.keymap.set("n", "<leader>gs", "<cmd>Telescope git_status<cr>") -- list current changes per file with diff preview ["gs" for git status]
-
+			local plenary = require("plenary.path")
 			local actions = require("telescope.actions")
 			local themes = require("telescope.themes")
+			local builtin = require("telescope.builtin")
+
+			local dropdown = themes.get_dropdown({
+				hidden = true,
+				no_ignore = true,
+				previewer = false,
+				prompt_title = "",
+				preview_title = "",
+				results_title = "",
+				layout_config = { prompt_position = "top" },
+			})
+
+			local with_title = function(opts, extra)
+				extra = extra or {}
+				local path = opts.cwd or opts.path or extra.cwd or extra.path or nil
+				local title = ""
+				local buf_path = vim.fn.expand("%:p:h")
+				local cwd = vim.fn.getcwd()
+				if path ~= nil and buf_path ~= cwd then
+					title = plenary:new(buf_path):make_relative(cwd)
+				else
+					title = vim.fn.fnamemodify(cwd, ":t")
+				end
+
+				return vim.tbl_extend("force", opts, {
+					prompt_title = title,
+				})
+			end
+
+			vim.api.nvim_create_augroup("startup", { clear = true })
+			vim.api.nvim_create_autocmd("VimEnter", {
+				group = "startup",
+				pattern = "*",
+				callback = function()
+					-- open file browser if arg is in a folder
+					local arg = vim.api.nvim_eval("argv(0)")
+					if arg and (vim.fn.isdirectory(arg) ~= 0 or arg == "") then
+						vim.defer_fn(function()
+							builtin.find_files(with_title(dropdown))
+						end, 10)
+					end
+				end,
+			})
 
 			require("telescope").setup({
 				defaults = {
-					mappings = {
+					prompt_prefix = "❯ ",
+					prompt_title = "",
+					results_title = "",
+					preview_title = "",
+					selection_caret = "❯ ",
+					multi_icon = "+ ",
+					sorting_strategy = "ascending",
+					layout_strategy = "flex",
+					layout_config = {
+						horizontal = {
+							prompt_position = "top",
+							preview_width = 0.55,
+						},
+						vertical = {
+							mirror = false,
+						},
+						width = 0.85,
+						height = 0.80,
+					},
+					path_display = { "truncate" },
+					{
 						i = {
 							["<C-n>"] = actions.cycle_history_next,
 							["<C-p>"] = actions.cycle_history_prev,
@@ -94,7 +160,15 @@ return {
 							["?"] = actions.which_key,
 						},
 					},
-					file_ignore_patterns = { ".git", "node_modules", "build", "dist", "*.lock", ".venv" },
+					file_ignore_patterns = {
+						"^.git/*",
+						"node_modules/*",
+						"^build/*",
+						"dist/*",
+						"*.lock",
+						".venv/*",
+						"^.*cache/*",
+					},
 					vimgrep_arguments = {
 						"rg",
 						"--color=never",
