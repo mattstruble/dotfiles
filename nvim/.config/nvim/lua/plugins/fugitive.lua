@@ -5,9 +5,11 @@
 
 return {
 	"tpope/vim-fugitive",
+	lazy = true,
+	keys = {
+		{ "<leader>gs", vim.cmd.Git, desc = "Git fugitive" },
+	},
 	config = function()
-		vim.keymap.set("n", "<leader>gs", vim.cmd.Git)
-
 		local mestruble_fugitive = vim.api.nvim_create_augroup("mestruble_fugitive", {})
 		local autocmd = vim.api.nvim_create_autocmd
 

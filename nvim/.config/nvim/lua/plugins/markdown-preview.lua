@@ -5,7 +5,7 @@
 return {
 	"iamcco/markdown-preview.nvim",
 	lazy = true,
-	run = function()
+	build = function()
 		vim.fn["mkdp#util#install"]()
 	end,
     -- stylua: ignore
