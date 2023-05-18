@@ -4,6 +4,8 @@
 
 return {
 	"jose-elias-alvarez/null-ls.nvim",
+	event = { "BufReadPost", "BufNewFile" },
+	lazy = true,
 	dependencies = {
 		"nvim-lua/plenary.nvim",
 		"jayp0521/mason-null-ls.nvim",

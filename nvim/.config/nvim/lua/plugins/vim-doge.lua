@@ -9,7 +9,7 @@ return {
 	end,
 	keys = {
 		{ "<leader>d", desc = "Doge Doc Generator" },
-		{ "<Tab>", desc = "Next Todo" },
-		{ "<S-Tab>", desc = "Prev Todo" },
+		-- { "<Tab>", desc = "Next Todo" },
+		-- { "<S-Tab>", desc = "Prev Todo" },
 	},
 }
