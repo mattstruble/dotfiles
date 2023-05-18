@@ -56,11 +56,13 @@ return {
 			require("noice").setup({
 				lsp = {
 					-- override markdown rendering so that **cmp** and other plugins use **Treesitter**
-					-- override = {
-					-- 	["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-					-- 	["vim.lsp.util.stylize_markdown"] = true,
-					-- 	["cmp.entry.get_documentation"] = true,
-					-- },
+					override = {
+						["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+						["vim.lsp.util.stylize_markdown"] = true,
+						["cmp.entry.get_documentation"] = true,
+					},
+					signature = { enabled = false },
+					hover = { enabled = false },
 				},
 				presets = {
 					inc_rename = true,

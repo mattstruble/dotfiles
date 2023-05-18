@@ -20,7 +20,12 @@ return {
 		branch = "v1.x",
 		dependencies = {
 			{ "neovim/nvim-lspconfig" },
-			{ "williamboman/mason.nvim" },
+			{
+				"williamboman/mason.nvim",
+				build = function()
+					pcall(vim.cmd, "MasonUpdate")
+				end,
+			},
 			{ "williamboman/mason-lspconfig.nvim" },
 
 			{ "hrsh7th/nvim-cmp" },
@@ -74,13 +79,30 @@ return {
 					spaces = 4,
 					prefix = "●",
 				},
-				float = {
-					source = "always",
-					border = "rounded",
-				},
 				underline = false,
-				update_in_insert = false,
+				update_in_insert = true,
+				severity_sort = true,
+				float = {
+					focusable = false,
+					style = "minimal",
+					border = "rounded",
+					source = "always",
+					header = "",
+					prefix = "",
+				},
 			})
+
+			vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
+				border = "rounded",
+			})
+
+			vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
+				border = "rounded",
+			})
+
+			require("lspconfig.ui.windows").default_options = {
+				border = "rounded",
+			}
 
 			lsp.set_preferences({
 				sign_icons = {
