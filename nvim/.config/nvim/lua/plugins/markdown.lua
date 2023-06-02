@@ -4,9 +4,18 @@
 
 return {
 	{
+		"mzlogin/vim-markdown-toc",
+		ft = "markdown",
+		lazy = true,
+		keys = {
+			{ "<leader>mtoc", "<cmd>GenTocMarked<cr>", desc = "Generate Markdown TOC" },
+		},
+	},
+	{
 		"iamcco/markdown-preview.nvim",
 		lazy = true,
 		cmd = { "MarkdownPreview", "MarkdownPreviewStop", "MarkdownPreviewToggle" },
+		ft = "markdown",
 		build = "cd app && npm install",
 		run = function()
 			vim.fn["mkdp#util#install"]()
