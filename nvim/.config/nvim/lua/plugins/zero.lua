@@ -69,7 +69,7 @@ return {
 				-- "yamlfmt",
 				-- "yamllint",
 				"yamlls",
-				-- "groovyls",
+				"groovyls",
 				-- "black",
 				-- "ruff-lsp",
 			})
