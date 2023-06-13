@@ -13,7 +13,8 @@ return {
 		module = true,
 		event = { "BufReadPost", "BufNewFile" },
 		dependencies = {
-			"mrjones2014/nvim-ts-rainbow",
+			"HiPhish/nvim-ts-rainbow2",
+			-- "mrjones2014/nvim-ts-rainbow",
 			"nvim-treesitter/nvim-treesitter-context",
 		},
 		cmd = {
@@ -60,6 +61,7 @@ return {
 					enable = true,
 					extended_mode = true,
 					max_file_lines = nil,
+					strategy = require("ts-rainbow").strategy.global,
 				},
 			})
 		end,
