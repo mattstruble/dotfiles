@@ -17,9 +17,6 @@ return {
 		cmd = { "MarkdownPreview", "MarkdownPreviewStop", "MarkdownPreviewToggle" },
 		ft = "markdown",
 		build = "cd app && npm install",
-		init = function()
-			vim.fn["mkdp#util#install"]()
-		end,
 		config = function()
 			vim.g.mkdp_page_title = "${name} - Preview"
 			vim.g.mkdp_echo_preview_url = 1
