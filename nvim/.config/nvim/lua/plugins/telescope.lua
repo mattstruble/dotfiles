@@ -15,6 +15,7 @@ return {
 			"nvim-lua/plenary.nvim",
 			"telescope-fzf",
 			"nvim-telescope/telescope-ui-select.nvim",
+			{ "prochri/telescope-all-recent.nvim", opts = {} },
 		},
 		keys = {
 			{ "<leader>ff", "<cmd>Telescope find_files hidden=true no_ignore=true<cr>", desc = "Find files" },
