@@ -28,6 +28,7 @@ lualine.setup({
 		},
 		lualine_c = {},
 		lualine_x = {
+			-- { require("statusline-action-hints").statusline },
 			{ "fancy_diagnostics" },
 			{ "fancy_searchcount" },
 			{ "fancy_location" },

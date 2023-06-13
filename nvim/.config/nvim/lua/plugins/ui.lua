@@ -1,10 +1,19 @@
 return {
 	{
+		"roobert/statusline-action-hints.nvim",
+		enabled = false,
+		opts = {
+			definition_identifier = "gd",
+			template = "%s ref:%s",
+		},
+	},
+	{
 		"nvim-lualine/lualine.nvim",
 		dependencies = {
 			"nvim-tree/nvim-web-devicons",
 			"bluz71/vim-nightfly-guicolors",
 			"meuter/lualine-so-fancy.nvim",
+			-- "roobert/statusline-action-hints.nvim",
 		},
 		config = function()
 			require("plugins.lualine.config")
