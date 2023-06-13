@@ -17,7 +17,7 @@ return {
 		cmd = { "MarkdownPreview", "MarkdownPreviewStop", "MarkdownPreviewToggle" },
 		ft = "markdown",
 		build = "cd app && npm install",
-		run = function()
+		init = function()
 			vim.fn["mkdp#util#install"]()
 		end,
 		config = function()
