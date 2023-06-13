@@ -16,4 +16,6 @@ if [[ $- == *i* ]]; then
 fi
 ### End Interactive }}}
 
+so ~/.subzsh/secret
+
 return 0
