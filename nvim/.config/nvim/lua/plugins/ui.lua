@@ -9,6 +9,8 @@ return {
 	},
 	{
 		"nvim-lualine/lualine.nvim",
+		lazy = true,
+		event = { "BufReadPost", "BufNewFile" },
 		dependencies = {
 			"nvim-tree/nvim-web-devicons",
 			"bluz71/vim-nightfly-guicolors",

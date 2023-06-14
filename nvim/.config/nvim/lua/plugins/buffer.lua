@@ -1,6 +1,8 @@
 return {
 	{
 		"axkirillov/hbac.nvim",
+		lazy = true,
+		event = "BufAdd",
 		dependencies = {
 			-- these are optional, add them, if you want the telescope module
 			"nvim-telescope/telescope.nvim",
@@ -13,6 +15,8 @@ return {
 	},
 	{
 		"sQVe/bufignore.nvim",
+		lazy = true,
+		event = "BufAdd",
 		dependencies = { "nvim-lua/plenary.nvim" },
 		opts = {
 			auto_start = true,
