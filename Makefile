@@ -64,6 +64,7 @@ brew_cellar = \
 	shellcheck \
 	shellharden \
 	stow \
+	sqlite \
 	terraform \
 	tmux \
 	uncrustify \
