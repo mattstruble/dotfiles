@@ -9,13 +9,36 @@ return {
 		name = "telescope-fzf",
 	},
 	{
+		"nvim-telescope/telescope-frecency.nvim",
+		lazy = true,
+		enabled = false,
+		dependencies = { "kkharji/sqlite.lua" },
+		config = function()
+			require("telescope").load_extension("frecency")
+		end,
+	},
+
+	{
+		"prochri/telescope-all-recent.nvim",
+		lazy = true,
+		dependencies = { "kkharji/sqlite.lua" },
+		opts = {
+			default = {
+				disable = true, -- disable any unknown pickers
+				use_cwd = true, -- differentiate scoring based on cwd
+				sorting = "frecency",
+			},
+		},
+	},
+	{
 		"nvim-telescope/telescope.nvim",
-		lazy = false,
+		lazy = true,
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			"telescope-fzf",
 			"nvim-telescope/telescope-ui-select.nvim",
-			{ "prochri/telescope-all-recent.nvim", opts = {} },
+			-- "nvim-telescope/telescope-frecency.nvim",
+			"prochri/telescope-all-recent.nvim",
 		},
 		keys = {
 			{ "<leader>ff", "<cmd>Telescope find_files hidden=true no_ignore=true<cr>", desc = "Find files" },
@@ -186,6 +209,19 @@ return {
 					["ui-select"] = {
 						themes.get_dropdown({}),
 					},
+					--[[ frecency = {
+						show_scores = false,
+						show_unindexed = true,
+						disable_devicons = false,
+						ignore_patterns = {
+							"*.git/*",
+							"*/build/*",
+							"*/dist/*",
+							"*.lock",
+							"*.venv/*",
+							"*cache/*",
+						},
+					}, ]]
 				},
 			})
 			require("telescope").load_extension("fzf")
