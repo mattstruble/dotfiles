@@ -17,8 +17,13 @@ return {
 		vim.g.loaded_netrwPlugin = 1
 
 		vim.cmd([[ highlight NvimTreeIndentMarker guifg=#3FC5ff ]])
-
 		require("nvim-tree").setup({
+			sync_root_with_cwd = true,
+			respect_buf_cwd = true,
+			update_focused_file = {
+				enable = true,
+				update_root = true,
+			},
 			hijack_cursor = true,
 			filesystem_watchers = {
 				enable = true,
