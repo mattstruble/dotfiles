@@ -24,17 +24,7 @@ opts = {
 	},
 }
 
-require("lazy").setup({
-	spec = {
-		{ "LazyVim/LazyVim", import = "lazyvim.plugins" },
-		{ import = "lazyvim.plugins.extras.editor.flash" },
-		{ import = "lazyvim.plugins.extras.util.project" },
-		{ import = "plugins" },
-	},
-	ui = {
-		border = "rounded",
-	},
-})
+require("lazy").setup("plugins", opts)
 
 -- Automatically jump to the last cursor spot in file before exiting
 vim.api.nvim_create_autocmd("BufReadPost", {

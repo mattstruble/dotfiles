@@ -17,14 +17,6 @@ return {
 			require("telescope").load_extension("frecency")
 		end,
 	},
-	{
-		"ahmedkhalf/project.nvim",
-		lazy = true,
-		opts = {},
-		keys = {
-			{ "<leader>fp", "<cmd>Telescope projects<cr>", desc = "[telescope] projects" },
-		},
-	},
 
 	{
 		"prochri/telescope-all-recent.nvim",
@@ -47,7 +39,6 @@ return {
 			"nvim-telescope/telescope-ui-select.nvim",
 			-- "nvim-telescope/telescope-frecency.nvim",
 			"prochri/telescope-all-recent.nvim",
-			"ahmedkhalf/project.nvim",
 		},
 		keys = {
 			{ "<leader>ff", "<cmd>Telescope find_files hidden=true no_ignore=true<cr>", desc = "Find files" },
@@ -55,16 +46,9 @@ return {
 			{ "<leader>fc", "<cmd>Telescope grep_string<cr>", desc = "Grep String" },
 			{ "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Telescope buffers" },
 			{ "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "Telescope help tags" },
-			{
-				"<leader>gc",
-				"<cmd>Telescope git_commits<cr>",
-				desc = "List all git commits",
-			},
-			{
-				"<leader>gfc",
-				"<cmd>Telescope git_bcommits<cr>",
-				desc = "List git commits for current file/buffer",
-			},
+
+			{ "<leader>gc", "<cmd>Telescope git_commits<cr>", desc = "List all git commits" },
+			{ "<leader>gfc", "<cmd>Telescope git_bcommits<cr>", desc = "List git commits for current file/buffer" },
 			{ "<leader>gb", "<cmd>Telescope git_branches<cr>", desc = "List git branches" },
 		},
 		config = function()
@@ -141,19 +125,26 @@ return {
 						i = {
 							["<C-n>"] = actions.cycle_history_next,
 							["<C-p>"] = actions.cycle_history_prev,
+
 							["<C-j>"] = actions.move_selection_next,
 							["<C-k>"] = actions.move_selection_previous,
+
 							["<C-c>"] = actions.close,
+
 							["<Down>"] = actions.move_selection_next,
 							["<Up>"] = actions.move_selection_previous,
+
 							["<CR>"] = actions.select_default,
 							["<C-x>"] = actions.select_horizontal,
 							["<C-v>"] = actions.select_vertical,
 							["<C-t>"] = actions.select_tab,
+
 							["<C-u>"] = actions.preview_scrolling_up,
 							["<C-d>"] = actions.preview_scrolling_down,
+
 							["<PageUp>"] = actions.results_scrolling_up,
 							["<PageDown>"] = actions.results_scrolling_down,
+
 							["<Tab>"] = actions.toggle_selection + actions.move_selection_worse,
 							["<S-Tab>"] = actions.toggle_selection + actions.move_selection_better,
 							["<C-q>"] = actions.send_to_qflist + actions.open_qflist,
@@ -167,23 +158,29 @@ return {
 							["<C-x>"] = actions.select_horizontal,
 							["<C-v>"] = actions.select_vertical,
 							["<C-t>"] = actions.select_tab,
+
 							["<Tab>"] = actions.toggle_selection + actions.move_selection_worse,
 							["<S-Tab>"] = actions.toggle_selection + actions.move_selection_better,
 							["<C-q>"] = actions.send_to_qflist + actions.open_qflist,
 							["<M-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
+
 							["j"] = actions.move_selection_next,
 							["k"] = actions.move_selection_previous,
 							["H"] = actions.move_to_top,
 							["M"] = actions.move_to_middle,
 							["L"] = actions.move_to_bottom,
+
 							["<Down>"] = actions.move_selection_next,
 							["<Up>"] = actions.move_selection_previous,
 							["gg"] = actions.move_to_top,
 							["G"] = actions.move_to_bottom,
+
 							["<C-u>"] = actions.preview_scrolling_up,
 							["<C-d>"] = actions.preview_scrolling_down,
+
 							["<PageUp>"] = actions.results_scrolling_up,
 							["<PageDown>"] = actions.results_scrolling_down,
+
 							["?"] = actions.which_key,
 						},
 					},
@@ -229,7 +226,6 @@ return {
 			})
 			require("telescope").load_extension("fzf")
 			require("telescope").load_extension("ui-select")
-			require("telescope").load_extension("projects")
 		end,
 	},
 }
