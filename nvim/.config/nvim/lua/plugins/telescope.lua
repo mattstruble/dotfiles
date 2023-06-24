@@ -18,6 +18,15 @@ return {
 		end,
 	},
 	{
+		"ahmedkhalf/project.nvim",
+		lazy = true,
+		opts = {},
+		keys = {
+			{ "<leader>fp", "<cmd>Telescope projects<cr>", desc = "[telescope] projects" },
+		},
+	},
+
+	{
 		"prochri/telescope-all-recent.nvim",
 		lazy = true,
 		dependencies = { "kkharji/sqlite.lua" },
@@ -30,18 +39,6 @@ return {
 		},
 	},
 	{
-		"ahmedkhalf/project.nvim",
-		lazy = true,
-		dependencies = "nvim-telescope/telescope.nvim",
-		config = function()
-			require("project_nvim").setup({})
-			require("telescope").load_extension("projects")
-		end,
-		keys = {
-			{ "<leader>fp", "<cmd>Telescope projects<cr>", desc = "[telescope] projects" },
-		},
-	},
-	{
 		"nvim-telescope/telescope.nvim",
 		lazy = true,
 		dependencies = {
@@ -50,6 +47,7 @@ return {
 			"nvim-telescope/telescope-ui-select.nvim",
 			-- "nvim-telescope/telescope-frecency.nvim",
 			"prochri/telescope-all-recent.nvim",
+			"ahmedkhalf/project.nvim",
 		},
 		keys = {
 			{ "<leader>ff", "<cmd>Telescope find_files hidden=true no_ignore=true<cr>", desc = "Find files" },
@@ -74,8 +72,6 @@ return {
 			local actions = require("telescope.actions")
 			local themes = require("telescope.themes")
 			local builtin = require("telescope.builtin")
-
-			require("project_nvim").setup({})
 
 			local dropdown = themes.get_dropdown({
 				hidden = true,
@@ -233,6 +229,7 @@ return {
 			})
 			require("telescope").load_extension("fzf")
 			require("telescope").load_extension("ui-select")
+			require("telescope").load_extension("projects")
 		end,
 	},
 }
