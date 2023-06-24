@@ -6,3 +6,5 @@ endif
 
 autocmd BufRead,BufNewFile Jenkinsfile* set filetype=groovy
 autocmd BufRead,BufNewFile Dockerfile* set filetype=dockerfile
+
+set splitbelow splitright
