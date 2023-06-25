@@ -5,23 +5,6 @@
 LDFLAGS="-L/opt/homebrew/opt/lapack/lib"
 CPPFLAGS="-I/opt/homebrew/opt/lapack/include"
 
-BREW=/usr/local/Homebrew
-CELLAR=/usr/local/Cellar
-CASK=/usr/local/Caskroom
-
-
-# if running on apple silicon (M1 mac)
-if [[ $(uname -p) == 'arm']]; then \
-	BREW=/opt/homebrew; \
-	CELLAR=/opt/homebrew/Cellar; \
-	CASK=/opt/homebrew/Caskroom; \
-fi
-
-$(info cellar $(CELLAR))
-$(info cask $(CASK))
-
-HOME=/Users/${USER}
-
 ZSH=$(HOME)/.oh-my-zsh
 
 
@@ -39,48 +22,6 @@ stow_dirs = \
 	tmux \
 	git
 
-### BREW TARGETS ###
-brew_cellar = \
-	ansible \
-	ansible-lint \
-	awscli \
-	aws-shell \
-	black \
-	checkmake \
-	curl \
-	gh \
-	git \
-	koekeishiya/formulae/skhd \
-	koekeishiya/formulae/yabai \
-	markdown-toc \
-	npm \
-	nvim \
-	pyenv \
-	pyenv-virtualenv \
-	python3 \
-	reattach-to-user-namespace \
-	ripgrep \
-	ruff \
-	shellcheck \
-	shellharden \
-	stow \
-	sqlite \
-	terraform \
-	tmux \
-	uncrustify \
-	vagrant \
-	# virtualbox \
-	vulture \
-	wget \
-	write-good \
-	yaml-language-server \
-	yamllint \
-	yarn
-
-brew_cask = \
-	iterm2 \
-	1password/tap/1password-cli
-	cask-fonts/tap/font-meslo-lg-nerd-font
 
 ### ZSH CUSTOM PLUGINS ###
 zsh_custom_plugins = \
@@ -127,13 +68,6 @@ repo_to_target_fn = $(foreach repo, $(1), $(2)/$(call strip_fn, $(repo)))
 
 ### Convert user defined targets into filepaths ###
 
-### BREW
-# Transform zsh_cellar into target directories
-cellar_targets := $(foreach wrd, $(brew_cellar), $(CELLAR)/$(wrd))
-
-# Transform zsh_cask into target directories
-cask_targets := $(foreach wrd, $(brew_cask), $(CASK)/$(wrd))
-
 ### Oh-My-Zsh
 active_plugins := $(zsh_builtin) $(call strip_fn, $(zsh_custom_plugins))
 
@@ -152,7 +86,7 @@ tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/
 
 ### Make targets
 
-.PHONY: all zsh_install brew_install install zsh_enable_plugins $(stow_dirs) stow start
+.PHONY: all install zsh_install zsh_enable_plugins $(stow_dirs) stow start restart restart_tmux restart_skhd restart_yabai
 
 all: install stow start
 
@@ -162,30 +96,13 @@ $(ZSH):
 	$(info "Installing oh-my-zsh")
 	sh -c "$$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-$(BREW) $(CELLAR) $(CASK):
-	$(info "Installing homebrew..")
-	@/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-	@eval "$$(/opt/homebrew/bin/brew shellenv)"
-
-$(cellar_targets): $(BREW)
-	$(info $@)
-	$(info "Installing $(@F)...")
-	@brew install $(subst $(CELLAR)/,, $@)
-
-$(cask_targets): $(BREW)
-	$(info $@)
-	$(info "Installing $(@F)...")
-	@brew install --cask $(subst $(CASK)/,, $@)
-
-brew_install: $(cellar_targets) $(cask_targets)
-
 $(zsh_custom_targets): $(ZSH)
 	$(info "Installing $@...")
 	if [ ! -d $@ ]; then \
 		git clone $($(@F)_REPO) $@; \
 	fi
 
-zsh_enable_plugins: $(ZSH) $(zsh_custom_targets)
+zsh_enable_plugins: $(zsh_custom_targets)
 	$(info "Enabling plugins...")
 	@sed -i '' 's|^plugins=\(.*\)|plugins=\($(active_plugins)\)|g' zsh/.zshrc
 	@grep "^plugins" zsh/.zshrc
@@ -199,22 +116,12 @@ $(ZSH)/custom/themes/powerlevel10k: $(ZSH)
 
 zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
 
-$(tmux_custom_targets): $(CELLAR)/tmux
-	$(info "Installing $(@F) from $($(@F)_REPO) to $@..." )
-	@mkdir -p $@
-	if [ ! -d $@ ]; then \
-		git clone $($(@F)_REPO) $@; \
-	fi
-
-tmux_install: $(CELLAR)/tmux $(tmux_custom_targets)
-
-install: zsh_install brew_install tmux_install
+install: zsh_install
 
 ### CONFIGURE
 
 $(stow_dirs): install
-	@stow -D $@
-	stow $@
+	stow -d ${CURDIR} -t ~ -R $@
 
 stow: $(stow_dirs)
 
@@ -223,12 +130,25 @@ start_zsh: $(stow_dirs)
 	/bin/zsh ~/.zshrc
 
 start_yabai: start_zsh
+	yabai --start-service
 	brew services restart yabai
 
 start_skhd: start_zsh
+	skhd --start-service
 	brew services restart skhd
 
 start_tmux: start_zsh
 	tmux source-file ~/.tmux.conf
 
 start: start_zsh start_yabai start_skhd
+
+restart_yabai:
+	brew services restart yabai
+
+restart_skhd:
+	brew services restart skhd
+
+restart_tmux:
+	tmux source-file ~/.tmux.conf
+
+restart: restart_yabai restart_skhd restart_tmux
