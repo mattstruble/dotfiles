@@ -3,9 +3,9 @@
 if [ $(command -v fortune) ] && [ $UID != '0' ] && [[ $- == *i* ]] && [ $TERM != 'dumb' ]; then
 	### Cowsay At Login ###
 	if [ $(command -v cowsay) ]; then
-		fortune | cowsay
+		fortune -a fortunes wisdom | cowsay
 	else
-		fortune
+		fortune -a fortunes wisdom
 	fi
 fi
 ### End Fortune ### }}}
