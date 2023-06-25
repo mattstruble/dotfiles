@@ -39,7 +39,6 @@ return {
 		opts = {},
 		config = function(_, opts)
 			require("project_nvim").setup(opts)
-			require("telescope").load_extension("projects")
 		end,
 		keys = {
 			{ "<leader>fp", "<Cmd>Telescope projects<CR>", desc = "Projects" },
@@ -224,6 +223,22 @@ return {
 					["ui-select"] = {
 						themes.get_dropdown({}),
 					},
+					project = {
+						base_dirs = {
+							{ path = "~/Software", max_depth = 4 },
+						},
+						hidden_files = true, -- default: false
+						theme = "dropdown",
+						order_by = "asc",
+						search_by = "title",
+						sync_with_nvim_tree = true, -- default false
+						-- default for on_project_selected = find project files
+						on_project_selected = function(prompt_bufnr)
+							-- Do anything you want in here. For example:
+							project_actions.change_working_directory(prompt_bufnr, false)
+							require("harpoon.ui").nav_file(1)
+						end,
+					},
 					--[[ frecency = {
 						show_scores = false,
 						show_unindexed = true,
@@ -241,6 +256,7 @@ return {
 			})
 			require("telescope").load_extension("fzf")
 			require("telescope").load_extension("ui-select")
+			require("telescope").load_extension("projects")
 		end,
 	},
 }
