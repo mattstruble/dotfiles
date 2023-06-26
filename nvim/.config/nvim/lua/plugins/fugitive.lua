@@ -25,6 +25,10 @@ return {
 				local bufnr = vim.api.nvim_get_current_buf()
 				local opts = { buffer = bufnr, remap = false }
 
+				vim.keymap.set("n", "cc", function()
+					vim.cmd.Git("commit", "-s")
+				end, opts)
+
 				vim.keymap.set("n", "<leader>p", function()
 					vim.cmd.Git("push")
 				end, opts)
