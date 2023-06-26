@@ -10,3 +10,5 @@ if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -
 # export TERM='xterm-256color'
 export EDITOR='nvim'
 export VISUAL='nvim'
+export SSH_AUTH_SOCK=`gpgconf --list-dirs agent-ssh-socket`
+export GPG_TTY=$(tty)

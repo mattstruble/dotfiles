@@ -140,7 +140,10 @@ start_skhd: start_zsh
 start_tmux: start_zsh
 	tmux source-file ~/.tmux.conf
 
-start: start_zsh start_yabai start_skhd
+start_gpg:
+	gpg-agent --daemon --enable-ssh-support
+
+start: start_zsh start_yabai start_skhd start_gpg
 
 restart_yabai:
 	brew services restart yabai
