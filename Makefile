@@ -20,7 +20,8 @@ stow_dirs = \
 	yabai \
 	vim \
 	tmux \
-	git
+	git \
+	gnupg
 
 
 ### ZSH CUSTOM PLUGINS ###
