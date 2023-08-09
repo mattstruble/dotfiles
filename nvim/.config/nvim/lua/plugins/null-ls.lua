@@ -30,7 +30,7 @@ return {
 			-- completion.spell,
 
 			formatting.beautysh,
-			formatting.black,
+			-- formatting.black,
 			formatting.buildifier,
 			formatting.codespell,
 			formatting.fixjson,
@@ -67,9 +67,9 @@ return {
 			diagnostics.mypy.with({
 				extra_args = { "--ignore-missing-imports" },
 			}),
-			diagnostics.ruff.with({
-				extra_args = { "--ignore", "E501" },
-			}),
+			-- diagnostics.ruff.with({
+			-- 	extra_args = { "--ignore", "E501" },
+			-- }),
 			diagnostics.shellcheck,
 			diagnostics.sqlfluff.with({
 				extra_args = { "--dialect", "snowflake", "--show-lint-violations" },
