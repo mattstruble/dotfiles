@@ -29,6 +29,7 @@
 
 [push]
     gpgsign = if-asked
+	autoSetupRemote = true
 
 [tag]
     gpgsign = true
