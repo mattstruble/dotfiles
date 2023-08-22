@@ -1,6 +1,3 @@
-require("mestruble.core.options")
-require("mestruble.core.keymaps")
-
 --------------------------
 -- LAZY SETUP
 --------------------------
@@ -24,7 +21,22 @@ opts = {
 	},
 }
 
-require("lazy").setup("plugins", opts)
+-- require("lazy").setup("plugins", opts)
+require("lazy").setup({
+	spec = {
+		{ "LazyVim/LazyVim", import = "lazyvim.plugins" },
+		{ import = "lazyvim.plugins.extras.lang.python" },
+		{ import = "lazyvim.plugins.extras.lang.docker" },
+		{ import = "lazyvim.plugins.extras.lang.terraform" },
+		{ import = "lazyvim.plugins.extras.lang.tex" },
+		{ import = "lazyvim.plugins.extras.lang.yaml" },
+		{ import = "lazyvim.plugins.extras.formatting.prettier" },
+		{ import = "plugins" },
+	},
+	ui = {
+		border = "rounded",
+	},
+}, opts)
 
 -- Automatically jump to the last cursor spot in file before exiting
 vim.api.nvim_create_autocmd("BufReadPost", {

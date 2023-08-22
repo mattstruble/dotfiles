@@ -13,8 +13,6 @@ return {
 	config = function()
 		local null_ls = require("null-ls")
 
-		local py = require("mestruble.lang.python")
-
 		local code_actions = null_ls.builtins.code_actions -- code actions sources
 		local diagnostics = null_ls.builtins.diagnostics -- diagnostics sources
 		local formatting = null_ls.builtins.formatting -- formatting sources
@@ -39,12 +37,12 @@ return {
 			-- formatting.lua_format,
 			formatting.markdown_toc,
 			formatting.markdownlint,
-			formatting.prettier,
+			-- formatting.prettier,
 			-- formatting.pyflyby,
 			-- formatting.remark,
-			formatting.ruff.with({
-				extra_args = { "--select", "E,F,I,PL" },
-			}),
+			-- formatting.ruff.with({
+			-- 	extra_args = { "--select", "E,F,I,PL" },
+			-- }),
 			formatting.shellharden,
 			formatting.sqlfluff.with({
 				extra_args = { "--dialect", "snowflake", "--disable-progress-bar", "--quiet" },
@@ -64,9 +62,9 @@ return {
 			diagnostics.codespell,
 			diagnostics.hadolint,
 			diagnostics.markdownlint,
-			diagnostics.mypy.with({
-				extra_args = { "--ignore-missing-imports" },
-			}),
+			-- diagnostics.mypy.with({
+			-- 	extra_args = { "--ignore-missing-imports" },
+			-- }),
 			-- diagnostics.ruff.with({
 			-- 	extra_args = { "--ignore", "E501" },
 			-- }),

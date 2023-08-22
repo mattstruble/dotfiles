@@ -84,7 +84,7 @@ return {
 		lazy = true,
 		config = function()
 			local adapter_python_path = require("plugins.dap.adapters").debugpy.path
-			local py = require("mestruble.lang.python")
+			local py = require("utils.python")
 			require("dap-python").setup(adapter_python_path)
 			require("dap-python").resolve_python = function()
 				py.env(vim.fn.getcwd())

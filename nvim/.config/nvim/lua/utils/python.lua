@@ -3,8 +3,7 @@
 -- https://github.com/younger-1/nvim/blob/main/lua/young/lang/python.lua
 --------------------------
 
-local status, util = pcall(require, "lspconfig.util")
-local path = util.path
+local path = require("utils.path")
 
 local M = {}
 

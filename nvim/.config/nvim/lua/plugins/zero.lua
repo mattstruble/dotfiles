@@ -47,7 +47,7 @@ return {
 				suggest_lsp_servers = true,
 			})
 
-			local py = require("mestruble.lang.python")
+			local py = require("utils.python")
 			local cmp = require("cmp")
 			local cmp_select = { behavior = cmp.SelectBehavior.Select }
 
@@ -147,22 +147,22 @@ return {
 				end,
 			})
 
-			lsp.configure("ruff_lsp", {
-				init_options = {
-					settings = {
-						args = { "--select", "ALL", "--ignore", "E501" },
-					},
-				},
-			})
+			-- lsp.configure("ruff_lsp", {
+			-- 	init_options = {
+			-- 		settings = {
+			-- 			args = { "--select", "ALL", "--ignore", "E501" },
+			-- 		},
+			-- 	},
+			-- })
 
-			lsp.configure("yamlls", {
-				settings = {
-					yaml = {
-						keyOrdering = false,
-						validate = true,
-					},
-				},
-			})
+			-- lsp.configure("yamlls", {
+			-- 	settings = {
+			-- 		yaml = {
+			-- 			keyOrdering = false,
+			-- 			validate = true,
+			-- 		},
+			-- 	},
+			-- })
 
 			local cmp_mappings = lsp.defaults.cmp_mappings({
 				["<C-p>"] = cmp.mapping.select_prev_item(cmp_select),
