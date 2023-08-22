@@ -1,7 +1,4 @@
-return {
-	"echasnovski/mini.nvim",
-	config = function()
-		local goose = [[
+local goose = [[
 
 
 ⡏⠙⠻⢦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⠶⠟⠛⠿⠗⣦⣄⠀⠀⠀⠀
@@ -19,7 +16,7 @@ return {
 
 
 ]]
-		local toaster = [[
+local toaster = [[
 
 
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣄⠀⠀⠀⢀⡀⠀⠀⠀⣀⡀⠀⠀⠀⠀⠀⠀
@@ -40,14 +37,15 @@ return {
 
 
         ]]
-		require("mini.starter").setup({
-			items = { { name = "", action = "", section = "" } },
-			header = toaster,
-			footer = "",
-			silent = true,
-			content_hooks = {
-				require("mini.starter").gen_hook.aligning("center", "top"),
-			},
-		})
-	end,
+return {
+	"echasnovski/mini.starter",
+	opts = {
+		items = { { name = "", action = "", section = "" } },
+		header = toaster,
+		footer = "",
+		silent = true,
+		content_hooks = {
+			require("mini.starter").gen_hook.aligning("center", "top"),
+		},
+	},
 }

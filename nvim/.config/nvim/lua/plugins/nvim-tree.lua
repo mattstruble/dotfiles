@@ -12,6 +12,7 @@ return {
 		"NvimTreeFindFileToggle",
 		"NvimTreeRefresh",
 	},
+	enabled = false,
 	config = function()
 		vim.g.loaded = 1
 		vim.g.loaded_netrwPlugin = 1

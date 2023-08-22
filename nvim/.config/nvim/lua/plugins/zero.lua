@@ -16,6 +16,7 @@ return {
 	-- },
 	{
 		"VonHeikemen/lsp-zero.nvim",
+		enabled = false,
 		event = "InsertEnter",
 		branch = "v1.x",
 		dependencies = {
@@ -74,23 +75,23 @@ return {
 				"ruff_lsp",
 			})
 
-			vim.diagnostic.config({
-				virtual_text = {
-					spaces = 4,
-					prefix = "●",
-				},
-				underline = false,
-				update_in_insert = true,
-				severity_sort = true,
-				float = {
-					focusable = false,
-					style = "minimal",
-					border = "rounded",
-					source = "always",
-					header = "",
-					prefix = "",
-				},
-			})
+			-- vim.diagnostic.config({
+			-- 	virtual_text = {
+			-- 		spaces = 4,
+			-- 		prefix = "●",
+			-- 	},
+			-- 	underline = false,
+			-- 	update_in_insert = true,
+			-- 	severity_sort = true,
+			-- 	float = {
+			-- 		focusable = false,
+			-- 		style = "minimal",
+			-- 		border = "rounded",
+			-- 		source = "always",
+			-- 		header = "",
+			-- 		prefix = "",
+			-- 	},
+			-- })
 
 			vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
 				border = "rounded",
@@ -114,38 +115,38 @@ return {
 			})
 
 			-- resolve global vim issues
-			lsp.configure("lua-language-server", {
-				settings = {
-					Lua = {
-						diagnostics = {
-							globals = { "vim" },
-						},
-					},
-				},
-			})
+			-- lsp.configure("lua-language-server", {
+			-- 	settings = {
+			-- 		Lua = {
+			-- 			diagnostics = {
+			-- 				globals = { "vim" },
+			-- 			},
+			-- 		},
+			-- 	},
+			-- })
 
 			-- pass python .venv into pyright
-			lsp.configure("pyright", {
-				capabilities = (function()
-					local capabilities = vim.lsp.protocol.make_client_capabilities()
-					capabilities.textDocument.publishDiagnostics.tagSupport.valueSet = { 2 }
-					return capabilities
-				end)(),
-				settings = {
-					python = {
-						analysis = {
-							typeCheckingMode = "basic",
-							useLibraryCodeForTypes = true,
-							completeFunctionParens = true,
-						},
-					},
-				},
-				on_new_config = function(new_config, new_root_dir)
-					py.env(new_root_dir)
-					new_config.settings.python.pythonPath = vim.fn.exepath("python")
-					new_config.settings.python.analysis.extraPaths = { py.pep582(new_root_dir) }
-				end,
-			})
+			-- lsp.configure("pyright", {
+			-- 	capabilities = (function()
+			-- 		local capabilities = vim.lsp.protocol.make_client_capabilities()
+			-- 		capabilities.textDocument.publishDiagnostics.tagSupport.valueSet = { 2 }
+			-- 		return capabilities
+			-- 	end)(),
+			-- 	settings = {
+			-- 		python = {
+			-- 			analysis = {
+			-- 				typeCheckingMode = "basic",
+			-- 				useLibraryCodeForTypes = true,
+			-- 				completeFunctionParens = true,
+			-- 			},
+			-- 		},
+			-- 	},
+			-- 	on_new_config = function(new_config, new_root_dir)
+			-- 		py.env(new_root_dir)
+			-- 		new_config.settings.python.pythonPath = vim.fn.exepath("python")
+			-- 		new_config.settings.python.analysis.extraPaths = { py.pep582(new_root_dir) }
+			-- 	end,
+			-- })
 
 			-- lsp.configure("ruff_lsp", {
 			-- 	init_options = {
@@ -164,56 +165,56 @@ return {
 			-- 	},
 			-- })
 
-			local cmp_mappings = lsp.defaults.cmp_mappings({
-				["<C-p>"] = cmp.mapping.select_prev_item(cmp_select),
-				["<C-n>"] = cmp.mapping.select_next_item(cmp_select),
-				["<C-Space>"] = cmp.mapping.complete(),
-			})
+			-- local cmp_mappings = lsp.defaults.cmp_mappings({
+			-- 	["<C-p>"] = cmp.mapping.select_prev_item(cmp_select),
+			-- 	["<C-n>"] = cmp.mapping.select_next_item(cmp_select),
+			-- 	["<C-Space>"] = cmp.mapping.complete(),
+			-- })
+			--
+			-- cmp_mappings["<Tab>"] = nil
+			-- cmp_mappings["<S-Tab>"] = nil
+			--
+			-- lsp.setup_nvim_cmp({
+			-- 	preselect = "none",
+			-- 	completion = {
+			-- 		completeopt = "menu, menuone, noinsert, noselect",
+			-- 	},
+			-- 	mapping = cmp_mappings,
+			-- })
 
-			cmp_mappings["<Tab>"] = nil
-			cmp_mappings["<S-Tab>"] = nil
-
-			lsp.setup_nvim_cmp({
-				preselect = "none",
-				completion = {
-					completeopt = "menu, menuone, noinsert, noselect",
-				},
-				mapping = cmp_mappings,
-			})
-
-			lsp.on_attach(function(client, bufnr)
-				local opts = { buffer = bufnr, remap = false }
-				vim.keymap.set("n", "gd", function()
-					vim.lsp.buf.definition()
-				end, opts)
-				vim.keymap.set("n", "gr", function()
-					vim.lsp.buf.references()
-				end, opts)
-				vim.keymap.set("n", "gD", function()
-					vim.lsp.buf.declaration()
-				end, opts)
-				vim.keymap.set("n", "K", function()
-					vim.lsp.buf.hover()
-				end, opts)
-				vim.keymap.set("n", "<leader>rn", function()
-					vim.lsp.buf.rename()
-				end, opts)
-				vim.keymap.set("n", "<leader>ca", function()
-					vim.lsp.buf.code_action()
-				end, opts)
-				vim.keymap.set("n", "gl", function()
-					vim.diagnostic.open_float()
-				end, opts)
-				vim.keymap.set("n", "]d", function()
-					vim.diagnostic.goto_prev()
-				end, opts)
-				vim.keymap.set("n", "[d", function()
-					vim.diagnostic.goto_next()
-				end, opts)
-				vim.keymap.set("n", "<leader>f", function()
-					vim.lsp.buf.format({ async = true })
-				end, opts)
-			end)
+			-- lsp.on_attach(function(client, bufnr)
+			-- 	local opts = { buffer = bufnr, remap = false }
+			-- 	vim.keymap.set("n", "gd", function()
+			-- 		vim.lsp.buf.definition()
+			-- 	end, opts)
+			-- 	vim.keymap.set("n", "gr", function()
+			-- 		vim.lsp.buf.references()
+			-- 	end, opts)
+			-- 	vim.keymap.set("n", "gD", function()
+			-- 		vim.lsp.buf.declaration()
+			-- 	end, opts)
+			-- 	vim.keymap.set("n", "K", function()
+			-- 		vim.lsp.buf.hover()
+			-- 	end, opts)
+			-- 	vim.keymap.set("n", "<leader>rn", function()
+			-- 		vim.lsp.buf.rename()
+			-- 	end, opts)
+			-- 	vim.keymap.set("n", "<leader>ca", function()
+			-- 		vim.lsp.buf.code_action()
+			-- 	end, opts)
+			-- 	vim.keymap.set("n", "gl", function()
+			-- 		vim.diagnostic.open_float()
+			-- 	end, opts)
+			-- 	vim.keymap.set("n", "]d", function()
+			-- 		vim.diagnostic.goto_prev()
+			-- 	end, opts)
+			-- 	vim.keymap.set("n", "[d", function()
+			-- 		vim.diagnostic.goto_next()
+			-- 	end, opts)
+			-- 	vim.keymap.set("n", "<leader>f", function()
+			-- 		vim.lsp.buf.format({ async = true })
+			-- 	end, opts)
+			-- end)
 
 			lsp.nvim_workspace()
 			lsp.setup()

@@ -24,19 +24,99 @@ opts = {
 -- require("lazy").setup("plugins", opts)
 require("lazy").setup({
 	spec = {
-		{ "LazyVim/LazyVim", import = "lazyvim.plugins" },
+		{
+			"LazyVim/LazyVim",
+			opts = {
+				icons = {
+					diagnostics = {
+						Error = " ",
+						Warn = " ",
+						Hint = "󰌶 ",
+						Info = " ",
+					},
+				},
+			},
+		},
+		{ import = "lazyvim.plugins" },
 		{ import = "lazyvim.plugins.extras.lang.python" },
 		{ import = "lazyvim.plugins.extras.lang.docker" },
 		{ import = "lazyvim.plugins.extras.lang.terraform" },
 		{ import = "lazyvim.plugins.extras.lang.tex" },
 		{ import = "lazyvim.plugins.extras.lang.yaml" },
+		{ import = "lazyvim.plugins.extras.lang.json" },
+		{ import = "lazyvim.plugins.extras.ui.mini-starter" },
 		{ import = "lazyvim.plugins.extras.formatting.prettier" },
 		{ import = "plugins" },
+
+		{
+			"hrsh7th/nvim-cmp",
+			opts = function(_, opts)
+				local cmp = require("cmp")
+				local cmp_select = { behavior = cmp.SelectBehavior.Select }
+
+				opts.mapping["<C-p>"] = cmp.mapping.select_prev_item(cmp_select)
+				opts.mapping["<C-n>"] = cmp.mapping.select_next_item(cmp_select)
+				opts.mapping["<C-Space>"] = cmp.mapping.complete()
+				opts.mapping["<Tab>"] = nil
+				opts.mapping["<S-Tab>"] = nil
+			end,
+		},
+
+		-- nvim-lspconfig global configurations
+		{
+			"neovim/nvim-lspconfig",
+            -- stylua: ignore
+			init = function()
+				local keys = require("lazyvim.plugins.lsp.keymaps").get()
+				keys[#keys + 1] = { "gd", function() vim.lsp.buf.definition() end }
+				keys[#keys + 1] = { "gr", function() vim.lsp.buf.references() end }
+				keys[#keys + 1] = { "gD", function() vim.lsp.buf.declaration() end }
+				keys[#keys + 1] = { "K", function() vim.lsp.buf.hover() end }
+				keys[#keys + 1] = { "<leader>rn", function() vim.lsp.buf.rename() end }
+				keys[#keys + 1] = { "<leader>ca", function() vim.lsp.buf.code_action() end }
+				keys[#keys + 1] = { "gl", function() vim.diagnostic.open_float() end }
+				keys[#keys + 1] = { "]d", function() vim.diagnostic.goto_next() end }
+				keys[#keys + 1] = { "[d", function() vim.diagnostic.goto_prev() end }
+				keys[#keys + 1] = { "<leader>f", function() vim.lsp.buf.format({ async = true }) end }
+			end,
+			opts = {
+				diagnostics = {
+					underline = false,
+					update_in_insert = false,
+					severity_sort = true,
+					virtual_text = {
+						severity = vim.diagnostic.severity.ERROR,
+						spacing = 4,
+						prefix = "",
+					},
+					float = {
+						focusable = false,
+						style = "minimal",
+						border = "rounded",
+						source = "always",
+						header = "",
+						prefix = "",
+					},
+				},
+				inlay_hints = { enabled = false },
+				autoformate = true,
+				format_notify = false,
+			},
+		},
 	},
 	ui = {
 		border = "rounded",
 	},
 }, opts)
+
+-- rounded borders
+vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
+	border = "rounded",
+})
+
+vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
+	border = "rounded",
+})
 
 -- Automatically jump to the last cursor spot in file before exiting
 vim.api.nvim_create_autocmd("BufReadPost", {

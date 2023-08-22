@@ -37,6 +37,28 @@ return {
 						},
 					},
 				},
+				pyright = {
+					capabilities = (function()
+						local capabilities = vim.lsp.protocol.make_client_capabilities()
+						capabilities.textDocument.publishDiagnostics.tagSupport.valueSet = { 2 }
+						return capabilities
+					end)(),
+					settings = {
+						python = {
+							analysis = {
+								typeCheckingMode = "basic",
+								useLibraryCodeForTypes = true,
+								completeFunctionParens = true,
+							},
+						},
+					},
+					on_new_config = function(new_config, new_root_dir)
+						local py = require("utils.python")
+						py.env(new_root_dir)
+						new_config.settings.python.pythonPath = vim.fn.exepath("python")
+						new_config.settings.python.analysis.extraPaths = { py.pep582(new_root_dir) }
+					end,
+				},
 			},
 		},
 	},
