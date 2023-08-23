@@ -7,6 +7,7 @@ return {
 			table.insert(opts.ensure_installed, "black")
 			table.insert(opts.ensure_installed, "ruff")
 			table.insert(opts.ensure_installed, "debugpy")
+			table.insert(opts.ensure_installed, "mypy")
 		end,
 	},
 	{
@@ -65,7 +66,7 @@ return {
 		},
 	},
 	{
-		"nvim/neotest",
+		"nvim-neotest/neotest",
 		opts = {
 			adapters = {
 				["neotest-python"] = {

@@ -14,13 +14,6 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- NOTE: This is in the wrong place but I don't want to keep fighting with it, tbh (lowercase global error).
-opts = {
-	ui = {
-		border = "rounded",
-	},
-}
-
 -- require("lazy").setup("plugins", opts)
 require("lazy").setup({
 	spec = {
@@ -104,11 +97,26 @@ require("lazy").setup({
 				format_notify = false,
 			},
 		},
+
+		{
+			"nvim-neo-tree/neo-tree.nvim",
+			opts = {
+				filesystem = {
+					filtered_items = {
+						hide_dotfiles = false,
+						hide_by_pattern = {
+							".git",
+						},
+						always_show = {
+							".gitignore",
+							".github",
+						},
+					},
+				},
+			},
+		},
 	},
-	ui = {
-		border = "rounded",
-	},
-}, opts)
+})
 
 -- rounded borders
 vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
@@ -118,6 +126,12 @@ vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
 vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
 	border = "rounded",
 })
+
+-- Diagnostics
+vim.fn.sign_define("DiagnosticSignError", { text = " ", texthl = "DiagnosticSignError" })
+vim.fn.sign_define("DiagnosticSignWarn", { text = " ", texthl = "DiagnosticSignWarn" })
+vim.fn.sign_define("DiagnosticSignInfo", { text = " ", texthl = "DiagnosticSignInfo" })
+vim.fn.sign_define("DiagnosticSignHint", { text = "󰌶 ", texthl = "DiagnosticSignHint" })
 
 -- Automatically jump to the last cursor spot in file before exiting
 vim.api.nvim_create_autocmd("BufReadPost", {

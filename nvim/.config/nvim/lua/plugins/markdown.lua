@@ -4,6 +4,25 @@
 
 return {
 	{
+		"williamboman/mason.nvim",
+		opts = function(_, opts)
+			table.insert(opts.ensure_installed, "markdownlint")
+			table.insert(opts.ensure_installed, "marksman")
+			table.insert(opts.ensure_installed, "markdown-cli")
+			table.insert(opts.ensure_installed, "prettier")
+		end,
+	},
+	{
+		"jose-elias-alvarez/null-ls.nvim",
+		opts = function(_, opts)
+			local nls = require("null-ls")
+
+			table.insert(opts.sources, nls.builtins.formatting.markdown_toc)
+			table.insert(opts.sources, nls.builtins.formatting.markdownlint)
+			table.insert(opts.sources, nls.builtins.diagnostics.markdownlint)
+		end,
+	},
+	{
 		"mzlogin/vim-markdown-toc",
 		ft = "markdown",
 		lazy = true,
