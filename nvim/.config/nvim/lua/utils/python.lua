@@ -71,9 +71,7 @@ M.env = function(root_dir)
 end
 
 M.venv = function(root_dir)
-	if _virtual_env == "" then
-		_virtual_env = get_python_dir(root_dir)
-	end
+	M.env(root_dir)
 
 	return _virtual_env
 end

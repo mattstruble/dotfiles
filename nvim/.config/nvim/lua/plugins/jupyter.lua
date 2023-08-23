@@ -1,3 +1,9 @@
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+	pattern = { "*.ipynb" },
+	desc = "Set jupyter notebook file types",
+	command = "setfiletype jupyter",
+})
+
 return {
 	"GCBallesteros/NotebookNavigator.nvim",
 	keys = {
@@ -22,7 +28,8 @@ return {
 		"hkupty/iron.nvim",
 		"anuvyklack/hydra.nvim",
 	},
-	event = "VeryLazy",
+	lazy = true,
+	ft = "jupyter",
 	config = function()
 		local nn = require("notebook-navigator")
 		local ai = require("mini.ai")
