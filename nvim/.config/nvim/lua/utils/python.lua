@@ -70,6 +70,14 @@ M.env = function(root_dir)
 	return _virtual_env ~= "" and py_bin_dir() or ""
 end
 
+M.venv = function(root_dir)
+	if _virtual_env == "" then
+		_virtual_env = get_python_dir(root_dir)
+	end
+
+	return _virtual_env
+end
+
 -- PEP 582 support
 M.pep582 = function(root_dir)
 	local pdm_match = vim.fn.glob(path.join(root_dir, "pdm.lock"))

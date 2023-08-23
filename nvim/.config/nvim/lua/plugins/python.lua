@@ -1,9 +1,12 @@
+local py = require("utils.python")
+
 return {
 	{
 		"williamboman/mason.nvim",
 		opts = function(_, opts)
 			table.insert(opts.ensure_installed, "black")
 			table.insert(opts.ensure_installed, "ruff")
+			table.insert(opts.ensure_installed, "debugpy")
 		end,
 	},
 	{
@@ -53,13 +56,34 @@ return {
 						},
 					},
 					on_new_config = function(new_config, new_root_dir)
-						local py = require("utils.python")
 						py.env(new_root_dir)
-						new_config.settings.python.pythonPath = vim.fn.exepath("python")
+						new_config.settings.python.pythonPath = py.venv(new_root_dir)
 						new_config.settings.python.analysis.extraPaths = { py.pep582(new_root_dir) }
 					end,
 				},
 			},
 		},
+	},
+	{
+		"nvim/neotest",
+		opts = {
+			adapters = {
+				["neotest-python"] = {
+					runner = "pytest",
+					python = py.venv(vim.fn.getcwd()),
+				},
+			},
+		},
+	},
+	{
+		"mfussenegger/nvim-dap",
+		config = function()
+			local path = require("mason-registry").get_package("debugpy"):get_install_path()
+			require("dap-python").setup(path .. "/venv/bin/python")
+			require("dap-python").resolve_python = function()
+				py.env(vim.fn.getcwd())
+				return py.venv(vim.fn.getcwd())
+			end
+		end,
 	},
 }

@@ -38,6 +38,7 @@ require("lazy").setup({
 			},
 		},
 		{ import = "lazyvim.plugins" },
+		{ import = "lazyvim.plugins.extras.dap.core" },
 		{ import = "lazyvim.plugins.extras.lang.python" },
 		{ import = "lazyvim.plugins.extras.lang.docker" },
 		{ import = "lazyvim.plugins.extras.lang.terraform" },

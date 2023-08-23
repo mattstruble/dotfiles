@@ -80,19 +80,6 @@ return {
 		end,
 	},
 	{
-		"mfussenegger/nvim-dap-python",
-		lazy = true,
-		config = function()
-			local adapter_python_path = require("plugins.dap.adapters").debugpy.path
-			local py = require("utils.python")
-			require("dap-python").setup(adapter_python_path)
-			require("dap-python").resolve_python = function()
-				py.env(vim.fn.getcwd())
-				return py.pep582(vim.fn.getcwd())
-			end
-		end,
-	},
-	{
 		"theHamsta/nvim-dap-virtual-text",
 		lazy = true,
 		config = function()
