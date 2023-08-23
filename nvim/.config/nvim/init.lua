@@ -101,6 +101,19 @@ require("lazy").setup({
 		{
 			"nvim-neo-tree/neo-tree.nvim",
 			opts = {
+				default_component_configs = {
+					git_status = {
+						symbols = {
+							unstaged = "✗",
+							staged = "✓",
+							unmerged = "",
+							renamed = "➜",
+							untracked = "★",
+							deleted = "",
+							ignored = "◌",
+						},
+					},
+				},
 				filesystem = {
 					filtered_items = {
 						hide_dotfiles = false,
@@ -112,8 +125,17 @@ require("lazy").setup({
 							".github",
 						},
 					},
+					hijack_netrw_behavior = "disabled",
+					use_libuv_file_watcher = true,
 				},
 			},
+		},
+
+		-- cache plugins so they load faster
+		{
+			"lewis6991/impatient.nvim",
+			lazy = false,
+			priority = 1000, -- load this first
 		},
 	},
 })
