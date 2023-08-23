@@ -25,7 +25,7 @@ return {
 					sort_by = "insert_at_end",
 					offsets = {
 						{
-							filetype = "NvimTree",
+							filetype = "neo-tree",
 							text = "File Explorer",
 							highlight = "Directory",
 							separator = false, -- use a "true" to enable the def
