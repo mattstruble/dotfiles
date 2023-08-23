@@ -8,7 +8,6 @@ return {
 		opts = function(_, opts)
 			table.insert(opts.ensure_installed, "markdownlint")
 			table.insert(opts.ensure_installed, "marksman")
-			table.insert(opts.ensure_installed, "markdown-cli")
 			table.insert(opts.ensure_installed, "prettier")
 		end,
 	},

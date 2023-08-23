@@ -37,7 +37,7 @@ return {
 				ruff_lsp = {
 					init_options = {
 						settings = {
-							args = { "--select", "ALL", "--ignore", "E501" },
+							args = { "--select", "ALL", "--ignore", "E501,ANN101" },
 						},
 					},
 				},
