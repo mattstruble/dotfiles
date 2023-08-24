@@ -14,6 +14,18 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+local opts = {
+	install = {
+		colorscheme = { "nightfly" },
+	},
+	ui = {
+		border = "rounded",
+	},
+	checker = {
+		enabled = true,
+	},
+}
+
 -- require("lazy").setup("plugins", opts)
 require("lazy").setup({
 	spec = {
@@ -41,6 +53,9 @@ require("lazy").setup({
 		{ import = "lazyvim.plugins.extras.ui.mini-starter" },
 		{ import = "lazyvim.plugins.extras.formatting.prettier" },
 		{ import = "plugins" },
+		{ import = "plugins.coding" },
+		{ import = "plugins.editor" },
+		{ import = "plugins.lsp" },
 
 		{
 			"hrsh7th/nvim-cmp",
@@ -138,7 +153,7 @@ require("lazy").setup({
 			priority = 1000, -- load this first
 		},
 	},
-})
+}, opts)
 
 -- rounded borders
 vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
