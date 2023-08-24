@@ -2,7 +2,7 @@ return {
 	{
 		"williamboman/mason.nvim",
 		opts = function(_, opts)
-			table.insert(opts.ensure_installed, "ansiblelint")
+			table.insert(opts.ensure_installed, "ansible-lint")
 			table.insert(opts.ensure_installed, "ansible-language-server")
 		end,
 	},
