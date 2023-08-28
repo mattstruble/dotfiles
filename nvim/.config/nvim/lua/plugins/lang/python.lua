@@ -16,8 +16,8 @@ return {
 			})
 			table.insert(opts.mappings, {
 				pattern = "(.*)/(.*).py$",
-				target = "tests?/integration/.*/test_%2.py",
-				context = "integration",
+				target = "tests?/unit/.*/test_%2.py",
+				context = "unit",
 			})
 		end,
 	},
