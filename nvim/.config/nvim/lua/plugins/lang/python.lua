@@ -2,6 +2,26 @@ local py = require("utils.python")
 
 return {
 	{
+		"rgroli/other.nvim",
+		opts = function(_, opts)
+			table.insert(opts.mappings, {
+				pattern = "(.*)/(.*).py$",
+				target = "tests?/.*/test_%2.py",
+				context = "tests",
+			})
+			table.insert(opts.mappings, {
+				pattern = "(.*)/(.*).py$",
+				target = "tests?/integration/.*/test_%2.py",
+				context = "integration",
+			})
+			table.insert(opts.mappings, {
+				pattern = "(.*)/(.*).py$",
+				target = "tests?/integration/.*/test_%2.py",
+				context = "integration",
+			})
+		end,
+	},
+	{
 		"williamboman/mason.nvim",
 		opts = function(_, opts)
 			table.insert(opts.ensure_installed, "black")
