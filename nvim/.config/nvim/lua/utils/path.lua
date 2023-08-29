@@ -42,3 +42,5 @@ M.join = function(...)
 	end
 	return table.concat(all_parts, M.path_separator)
 end
+
+return M
