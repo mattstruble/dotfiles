@@ -29,6 +29,7 @@ return {
 				ensure_installed = {
 					"bash",
 					"c",
+					"gitcommit",
 					"html",
 					"javascript",
 					"jsdoc",
