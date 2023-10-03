@@ -1,4 +1,4 @@
-if [[ $(uname -p) = 'arm' ]]; then
+if [[ $(uname -p) == 'arm' ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 else
     eval "$(/usr/local/Homebrew/bin/brew shellenv)"
