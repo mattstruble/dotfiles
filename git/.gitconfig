@@ -1,7 +1,7 @@
 [user]
     name = Matt Struble
     email = mattstruble@outlook.com
-    signingkey = 8B4607015040DE6C
+;	signingkey = 12098F0A573900D0ED6150D58B4607015040DE6C
 
 [core]
     editor = nvim
@@ -22,10 +22,10 @@
 
 [alias]
     l = log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit
-    commit = commit -s
+    ; commit = commit -s
 
 [commit]
-    gpgsign = true
+	gpgsign = false
 
 [push]
     gpgsign = if-asked
