@@ -2,6 +2,7 @@ return {
 	{
 		"lukas-reineke/indent-blankline.nvim",
 		lazy = true,
+		main = "ibl",
 		event = {
 			"BufReadPost",
 			"BufNewFile",
@@ -12,19 +13,28 @@ return {
 			vim.opt.listchars:append("space:⋅")
 			vim.opt.listchars:append("eol:↴")
 
-			require("indent_blankline").setup({
-				show_end_of_line = true,
-				space_char_blankline = " ",
-				show_current_context = true,
-				show_current_context_start = true,
-				filetype_exclude = {
-					"help",
-					"alpha",
-					"dashboard",
-					"NvimTree",
-					"Trouble",
-					"lazy",
-					"mason",
+			require("ibl").setup({
+				-- show_end_of_line = true,
+				-- space_char_blankline = " ",
+				-- show_current_context = true,
+				-- show_current_context_start = true,
+				exclude = {
+					filetypes = {
+						"help",
+						"alpha",
+						"dashboard",
+						"NvimTree",
+						"Trouble",
+						"lazy",
+						"mason",
+						"gitcommit",
+						"TelescopePrompt",
+						"TelescopeResults",
+						"ToggleTerm",
+						"checkhealth",
+						"man",
+						"lspinfo",
+					},
 				},
 			})
 		end,
