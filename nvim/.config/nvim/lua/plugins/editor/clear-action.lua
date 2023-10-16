@@ -1,4 +1,5 @@
-return {
-	"luckasRanarison/clear-action.nvim",
-	opts = {},
-}
+-- return {
+-- 	"luckasRanarison/clear-action.nvim",
+-- 	opts = {},
+-- }
+return {}
