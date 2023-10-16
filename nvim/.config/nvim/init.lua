@@ -160,6 +160,12 @@ require("lazy").setup({
 			lazy = false,
 			priority = 1000, -- load this first
 		},
+
+		-- Keep LSP ram usage low
+		{
+			"hinell/lsp-timeout.nvim",
+			dependencies = { "neovim/nvim-lspconfig" },
+		},
 	},
 }, opts)
 
