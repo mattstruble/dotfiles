@@ -30,7 +30,7 @@ return {
 						"gitcommit",
 						"TelescopePrompt",
 						"TelescopeResults",
-						"ToggleTerm",
+						"toggleterm",
 						"checkhealth",
 						"man",
 						"lspinfo",

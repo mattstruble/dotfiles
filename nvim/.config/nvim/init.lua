@@ -52,6 +52,7 @@ require("lazy").setup({
 		{ import = "lazyvim.plugins.extras.lang.json" },
 		{ import = "lazyvim.plugins.extras.ui.mini-starter" },
 		{ import = "lazyvim.plugins.extras.formatting.prettier" },
+		{ import = "lazyvim.plugins.extras.lsp.none-ls" },
 		{ import = "plugins" },
 		{ import = "plugins.coding" },
 		{ import = "plugins.editor" },
@@ -75,7 +76,7 @@ require("lazy").setup({
 			"m4xshen/hardtime.nvim",
 			dependencies = { "MunifTanjim/nui.nvim", "nvim-lua/plenary.nvim" },
 			opts = {
-				disabled_filetypes = { "qf", "netrw", "NvimTree", "lazy", "mason", "ToggleTerm" },
+				disabled_filetypes = { "qf", "netrw", "NvimTree", "lazy", "mason", "toggleterm" },
 			},
 		},
 
