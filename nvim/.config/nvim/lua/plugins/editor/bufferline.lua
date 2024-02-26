@@ -2,6 +2,7 @@ return {
 	{
 		"akinsho/bufferline.nvim",
 		lazy = true,
+		enabled = false,
 		event = {
 			"BufReadPost",
 			"BufAdd",
