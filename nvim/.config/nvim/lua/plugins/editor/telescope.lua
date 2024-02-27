@@ -35,18 +35,18 @@ return {
 		dependencies = {
 			"nvim-telescope/telescope.nvim",
 		},
-		lazy = true,
+		event = "VeryLazy",
 		opts = {},
 		config = function(_, opts)
 			require("project_nvim").setup(opts)
+			require("telescope").load_extension("projects")
 		end,
 		keys = {
-			{ "<leader>fp", "<Cmd>Telescope projects<CR>", desc = "Projects" },
+			{ "<leader>sp", "<cmd>Telescope projects<cr>", desc = "[S]earch [P]rojects" },
 		},
 	},
 	{
 		"nvim-telescope/telescope.nvim",
-		lazy = true,
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			"telescope-fzf",
@@ -55,15 +55,20 @@ return {
 			"prochri/telescope-all-recent.nvim",
 		},
 		keys = {
-			{ "<leader>ff", "<cmd>Telescope find_files hidden=true no_ignore=true<cr>", desc = "Find files" },
-			{ "<leader>fs", "<cmd>Telescope live_grep<cr>", desc = "Live Grep" },
-			{ "<leader>fc", "<cmd>Telescope grep_string<cr>", desc = "Grep String" },
-			{ "<leader>fb", "<cmd>Telescope buffers<cr>", desc = "Telescope buffers" },
-			{ "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "Telescope help tags" },
-
-			{ "<leader>gc", "<cmd>Telescope git_commits<cr>", desc = "List all git commits" },
-			{ "<leader>gfc", "<cmd>Telescope git_bcommits<cr>", desc = "List git commits for current file/buffer" },
-			{ "<leader>gb", "<cmd>Telescope git_branches<cr>", desc = "List git branches" },
+			{ "<leader>sf", "<cmd>Telescope find_files hidden=true no_ignore=true<cr>", desc = "[S]earch [F]iles" },
+			{ "<leader>sg", "<cmd>Telescope live_grep<cr>", desc = "[S]earch by [G]rep" },
+			{
+				"<leader>ss",
+				"<cmd>Telescope grep_string<cr>",
+				desc = "[S]earch current [S]tring",
+			},
+			{ "<leader>sb", "<cmd>Telescope buffers<cr>", desc = "[S]earch [B]buffers" },
+			{ "<leader>sh", "<cmd>Telescope help_tags<cr>", desc = "[S]earch [H]elp" },
+			{
+				"<leader>sd",
+				"<cmd>Telescope diagnostics<cr>",
+				desc = "[S]earch [D]iagnostics",
+			},
 		},
 		config = function()
 			local plenary = require("plenary.path")
@@ -256,7 +261,6 @@ return {
 			})
 			require("telescope").load_extension("fzf")
 			require("telescope").load_extension("ui-select")
-			require("telescope").load_extension("projects")
 		end,
 	},
 }

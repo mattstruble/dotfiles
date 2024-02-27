@@ -13,10 +13,10 @@ keymap.set("n", "x", '"_x')
 keymap.set("n", "<leader>+", "<C-a>")
 keymap.set("n", "<leader>-", "<C-x>")
 
-keymap.set("n", "<leader>sv", "<C-w>v") -- split vertically
-keymap.set("n", "<leader>sh", "<C-w>s") -- split horizontally
-keymap.set("n", "<leader>se", "<C-w>=") -- make split equal width
-keymap.set("n", "<leader>sx", ":close<CR>") -- close current split
+-- keymap.set("n", "<leader>sv", "<C-w>v") -- split vertically
+-- keymap.set("n", "<leader>sh", "<C-w>s") -- split horizontally
+-- keymap.set("n", "<leader>se", "<C-w>=") -- make split equal width
+-- keymap.set("n", "<leader>sx", ":close<CR>") -- close current split
 
 keymap.set("n", "<leader>to", ":tabnew<CR>") -- open new tab
 keymap.set("n", "<leader>tx", ":tabclose<CR>") -- close curr tab
@@ -27,8 +27,8 @@ keymap.set("n", "<leader>tp", ":tabp<CR>") -- go to previous tab
 vim.keymap.set("n", "U", "<C-r>")
 
 -- Tab and S-Tab to cycle through buffers
-vim.keymap.set("n", "<S-Tab>", "<cmd>:bprevious<cr>")
-vim.keymap.set("n", "<Tab>", "<cmd>:bnext<cr>")
+-- vim.keymap.set("n", "<S-Tab>", "<cmd>:bprevious<cr>")
+-- vim.keymap.set("n", "<Tab>", "<cmd>:bnext<cr>")
 
 -- ctrl-backspace to delete entire word
 vim.keymap.set("i", "<C-BS>", "<Esc>cvb", {})

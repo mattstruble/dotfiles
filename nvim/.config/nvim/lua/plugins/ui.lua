@@ -36,6 +36,11 @@ return {
 				end,
 				desc = "Delete all notifications",
 			},
+			{
+				"<leader>sn",
+				"<cmd>Telescope notify",
+				desc = "[S]earch [N]notifications",
+			},
 		},
 		opts = {
 			render = "compact",

@@ -7,14 +7,14 @@ return {
 	end,
 	keys = {
 		{
-			"<leader>sr",
+			"<leader>sw",
 			"<cmd>lua require('telescope').extensions.git_worktree.git_worktrees()<cr>",
-			desc = "List worktrees",
+			desc = "[S]earch local [W]orktrees",
 		},
 		{
-			"<leader>sR",
+			"<leader>sW",
 			"<cmd>lua require('telescope').extensions.git_worktree.create_git_worktree()<cr>",
-			desc = "Create worktree",
+			desc = "[S]earch remote [W]orktrees",
 		},
 	},
 }
