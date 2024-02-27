@@ -25,7 +25,6 @@
     clone = clone --bare
     ; commit = commit -s
 
-
 [commit]
 	gpgsign = false
 
