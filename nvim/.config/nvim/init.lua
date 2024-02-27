@@ -163,13 +163,18 @@ require("lazy").setup({
 		},
 
 		-- Keep LSP ram usage low
-		-- {
-		-- 	"hinell/lsp-timeout.nvim",
-		-- 	dependencies = {
-		-- 		"nvimtools/none-ls.nvim",
-		-- 		"neovim/nvim-lspconfig",
-		-- 	},
-		-- },
+		{
+			"hinell/lsp-timeout.nvim",
+			dependencies = {
+				"nvimtools/none-ls.nvim",
+				"neovim/nvim-lspconfig",
+			},
+		},
+
+		{
+			"nvim-pack/nvim-spectre",
+			enabled = false,
+		},
 	},
 }, opts)
 

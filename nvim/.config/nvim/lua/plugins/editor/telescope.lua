@@ -134,7 +134,7 @@ return {
 						width = 0.85,
 						height = 0.80,
 					},
-					path_display = { "truncate" },
+					-- path_display = { "truncate" },
 					{
 						i = {
 							["<C-n>"] = actions.cycle_history_next,
