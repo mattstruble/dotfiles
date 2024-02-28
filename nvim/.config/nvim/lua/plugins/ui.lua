@@ -38,7 +38,7 @@ return {
 			},
 			{
 				"<leader>sn",
-				"<cmd>Telescope notify",
+				"<cmd>Telescope notify<cr>",
 				desc = "[S]earch [N]notifications",
 			},
 		},
