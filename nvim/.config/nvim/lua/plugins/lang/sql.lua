@@ -25,4 +25,19 @@ return {
 			)
 		end,
 	},
+	{
+		"kristijanhusak/vim-dadbod-ui",
+		dependencies = {
+			"tpope/vim-dadbod",
+			"kristijanhusak/vim-dadbod-completion",
+		},
+		lazy = true,
+		keys = {
+			{
+				"<leader>vb",
+				"<cmd>DBUIToggle<cr>",
+				desc = "View dadbod",
+			},
+		},
+	},
 }
