@@ -125,6 +125,7 @@ require("lazy").setup({
 		{
 			"nvim-neo-tree/neo-tree.nvim",
 			opts = {
+				close_if_last_window = true,
 				default_component_configs = {
 					git_status = {
 						symbols = {
@@ -138,6 +139,16 @@ require("lazy").setup({
 						},
 					},
 				},
+				window = {
+					mappings = {
+						["a"] = {
+							"add",
+							config = {
+								show_path = "relative",
+							},
+						},
+					},
+				},
 				filesystem = {
 					filtered_items = {
 						hide_dotfiles = false,
@@ -148,6 +159,16 @@ require("lazy").setup({
 							".gitignore",
 							".github",
 						},
+						never_show = {
+							".DS_Store",
+							"thumbs.db",
+						},
+						never_show_by_pattern = {
+							".null-ls_*",
+						},
+					},
+					follow_current_file = {
+						enabled = true,
 					},
 					hijack_netrw_behavior = "disabled",
 					use_libuv_file_watcher = true,
