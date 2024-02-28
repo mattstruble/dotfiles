@@ -28,6 +28,7 @@ return {
 		"pwntester/octo.nvim",
 		lazy = true,
 		cmd = "Octo",
+		enabled = false,
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			"nvim-telescope/telescope.nvim",
