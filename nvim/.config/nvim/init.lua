@@ -190,6 +190,8 @@ require("lazy").setup({
 				"nvimtools/none-ls.nvim",
 				"neovim/nvim-lspconfig",
 			},
+			lazy = true,
+			event = "LazyFile",
 		},
 
 		{
