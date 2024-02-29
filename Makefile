@@ -132,11 +132,9 @@ start_zsh: $(stow_dirs)
 
 start_yabai: start_zsh
 	yabai --start-service
-	brew services restart yabai
 
 start_skhd: start_zsh
 	skhd --start-service
-	brew services restart skhd
 
 start_tmux: start_zsh
 	tmux source-file ~/.tmux.conf
@@ -147,10 +145,10 @@ start_gpg:
 start: start_zsh start_yabai start_skhd start_gpg
 
 restart_yabai:
-	brew services restart yabai
+	yabai --restart-service
 
 restart_skhd:
-	brew services restart skhd
+	skhd --restart-service
 
 restart_tmux:
 	tmux source-file ~/.tmux.conf

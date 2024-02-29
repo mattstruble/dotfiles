@@ -36,6 +36,11 @@ return {
 				end,
 				desc = "Delete all notifications",
 			},
+			{
+				"<leader>sn",
+				"<cmd>Telescope notify<cr>",
+				desc = "[S]earch [N]notifications",
+			},
 		},
 		opts = {
 			render = "compact",
@@ -72,8 +77,8 @@ return {
 						["vim.lsp.util.stylize_markdown"] = true,
 						["cmp.entry.get_documentation"] = true,
 					},
-					signature = { enabled = false },
-					hover = { enabled = false },
+					signature = { enabled = true },
+					hover = { enabled = true },
 				},
 				presets = {
 					inc_rename = true,

@@ -1,7 +1,8 @@
 [user]
     name = Matt Struble
     email = mattstruble@outlook.com
-    signingkey = 8B4607015040DE6C
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEM+saqSDNRJt5qpi6lltteSsdY7wNVz5Is2ywVFcyzv
+;	signingkey = 12098F0A573900D0ED6150D58B4607015040DE6C
 
 [core]
     editor = nvim
@@ -22,10 +23,11 @@
 
 [alias]
     l = log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --abbrev-commit
-    commit = commit -s
+    clone = clone --bare
+    ; commit = commit -s
 
 [commit]
-    gpgsign = true
+	gpgsign = true
 
 [push]
     gpgsign = if-asked
@@ -38,3 +40,7 @@
     rebase = true
 [init]
 	defaultBranch = main
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
