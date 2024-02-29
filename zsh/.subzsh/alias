@@ -58,5 +58,11 @@ alias gg='git grep'
 # Fast diff for large files.
 alias fdiff='diff --speed-large-files'
 
-# Kill tmux 
+# Kill tmux
 alias tkill='tmux kill-server'
+
+# Reset obsidian git
+alias ogit='rm ~/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Personal/.git/index.lock'
+
+# Python to Python3
+alias python='python3'
