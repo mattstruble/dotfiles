@@ -1,5 +1,3 @@
-local py = require("utils.python")
-
 return {
 	{
 		"williamboman/mason.nvim",
