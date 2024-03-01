@@ -3,8 +3,10 @@ program = "/bin/zsh"
 
 [window]
 decorations = "none"
-padding = { x = 3, y = 3 }
+padding = { x = 5, y = 5 }
 decorations_theme_variant = "Dark"
+opacity = 0.9
+dynamic_padding = true
 
 [font]
 normal = { family = "Iosevka Nerd Font Mono", style = "Regular"}
