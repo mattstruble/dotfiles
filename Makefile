@@ -13,6 +13,7 @@ ZSH=$(HOME)/.oh-my-zsh
 ###
 
 stow_dirs = \
+	alacritty \
 	nvim \
 	p10k \
 	zsh \

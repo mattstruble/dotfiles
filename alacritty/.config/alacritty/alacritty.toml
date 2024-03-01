@@ -1,0 +1,11 @@
+[shell]
+program = "/bin/zsh"
+
+[window]
+decorations = "none"
+padding = { x = 3, y = 3 }
+decorations_theme_variant = "Dark"
+
+[font]
+normal = { family = "Iosevka Nerd Font Mono", style = "Regular"}
+size = 18
