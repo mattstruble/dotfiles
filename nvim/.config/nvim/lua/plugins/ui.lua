@@ -1,3 +1,5 @@
+local mode = require("utils.mode")
+
 return {
 	{
 		"roobert/statusline-action-hints.nvim",
@@ -10,7 +12,7 @@ return {
 	{
 		"nvim-lualine/lualine.nvim",
 		lazy = true,
-		event = { "BufReadPost", "BufNewFile" },
+		event = { "BufReadPre" },
 		dependencies = {
 			"nvim-tree/nvim-web-devicons",
 			"bluz71/vim-nightfly-guicolors",
@@ -30,7 +32,13 @@ return {
 					{
 						"mode",
 						fmt = function()
-							return "󰀘"
+							return mode.isNormal() and ""
+								or mode.isInsert() and ""
+								or mode.isVisual() and "󰒉"
+								or mode.isCommand() and ""
+								or mode.isReplace() and ""
+								or vim.api.nvim_get_mode().mode == "t" and ""
+								or ""
 						end,
 						separator = { left = "" },
 						right_padding = 2,
@@ -41,22 +49,15 @@ return {
 					{ "fancy_diff" },
 				},
 				lualine_c = {},
-				lualine_x = {
+				lualine_x = {},
+				lualine_y = {
 					-- { require("statusline-action-hints").statusline },
 					{ "fancy_diagnostics" },
 					{ "fancy_searchcount" },
 					{ "fancy_location" },
 				},
-				lualine_y = {
-					{ "fancy_filetype", ts_icon = "" },
-				},
 				lualine_z = {
-					{
-						require("noice").api.statusline.mode.get,
-						cond = require("noice").api.statusline.mode.has,
-						color = { fg = "#ff9e64" },
-					},
-					{ separator = { right = "" }, left_padding = 2 },
+					{ "fancy_filetype", separator = { right = "" }, left_padding = 2 },
 				},
 			},
 			extensions = {
