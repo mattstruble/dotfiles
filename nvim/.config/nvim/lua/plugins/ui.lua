@@ -23,6 +23,7 @@ return {
 		after = "noice.nvim",
 		opts = {
 			options = {
+				theme = "catppuccin-mocha",
 				icons_enabled = true,
 				component_separators = "|",
 				section_separators = { left = "", right = "" },
@@ -40,7 +41,7 @@ return {
 								or vim.api.nvim_get_mode().mode == "t" and ""
 								or ""
 						end,
-						separator = { left = "" },
+						separator = { left = " " },
 						right_padding = 2,
 					},
 				},
@@ -57,7 +58,7 @@ return {
 					{ "fancy_location" },
 				},
 				lualine_z = {
-					{ "fancy_filetype", separator = { right = "" }, left_padding = 2 },
+					{ "fancy_filetype", separator = { right = " " }, left_padding = 2 },
 				},
 			},
 			extensions = {
