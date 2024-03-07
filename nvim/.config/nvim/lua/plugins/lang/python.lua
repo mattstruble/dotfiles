@@ -18,12 +18,6 @@ return {
 			table.insert(opts.sources, nls.builtins.formatting.black)
 			table.insert(
 				opts.sources,
-				nls.builtins.formatting.ruff.with({
-					extra_args = { "--select", "E,F,I,PL" },
-				})
-			)
-			table.insert(
-				opts.sources,
 				nls.builtins.diagnostics.mypy.with({
 					extra_args = { "--ignore-missing-imports" },
 				})

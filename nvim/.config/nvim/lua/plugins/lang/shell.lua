@@ -12,8 +12,7 @@ return {
 			local nls = require("null-ls")
 
 			table.insert(opts.sources, nls.builtins.formatting.shellharden)
-			table.insert(opts.sources, nls.builtins.formatting.beautysh)
-			table.insert(opts.sources, nls.builtins.diagnostics.shellcheck)
+			table.insert(opts.sources, nls.builtins.formatting.shfmt)
 		end,
 	},
 }

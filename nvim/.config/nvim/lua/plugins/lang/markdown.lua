@@ -16,7 +16,6 @@ return {
 		opts = function(_, opts)
 			local nls = require("null-ls")
 
-			table.insert(opts.sources, nls.builtins.formatting.markdown_toc)
 			table.insert(opts.sources, nls.builtins.formatting.markdownlint)
 			table.insert(opts.sources, nls.builtins.diagnostics.markdownlint)
 		end,

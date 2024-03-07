@@ -51,6 +51,9 @@ require("lazy").setup({
 		{ import = "lazyvim.plugins.extras.lang.yaml" },
 		{ import = "lazyvim.plugins.extras.lang.json" },
 		{ import = "lazyvim.plugins.extras.lang.rust" },
+		{ import = "lazyvim.plugins.extras.lang.markdown" },
+		{ import = "lazyvim.plugins.extras.lang.ansible" },
+		{ import = "lazyvim.plugins.extras.lang.yaml" },
 		{ import = "lazyvim.plugins.extras.ui.mini-starter" },
 		{ import = "lazyvim.plugins.extras.formatting.prettier" },
 		{ import = "lazyvim.plugins.extras.lsp.none-ls" },
@@ -198,6 +201,13 @@ require("lazy").setup({
 		{
 			"nvim-pack/nvim-spectre",
 			enabled = false,
+		},
+
+		{
+			"nvimtools/none-ls.nvim",
+			dependencies = {
+				"nvimtools/none-ls-extras.nvim",
+			},
 		},
 	},
 }, opts)
