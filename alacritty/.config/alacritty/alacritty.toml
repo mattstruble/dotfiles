@@ -1,3 +1,5 @@
+import = ["~/.config/alacritty/catppuccin-mocha.toml"]
+
 [shell]
 program = "/bin/zsh"
 
@@ -11,3 +13,6 @@ dynamic_padding = true
 [font]
 normal = { family = "Iosevka Nerd Font Mono", style = "Regular"}
 size = 18
+
+[env]
+TERM = "xterm-256color"
