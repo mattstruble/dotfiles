@@ -3,7 +3,8 @@
     email = mattstruble@outlook.com
 	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEM+saqSDNRJt5qpi6lltteSsdY7wNVz5Is2ywVFcyzv
 ;	signingkey = 12098F0A573900D0ED6150D58B4607015040DE6C
-
+[url "git@github.com:"]
+	insteadOf = https://github.com/
 [core]
     editor = nvim
     excludesfile = ~/.gitignore
