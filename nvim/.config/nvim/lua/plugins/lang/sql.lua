@@ -14,13 +14,13 @@ return {
 			table.insert(
 				opts.sources,
 				nls.builtins.formatting.sqlfluff.with({
-					extra_args = { "--dialect", "snowflake", "--disable-progress-bar", "--quiet" },
+					-- extra_args = { "--dialect", "snowflake", "--disable-progress-bar", "--quiet" },
 				})
 			)
 			table.insert(
 				opts.sources,
 				nls.builtins.diagnostics.sqlfluff.with({
-					extra_args = { "--dialect", "snowflake", "--show-lint-violations" },
+					-- extra_args = { "--dialect", "snowflake", "--show-lint-violations" },
 				})
 			)
 		end,

@@ -1,10 +1,26 @@
 #!/bin/bash
 # https://github.com/omerxx/dotfiles/blob/master/tmux/scripts/cal.sh
 
+show_meetings() {
+	local index=$1
+	local icon
+	local color
+	local result
+	local text
+	local module
+	icon="$(get_tmux_option "@catppuccin_meetings_icon" "")"
+	color="$(get_tmux_option "@catppuccin_meetings_color" "$thm_blue")"
+	result="$(main)"
+	text="$(get_tmux_option "@catppuccin_meetings_text" "$result")"
+	module=$(build_status_module "$index" "$icon" "$color" "$text")
+	echo "$module"
+}
+
 ALERT_IF_IN_NEXT_MINUTES=10
 ALERT_POPUP_BEFORE_SECONDS=10
 NERD_FONT_FREE="󱁕 "
 NERD_FONT_MEETING="󰤙"
+EXCLUDE_CALS=""
 
 get_attendees() {
 	attendees=$(
@@ -19,7 +35,7 @@ get_attendees() {
 			--separateByDate \
 			--excludeEndDates \
 			--bullet "" \
-			--excludeCals "training,omerxx@gmail.com" \
+			--excludeCals "$EXCLUDE_CALS" \
 			eventsToday
 	)
 }
@@ -43,7 +59,7 @@ get_next_meeting() {
 		--excludeAllDayEvents \
 		--separateByDate \
 		--bullet "" \
-		--excludeCals "training,omerxx@gmail.com" \
+		--excludeCals "$EXCLUDE_CALS" \
 		eventsToday)
 }
 
@@ -60,7 +76,7 @@ get_next_next_meeting() {
 			--excludeAllDayEvents \
 			--separateByDate \
 			--bullet "" \
-			--excludeCals "training,omerxx@gmail.com" \
+			--excludeCals "$EXCLUDE_CALS" \
 			eventsFrom:"$end_timestamp" to:"$tonight"
 	)
 }
@@ -97,7 +113,7 @@ display_popup() {
 		--includeOnlyEventsFromNowOn \
 		--limitItems 1 \
 		--excludeAllDayEvents \
-		--excludeCals "training" \
+		--excludeCals "$EXCLUDE_CALS" \
 		eventsToday
 }
 
@@ -129,5 +145,3 @@ main() {
 	print_tmux_status
 	# echo "$minutes_till_meeting | $number_of_attendees"
 }
-
-main
