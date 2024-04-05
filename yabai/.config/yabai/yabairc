@@ -46,3 +46,4 @@ yabai -m rule --add app="^Finder$" manage=off
 yabai -m rule --add app="^Mozilla Crash Reporter$" manage=off
 yabai -m rule --add app="^AnyConnect$" manage=off
 yabai -m rule --add app="^Outlook Preferences$" manage=off
+yabai -m rule --add app="^Cisco AnyConnect Secure Mobility Client$"
