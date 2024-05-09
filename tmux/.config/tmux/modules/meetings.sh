@@ -1,21 +1,6 @@
 #!/bin/bash
 # https://github.com/omerxx/dotfiles/blob/master/tmux/scripts/cal.sh
 
-show_meetings() {
-	local index=$1
-	local icon
-	local color
-	local result
-	local text
-	local module
-	icon="$(get_tmux_option "@catppuccin_meetings_icon" "")"
-	color="$(get_tmux_option "@catppuccin_meetings_color" "$thm_blue")"
-	result="$(main)"
-	text="$(get_tmux_option "@catppuccin_meetings_text" "$result")"
-	module=$(build_status_module "$index" "$icon" "$color" "$text")
-	echo "$module"
-}
-
 ALERT_IF_IN_NEXT_MINUTES=10
 ALERT_POPUP_BEFORE_SECONDS=10
 NERD_FONT_FREE="󱁕 "
@@ -29,6 +14,7 @@ get_attendees() {
 			--propertyOrder "datetime,title" \
 			--noCalendarNames \
 			--dateFormat "%A" \
+		    --timeFormat "%H:%M:%S" \
 			--includeOnlyEventsFromNowOn \
 			--limitItems 1 \
 			--excludeAllDayEvents \
@@ -54,6 +40,7 @@ get_next_meeting() {
 		--propertyOrder "datetime,title" \
 		--noCalendarNames \
 		--dateFormat "%A" \
+		--timeFormat "%H:%M:%S" \
 		--includeOnlyEventsFromNowOn \
 		--limitItems 1 \
 		--excludeAllDayEvents \
@@ -72,6 +59,7 @@ get_next_next_meeting() {
 			--propertyOrder "datetime,title" \
 			--noCalendarNames \
 			--dateFormat "%A" \
+			--timeFormat "%H:%M:%S" \
 			--limitItems 1 \
 			--excludeAllDayEvents \
 			--separateByDate \
@@ -83,7 +71,7 @@ get_next_next_meeting() {
 
 parse_result() {
 	array=()
-	for line in "$1"; do
+	for line in $1; do
 		array+=("$line")
 	done
 	time="${array[2]}"
@@ -123,7 +111,7 @@ print_tmux_status() {
 		echo "$NERD_FONT_MEETING \
 			$time $title ($minutes_till_meeting minutes)"
 	else
-		echo "$NERD_FONT_FREE"
+        echo "$(date +%H:%M)"
 	fi
 
 	if [[ $epoc_diff -gt $ALERT_POPUP_BEFORE_SECONDS && epoc_diff -lt $ALERT_POPUP_BEFORE_SECONDS+10 ]]; then
@@ -144,4 +132,19 @@ main() {
 	fi
 	print_tmux_status
 	# echo "$minutes_till_meeting | $number_of_attendees"
+}
+
+show_meetings() {
+	local index=$1
+	local icon
+	local color
+	local result
+	local text
+	local module
+	icon="$(get_tmux_option "@catppuccin_meetings_icon" "")"
+	color="$(get_tmux_option "@catppuccin_meetings_color" "$thm_blue")"
+	result="$(main)"
+	text="$(get_tmux_option "@catppuccin_meetings_text" "$result")"
+	module=$(build_status_module "$index" "$icon" "$color" "$text")
+	echo "$module"
 }

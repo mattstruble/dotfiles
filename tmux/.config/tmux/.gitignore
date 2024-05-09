@@ -1,4 +1,1 @@
 plugins
-!plugins/tmux/custom
-plugins/tmux/custom/README.md
-plugins/tmux/custom/example.sh
