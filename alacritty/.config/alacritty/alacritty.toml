@@ -1,5 +1,42 @@
 import = ["~/.config/alacritty/catppuccin-mocha.toml"]
 
+live_config_reload = true
+
+[bell]
+animation = "EaseOutExpo"
+duration = 0
+
+[colors]
+draw_bold_text_with_bright_colors = true
+
+[cursor]
+blink_interval = 500
+blink_timeout = 5
+unfocused_hollow = false
+
+[cursor.style]
+blinking = "Off"
+shape = "Block"
+
+[env]
+TERM = "xterm-256color"
+
+[font]
+normal = { family = "Iosevka Nerd Font Mono", style = "Regular" }
+bold = { family = "Iosevka Nerd Font Mono", style = "Bold" }
+italic = { family = "Iosevka Nerd Font Mono", style = "Italic" }
+size = 18
+
+[mouse]
+hide_when_typing = true
+
+[[mouse.bindings]]
+action = "PasteSelection"
+mouse = "Middle"
+
+[selection]
+semantic_escape_chars = ",│`|:\"' ()[]{}<>"
+
 [shell]
 program = "/bin/zsh"
 
@@ -9,10 +46,3 @@ padding = { x = 5, y = 5 }
 decorations_theme_variant = "Dark"
 opacity = 0.9
 dynamic_padding = true
-
-[font]
-normal = { family = "Iosevka Nerd Font Mono", style = "Regular"}
-size = 18
-
-[env]
-TERM = "xterm-256color"
