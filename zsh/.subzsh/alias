@@ -66,5 +66,3 @@ alias ogit='rm ~/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Personal
 
 # Python to Python3
 alias python='python3'
-
-alias cd='z'
