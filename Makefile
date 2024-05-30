@@ -22,27 +22,10 @@ stow_dirs = \
 	vim \
 	tmux \
 	git \
-	gnupg
+	gnupg \
+	wezterm
 
 
-### ZSH CUSTOM PLUGINS ###
-zsh_custom_plugins = \
-	https://github.com/zsh-users/zsh-history-substring-search.git \
-	https://github.com/zsh-users/zsh-syntax-highlighting.git \
-	https://github.com/zsh-users/zsh-autosuggestions.git
-
-### ZSH BUILT IN PLUGINS ###
-zsh_builtin = \
-	bazel \
-	history \
-	web-search \
-	terraform \
-	ripgrep \
-	pyenv \
-	poetry \
-	macos \
-	git \
-	1password
 
 ### TMUX PLUGINS ###
 tmux_plugins = \
@@ -90,39 +73,13 @@ tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/
 
 .PHONY: all install zsh_install zsh_enable_plugins $(stow_dirs) stow start restart restart_tmux restart_skhd restart_yabai
 
-all: install stow start
+all: stow start
 
 ### INSTALL
 
-$(ZSH):
-	$(info "Installing oh-my-zsh")
-	sh -c "$$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
-$(zsh_custom_targets): $(ZSH)
-	$(info "Installing $@...")
-	if [ ! -d $@ ]; then \
-		git clone $($(@F)_REPO) $@; \
-	fi
-
-zsh_enable_plugins: $(zsh_custom_targets)
-	$(info "Enabling plugins...")
-	@sed -i '' 's|^plugins=\(.*\)|plugins=\($(active_plugins)\)|g' zsh/.zshrc
-	@grep "^plugins" zsh/.zshrc
-
-$(ZSH)/custom/themes/powerlevel10k: $(ZSH)
-	echo "Installing powerlevel10k theme"
-	if [ ! -d $(ZSH)/custom/themes/powerlevel10k ]; then \
-		git clone https://github.com/romkatv/powerlevel10k.git $(ZSH)/custom/themes/powerlevel10k; \
-		sed -i '' 's#^ZSH_THEME.*$$#ZSH_THEME="powerlevel10k/powerlevel10k"#g' zsh/.zshrc; \
-	fi
-
-zsh_install: $(ZSH) zsh_enable_plugins $(zsh_custom_targets) $(ZSH)/custom/themes/powerlevel10k
-
-install: zsh_install
-
 ### CONFIGURE
 
-$(stow_dirs): install
+$(stow_dirs):
 	stow -d ${CURDIR} -t ~ -R $@
 
 stow: $(stow_dirs)
