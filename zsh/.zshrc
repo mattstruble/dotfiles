@@ -121,3 +121,13 @@ export PATH="/usr/local/opt/openjdk@11/bin:$PATH"
 # Shell integrations
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
+
+export PATH="$HOME/.pyenv:$PATH"
+export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+
+# Created by `pipx` on 2024-06-05 20:11:26
+export PATH="$PATH:/Users/MStru3/.local/bin"
