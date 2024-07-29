@@ -23,7 +23,8 @@ stow_dirs = \
 	tmux \
 	git \
 	gnupg \
-	wezterm
+	wezterm \
+	prettier
 
 
 

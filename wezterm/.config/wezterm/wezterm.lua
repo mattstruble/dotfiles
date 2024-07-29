@@ -19,6 +19,6 @@ config.window_decorations = "RESIZE"
 
 config.hide_mouse_cursor_when_typing = true
 
-config.default_prog = { "/bin/zsh", "-l", "-c", "tmux attach || tmux" }
+-- config.default_prog = { "/bin/zsh", "-l", "-c", "tmux attach || tmux" }
 
 return config

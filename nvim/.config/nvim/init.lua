@@ -55,7 +55,6 @@ require("lazy").setup({
 		{ import = "lazyvim.plugins.extras.lang.ansible" },
 		{ import = "lazyvim.plugins.extras.lang.yaml" },
 		{ import = "lazyvim.plugins.extras.ui.mini-starter" },
-		{ import = "lazyvim.plugins.extras.formatting.prettier" },
 		{ import = "lazyvim.plugins.extras.lsp.none-ls" },
 		{ import = "plugins" },
 		{ import = "plugins.coding" },
