@@ -6,7 +6,7 @@ LDFLAGS="-L/opt/homebrew/opt/lapack/lib"
 CPPFLAGS="-I/opt/homebrew/opt/lapack/include"
 
 ZSH=$(HOME)/.oh-my-zsh
-NIX=/nix/var/nix/profiles/default/bin/nix
+NIX-PATH=/nix/var/nix/profiles/default/bin/nix
 NIX-FLAKE=~/.config/nix-darwin/flake.nix
 NIX-DARWIN=/run/current-system/sw/bin/darwin-rebuild
 
@@ -27,7 +27,8 @@ stow_dirs = \
 	git \
 	gnupg \
 	wezterm \
-	prettier
+	prettier \
+	nix
 
 
 
@@ -77,27 +78,39 @@ tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/
 
 .PHONY: all install zsh_install zsh_enable_plugins $(stow_dirs) stow start restart restart_tmux restart_skhd restart_yabai
 
-# all: stow start
+all: stow install start
 
 ### INSTALL
 
-$(NIX):
-	# curl -L https://nixos.org/nix/install | sh
-	# https://zero-to-nix.com/start/install
+# https://zero-to-nix.com/start/install
+$(NIX-PATH):
 	curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 
-$(NIX-FLAKE): $(NIX)
-	# https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-1-creating-flakenix
-	mkdir -p ~/.config/nix-darwin
-	cd ~/.config/nix-darwin &&\
-	nix flake init -t nix-darwin &&\
-	sed -i '' "s/simple/$(scutil --get LocalHostName)/" flake.nix
+# https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
+$(NIX-DARWIN): $(NIX-PATH)
+	nix run nix-darwin -- switch --flake nix-darwin
 
-$(NIX-DARWIN): $(NIX-FLAKE)
-	# https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
-	nix run nix-darwin -- switch --flake ~/.config/nix-darwin
+install: $(NIX-DARWIN)
 
-nix: $(NIX-DARWIN)
+### REBUILD
+
+.PHONY: nix_rebuild
+nix_rebuild: $(NIX-DARWIN)
+	darwin-rebuild switch --flake nix-darwin
+
+.PHONY: rebuild refresh
+rebuild: $(nix_rebuild)
+refresh: rebuild
+
+### UPDATE
+
+.PHONY: update_nix
+update_nix: $(NIX-DARWIN-PATH)
+	nix-channel --update darwin
+	darwin-rebuild changelog
+
+.PHONY: update
+update: update_nix
 
 ### CONFIGURE
 

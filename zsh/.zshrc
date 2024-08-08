@@ -129,5 +129,7 @@ eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
+export NIX_CONF_DIR=$HOME/.config/nix
+
 # Created by `pipx` on 2024-06-05 20:11:26
 export PATH="$PATH:/Users/MStru3/.local/bin"
