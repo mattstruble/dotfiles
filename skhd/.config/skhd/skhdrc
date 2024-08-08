@@ -71,3 +71,8 @@ shift + alt - 7 : yabai -m window --space 7;
 ctrl + alt - q : brew services stop yabai
 ctrl + alt - s : brew services start yabai
 ctrl + alt - r : brew services restart yabai
+
+# -- Apple Scripts --
+
+# Close notifications
+alt - n: osascript ~/.config/skhd/applescripts/notifications.scpt
