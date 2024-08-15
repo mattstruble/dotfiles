@@ -9,60 +9,50 @@ ZSH=$(HOME)/.oh-my-zsh
 NIX-PATH=/nix/var/nix/profiles/default/bin/nix
 NIX-FLAKE=~/.config/nix-darwin/flake.nix
 NIX-DARWIN=/run/current-system/sw/bin/darwin-rebuild
+XCODE=/Library/Developer/CommandLineTools
 
+ARCH=$(shell uname -p)
 
-###
-### USER INPUT
-###
+ifeq ($(ARCH),arm)
+	BREW_HOME=/opt/homebrew
+else
+	BREW_HOME=/usr/local/Homebrew
+endif
 
-
-### TMUX PLUGINS ###
-tmux_plugins = \
-	https://github.com/tmux-plugins/tpm.git \
-	https://github.com/tmux-plugins/tmux-resurrect.git
-
+BREW=$(BREW_HOME)/bin/brew
 
 ###
 ### MAKE LOGIC
 ###
 
-### functions ###
-
-# strip out the directories and extension from the provided variable $(call strip_fn, var)
-strip_fn = $(notdir $(basename $(1)))
-
-# Returns the filter that matches a git url (http%.git)
-git_filter_fn = $(filter http%.git, $(1))
-
-# Filter the variable to match http%.git, strip out the domain to just the repository, map it to name_REPO=<URL>
-repo_map_fn = $(foreach repo, $(1), $(eval $(call strip_fn, $(repo))_REPO := $(repo)))
-
-# Transforms a repo into the target $(call repo_to_target_fn, repo, target_dir)
-repo_to_target_fn = $(foreach repo, $(1), $(2)/$(call strip_fn, $(repo)))
-
-### Convert user defined targets into filepaths ###
-
-### Oh-My-Zsh
-active_plugins := $(zsh_builtin) $(call strip_fn, $(zsh_custom_plugins))
-
-# Set up name_REPO variables and the associated target directory
-$(call repo_map_fn, $(zsh_custom_plugins))
-zsh_custom_targets := $(call repo_to_target_fn, $(zsh_custom_plugins), $(ZSH)/custom/plugins)
-
-### TMUX
-$(call repo_map_fn, $(tmux_plugins))
-tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/plugins)
-
-## TODO:
-# - Clean call to delete custom plugins?
-# - Make themes configurable above
-# - BREW pathing is no longer working and everything is installing
 
 ### Make targets
 
-.PHONY: all zsh_install zsh_enable_plugins start restart restart_tmux restart_skhd restart_yabai
+.PHONY: all
+all: setup start
 
-all: stow install start
+### INSTALL
+
+# https://zero-to-nix.com/start/install
+$(NIX-PATH):
+	curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+
+# https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
+$(NIX-DARWIN): $(NIX-PATH)
+	mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
+	cd nix-darwin && nix run nix-darwin -- switch --flake .
+
+$(BREW):
+	$(info "Installing homebrew..")
+	@/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+	@eval "$$(/opt/homebrew/bin/brew shellenv)"
+
+$(XCODE):
+	$(info "Installing XCODE..")
+	xcode-select --install
+
+.PHONY: install
+install: $(BREW) $(XCODE) $(NIX-DARWIN)
 
 ### SETUP
 
@@ -76,7 +66,7 @@ all: stow install start
 stow-symlink: .stow-local-ignore .stowrc
 
 .PHONY: stow
-stow:
+stow: install
 	for file in *; do \
 		if [ -d $${file} ]; then \
 			stow $${file}; \
@@ -86,20 +76,6 @@ stow:
 
 .PHONY: setup
 setup: stow
-
-### INSTALL
-
-# https://zero-to-nix.com/start/install
-$(NIX-PATH):
-	curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-
-# https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
-$(NIX-DARWIN): $(NIX-PATH)
-	mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
-	cd nix-darwin && nix run nix-darwin -- switch --flake .
-
-.PHONY: install
-install: $(NIX-DARWIN)
 
 
 ### REBUILD
@@ -125,36 +101,42 @@ update: update_nix
 
 ### CONFIGURE
 
-$(stow_dirs):
-	-stow -d ${CURDIR} -t ~ -R $@
-
-stow: $(stow_dirs)
 
 ### START
+.PHONY: start_zsh
 start_zsh: $(stow_dirs)
 	/bin/zsh ~/.zshrc
 
+.PHONY: start_yabai
 start_yabai: start_zsh
 	yabai --start-service
 
+.PHONY: start_skhd
 start_skhd: start_zsh
 	skhd --start-service
 
+.PHONY: start_tmux
 start_tmux: start_zsh
 	tmux source-file ~/.tmux.conf
 
+.PHONY: start_gpg
 start_gpg:
 	gpg-agent --daemon --enable-ssh-support
 
+.PHONY: start
 start: start_zsh start_yabai start_skhd start_gpg
 
+.PHONY: restart_yabai
 restart_yabai:
 	yabai --restart-service
 
+.PHONY: restart skhd
 restart_skhd:
 	skhd --restart-service
 
+.PHONY: restart_tmux
 restart_tmux:
 	tmux source-file ~/.tmux.conf
 
+.PHONY: restart
 restart: restart_yabai restart_skhd restart_tmux
