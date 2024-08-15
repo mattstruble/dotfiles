@@ -1,0 +1,24 @@
+\.DS_Store
+\.git
+\.gitignore
+\.gitmodules
+\.stow-local-ignore
+
+.*.example
+^/@.*
+KeybdPrefs_.*.png
+Safari_.*.png
+^/README.*
+^/LICENSE.*
+
+TODO.*
+RCS
+.*.secrets.*
+
+CVS .+\#.+       # CVS conflict files / emacs lock files
+\.cvsignore
+\.svn
+_darcs
+\.hg
+.+~          # emacs backup files
+\#.*\#       # emacs autosave files

@@ -15,22 +15,6 @@ NIX-DARWIN=/run/current-system/sw/bin/darwin-rebuild
 ### USER INPUT
 ###
 
-stow_dirs = \
-	alacritty \
-	nvim \
-	p10k \
-	zsh \
-	skhd \
-	yabai \
-	vim \
-	tmux \
-	git \
-	gnupg \
-	wezterm \
-	prettier \
-	nix
-
-
 
 ### TMUX PLUGINS ###
 tmux_plugins = \
@@ -76,9 +60,32 @@ tmux_custom_targets := $(call repo_to_target_fn, $(tmux_plugins), $(HOME)/.tmux/
 
 ### Make targets
 
-.PHONY: all install zsh_install zsh_enable_plugins $(stow_dirs) stow start restart restart_tmux restart_skhd restart_yabai
+.PHONY: all zsh_install zsh_enable_plugins start restart restart_tmux restart_skhd restart_yabai
 
 all: stow install start
+
+### SETUP
+
+.stow-local-ignore:
+	ln -s stow/.stow-global-ignore '.stow-local-ignore'
+
+.stowrc:
+	ln -s stow/.stowrc '.stowrc'
+
+.PHONY: stow-symlink
+stow-symlink: .stow-local-ignore .stowrc
+
+.PHONY: stow
+stow:
+	for file in *; do \
+		if [ -d $${file} ]; then \
+			stow $${file}; \
+			echo "$${file} stowed."; \
+		fi \
+	done
+
+.PHONY: setup
+setup: stow
 
 ### INSTALL
 
@@ -90,7 +97,9 @@ $(NIX-PATH):
 $(NIX-DARWIN): $(NIX-PATH)
 	nix run nix-darwin -- switch --flake nix-darwin
 
+.PHONY: install
 install: $(NIX-DARWIN)
+
 
 ### REBUILD
 
