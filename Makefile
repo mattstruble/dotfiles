@@ -95,7 +95,8 @@ $(NIX-PATH):
 
 # https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
 $(NIX-DARWIN): $(NIX-PATH)
-	nix run nix-darwin -- switch --flake nix-darwin
+	mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
+	cd nix-darwin && nix run nix-darwin -- switch --flake .
 
 .PHONY: install
 install: $(NIX-DARWIN)
@@ -105,10 +106,11 @@ install: $(NIX-DARWIN)
 
 .PHONY: nix_rebuild
 nix_rebuild: $(NIX-DARWIN)
-	darwin-rebuild switch --flake nix-darwin
+	cd nix-darwin && darwin-rebuild switch --flake .
 
 .PHONY: rebuild refresh
-rebuild: $(nix_rebuild)
+rebuild: nix_rebuild
+
 refresh: rebuild
 
 ### UPDATE
