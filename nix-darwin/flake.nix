@@ -16,10 +16,10 @@
     configuration = { pkgs, ... }: {
       # List packages installed in system profile. To search by name, run:
       # $ nix-env -qaP | grep wget
-      environment.systemPackages =
+      environment.systemPackages = with pkgs;
         [
-            pkgs.vim
-            pkgs.neovim
+            vim
+            neovim
         ];
 
       # Auto upgrade nix package and the daemon service.
@@ -41,7 +41,6 @@
       system.stateVersion = 4;
 
       # The platform the configuration will be used on.
-      nixpkgs.hostPlatform = "aarch64-darwin";
 
       # Allow touch id for sudo
       security.pam.enableSudoTouchIdAuth = true;
@@ -62,6 +61,5 @@
 
     # Expose the package set, including overlays, for convenience.
     darwinPackages = self.darwinConfigurations."MacStruble".pkgs;
-    # darwinPackages = self.darwinConfigurations."AP94ML85DF565C".pkgs;
   };
 }
