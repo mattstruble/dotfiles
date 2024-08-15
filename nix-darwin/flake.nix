@@ -49,17 +49,17 @@
   {
     # Build darwin flake using:
     # $ darwin-rebuild build --flake .#MacStruble
-    darwinConfigurations."MacStruble" = nix-darwin.lib.darwinSystem {
+    darwinConfigurations."arm" = nix-darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       modules = [ configuration ];
     };
 
-    darwinConfigurations."AP94ML85DF565C" = nix-darwin.lib.darwinSystem {
+    darwinConfigurations."i386" = nix-darwin.lib.darwinSystem {
       system = "x86_64-darwin";
       modules = [ configuration ];
     };
 
     # Expose the package set, including overlays, for convenience.
-    darwinPackages = self.darwinConfigurations."MacStruble".pkgs;
+    darwinPackages = self.darwinConfigurations."arm".pkgs;
   };
 }

@@ -40,7 +40,7 @@ $(NIX-PATH):
 # https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
 $(NIX-DARWIN): $(NIX-PATH)
 	mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
-	cd nix-darwin && nix run nix-darwin -- switch --flake .
+	cd nix-darwin && nix run nix-darwin -- switch --flake .#$(ARCH)
 
 $(BREW):
 	$(info "Installing homebrew..")
@@ -82,7 +82,7 @@ setup: stow
 
 .PHONY: nix_rebuild
 nix_rebuild: $(NIX-DARWIN)
-	cd nix-darwin && darwin-rebuild switch --flake .
+	cd nix-darwin && darwin-rebuild switch --flake .#$(ARCH)
 
 .PHONY: rebuild refresh
 rebuild: nix_rebuild
