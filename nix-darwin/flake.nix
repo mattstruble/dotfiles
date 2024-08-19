@@ -1,17 +1,23 @@
 {
-  description = "Example Darwin system flake";
+  description = "Darwin configuration";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nix-darwin.url = "github:LnL7/nix-darwin/master";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    darwin = {
+      url = "github:LnL7/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    firefox-addons = {
+      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
+  outputs = inputs@{ self, darwin, nixpkgs, home-manager, firefox-addons }:
   let
     configuration = { pkgs, ... }: {
       # List packages installed in system profile. To search by name, run:
@@ -20,6 +26,7 @@
         [
             vim
             neovim
+            direnv
         ];
 
       # Auto upgrade nix package and the daemon service.
@@ -49,12 +56,12 @@
   {
     # Build darwin flake using:
     # $ darwin-rebuild build --flake .#MacStruble
-    darwinConfigurations."arm" = nix-darwin.lib.darwinSystem {
+    darwinConfigurations."arm" = darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       modules = [ configuration ];
     };
 
-    darwinConfigurations."i386" = nix-darwin.lib.darwinSystem {
+    darwinConfigurations."i386" = darwin.lib.darwinSystem {
       system = "x86_64-darwin";
       modules = [ configuration ];
     };
