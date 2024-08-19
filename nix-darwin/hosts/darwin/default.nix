@@ -18,7 +18,7 @@ in {
 
     progams = {
         zsh = {
-            enable = true
+            enable = true;
             enableCompletion = false;
         }
     };
@@ -28,122 +28,51 @@ in {
         onActivation = {
             autoUpdate = true;
             upgrade = true;
-            cleanup = 'zap';
+            cleanup = "zap";
         };
 
         taps = [
-            '1password/tap'
-            'felixkratz/formulae'
-            'koekeishiya/formulae'
+            "1password/tap"
+            "felixkratz/formulae"
+            "koekeishiya/formulae"
         ];
 
         brews = [
-            'ansible'
-            'ansible-lint'
-            'aws-shell'
-            'awscli'
-            'basictex'
-            'biber'
-            'bibtex2html'
-            'bibtexconv'
-            'black'
-            'borders'
-            'checkmake'
-            'cowsay'
-            'curl'
-            'docker-completion'
-            'docker-compose'
-            'fd'
-            'fish'
-            'fortune'
-            'fzf'
-            'gh'
-            'gimme-aws-creds'
-            'git'
-            'git-crypt'
-            'git-lfs'
-            'gnupg'
-            'groovy'
-            'openjdk'
-            'groovy'
-            'ical-buddy'
-            'jq'
-            'lazygit'
-            'node'
-            'npm'
-            'openssl'
-            'markdown-toc'
-            'markdownlint-cli'
-            'mas'
-            'nmap'
-            'openssh'
-            'poetry'
-            'prettier'
-            'pre-commit'
-            'protonmail-bridge'
-            'pyenv'
-            'pyenv-vertualenv'
-            'pyright'
-            'python-toml'
-            'pyyaml'
-            'reattach-to-user-namespace'
-            'rename'
-            'ripgrep'
-            'ruff'
-            'ruff-lsp'
-            'rustup'
-            'shellcheck'
-            'shellharden'
-            'skhd'
-            'sops'
-            'stern'
-            'stow'
-            'sqlite'
-            'terraform'
-            'texlive'
-            'tmux'
-            'tree-sitter'
-            'uncrustify'
-            'virtualenv'
-            'vulture'
-            'wget'
-            'write-good'
-            'yaml-language-server'
-            'yamllint'
-            'yarn'
-            'ykman'
-            'yubikey-agent'
-            'yubikey-personalization'
-            'zoxide'
+            "aws-shell"
+            "basictex"
+            "bibtex2html"
+            "bibtexconv"
+            "borders"
+            "docker-completion"
+            "ical-buddy"
+            "markdown-toc"
+            "mas"
+            "pyenv-vertualenv"
+            "python-toml"
+            "pyyaml"
         ];
 
         casks = [
-                '1password-cli'
-                'discord'
-                'docker'
-                'floorp'
-                'flux'
-                'font-iosevka-nerd-font'
-                'godot'
-                'iterm2'
-                'mactex'
-                'menuwhere'
-                'monitorcontrol'
-                'obsidian'
-                'vagrant'
-                'virtualbox'
-                'wacom-tablet'
-                'wezterm'
-                'yubico-yubikey-manager'
+                "1password-cli"
+                "flux"
+                "floorp"
+                "font-iosevka-nerd-font"
+                "godot"
+                "mactex"
+                "menuwhere"
+                "monitorcontrol"
+                "standard-notes"
+                "wacom-tablet"
+                "yubico-yubikey-manager"
         ];
 
         masApps = {
-                'CopyClip' = 595191960;
-                'Dropover' = 1355679052;
-                'Hidden Bar' = 1452453066;
-                'Pure Paste' = 1611378436;
-                'Slack' = 803453959;
-                'Velja' = 1607635845;
+                "CopyClip" = 595191960;
+                "Dropover" = 1355679052;
+                "Hidden Bar" = 1452453066;
+                "Pure Paste" = 1611378436;
+                "Slack" = 803453959;
+                "Velja" = 1607635845;
         };
     };
 
