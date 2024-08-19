@@ -1,0 +1,12 @@
+\.DS_STORE
+
+\.git
+\.gitignore
+\.stow-local-ignore
+\.stowrc
+
+^/nix-darwin
+
+^/LICENSE.*
+^/Makefile.*
+^/README.*
