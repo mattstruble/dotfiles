@@ -104,7 +104,7 @@ in
   nix-prefetch-scripts
   nixpkgs-fmt
   nixpkgs-lint
-  nixfmt
+  nixfmt-rfc-style
   nmap
   nodejs
   nodePackages.csslint
