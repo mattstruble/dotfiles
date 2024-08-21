@@ -19,10 +19,10 @@ in
   perl
   biber
   black
+  cacert
   checkmake
   coreutils
   cowsay
-  csvkit
   curl
   darwin.cctools
   diffstat
@@ -135,13 +135,13 @@ in
   pv
   pyenv
   pyright
-  python3
+  (pkgs.lowPrio python311)
   reattach-to-user-namespace
   rename
   renameutils
   ripgrep
   rsync
-  ruby
+  # ruby
   ruff
   ruff-lsp
   rustup
@@ -161,7 +161,7 @@ in
   terraform-ls
   terraform-lsp
   terminal-notifier
-  texlive
+  # texliveSmall
   tmux
   translate-shell
   tree
@@ -169,10 +169,10 @@ in
   (pkgs.lowPrio ctags)
   uncrustify
   universal-ctags
-  vagrant
-  virtualbox
+  # vagrant
+  # virtualbox
   virtualenv
-  wezterm
+  # wezterm
   wget
   write-good
   yabai
