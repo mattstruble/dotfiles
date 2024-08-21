@@ -57,17 +57,19 @@ in
     ];
 
     casks = [
+      "1password"
       "1password-cli"
       "flux"
       "floorp"
       "font-iosevka-nerd-font"
       "godot"
+      "iterm2"
       "mactex"
       "menuwhere"
       "monitorcontrol"
       "standard-notes"
-      "vagrant"
-      "virtualbox"
+      # "vagrant"
+      # "virtualbox"
       "wacom-tablet"
       "yubico-yubikey-manager"
     ];

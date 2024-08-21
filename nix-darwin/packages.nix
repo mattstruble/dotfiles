@@ -141,7 +141,7 @@ in
   renameutils
   ripgrep
   rsync
-  # ruby
+  ruby
   ruff
   ruff-lsp
   rustup
@@ -161,7 +161,7 @@ in
   terraform-ls
   terraform-lsp
   terminal-notifier
-  # texliveSmall
+  texliveSmall
   tmux
   translate-shell
   tree
@@ -169,10 +169,7 @@ in
   (pkgs.lowPrio ctags)
   uncrustify
   universal-ctags
-  # vagrant
-  # virtualbox
   virtualenv
-  # wezterm
   wget
   write-good
   yabai
