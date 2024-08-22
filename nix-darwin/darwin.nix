@@ -1,4 +1,10 @@
-{ pkgs, lib, config, hostname, inputs, ... }:
+{ pkgs
+, lib
+, config
+, hostname
+, inputs
+, ...
+}:
 
 let
   home = builtins.getEnv "HOME";
@@ -23,6 +29,20 @@ in
     };
   };
 
+  nix = {
+    package = pkgs.nix;
+    gc.automatic = true;
+    optimise.automatic = true;
+    settings = {
+      auto-optimise-store = true;
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+    };
+
+  };
+
   fonts.packages = with pkgs; [ iosevka ];
 
   # progams = {
@@ -40,7 +60,11 @@ in
       cleanup = "zap";
     };
 
-    taps = [ "1password/tap" "felixkratz/formulae" "koekeishiya/formulae" ];
+    taps = [
+      "1password/tap"
+      "felixkratz/formulae"
+      "koekeishiya/formulae"
+    ];
 
     brews = [
       "aws-shell"

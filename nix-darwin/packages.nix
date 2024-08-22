@@ -4,12 +4,11 @@ with pkgs;
 
 let
   exe =
-    if pkgs.stdenv.targetPlatform.isx86_64 then
-      haskell.lib.justStaticExecutables
-    else
-      pkgs.lib.id;
+    if pkgs.stdenv.targetPlatform.isx86_64 then haskell.lib.justStaticExecutables else pkgs.lib.id;
 in
 [
+  # _1password  # currently labeled as broken
+  # _1password-gui
   asciidoctor
   aspell
   aspellDicts.en
@@ -184,5 +183,6 @@ in
   zsh
   zsh-autosuggestions
   zsh-fzf-history-search
+  zsh-powerlevel10k
   zsh-syntax-highlighting
 ]

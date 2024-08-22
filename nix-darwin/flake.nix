@@ -2,7 +2,7 @@
   description = "Darwin configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/master";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -17,12 +17,13 @@
     };
   };
 
-  outputs = inputs:
-    with inputs; rec {
+  outputs =
+    inputs: with inputs; rec {
       darwinConfigurations =
         let
           userName = builtins.getEnv "USER";
-          configure = arch: system:
+          configure =
+            hostname: system:
             darwin.lib.darwinSystem {
               pkgs = import nixpkgs {
                 inherit system;
@@ -35,7 +36,9 @@
               };
 
               inherit system;
-              specialArgs = { inherit inputs; };
+              specialArgs = {
+                inherit hostname inputs;
+              };
               modules = [
                 ./darwin.nix
                 home-manager.darwinModules.home-manager
@@ -44,19 +47,21 @@
                     useGlobalPkgs = true;
                     backupFileExtension = "backup";
                     users."${userName}" = import ./home.nix;
-                    extraSpecialArgs = { inherit inputs; };
+                    extraSpecialArgs = {
+                      inherit hostname inputs;
+                    };
                   };
                 }
               ];
             };
         in
         {
-          arm = configure "arm" "aarch64-darwin";
-          i386 = configure "i386" "x86_64-darwin";
+          MacStruble = configure "MacStruble" "aarch64-darwin";
+          AP94ML85DF565C = configure "AP94ML85DF565C" "x86_64-darwin";
         };
 
       # Expose the package set, including overlays, for convenience.
-      darwinPackages = self.darwinConfigurations."arm".pkgs;
+      darwinPackages = self.darwinConfigurations."MacStruble".pkgs;
     };
 
 }
