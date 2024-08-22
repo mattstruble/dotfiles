@@ -211,7 +211,7 @@ in
         # "gpg \"ssh\"".program = "${lib.getExe' pkgs._1password-gui "op-ssh-sign"}";
         "gpg \"ssh\"".program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
 
-        credential.helper = "${pkgs.pass-git-helper}/bin/pass-git-helper";
+        credential.helper = "store";
         ghi.token = "!${pkgs.pass}/bin/pass show api.github.com | head -1";
         hub.protocol = "${pkgs.openssh}/bin/ssh";
         mergetool.keepBackup = true;

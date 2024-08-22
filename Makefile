@@ -83,7 +83,7 @@ unstow: install
 	done
 
 .PHONY: setup
-setup: stow
+setup: install
 
 
 ### REBUILD
