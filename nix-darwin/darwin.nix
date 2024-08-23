@@ -76,7 +76,7 @@ in
       "markdown-toc"
       "mas"
       "pyenv-virtualenv"
-      "python-toml"
+      # "python-toml"
       "pyyaml"
     ];
 
@@ -95,6 +95,7 @@ in
       # "vagrant"
       # "virtualbox"
       "wacom-tablet"
+      "wezterm"
       "yubico-yubikey-manager"
     ];
 
