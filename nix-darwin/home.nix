@@ -56,15 +56,19 @@ in
       "${brew_path}"
     ];
 
-    file = let mkLink = config.lib.file.mkOutOfStoreSymlink; in {
+    file =
+      let
+        mkLink = config.lib.file.mkOutOfStoreSymlink;
+      in
+      {
         ".curlrc".text = ''
-            capath=${ca-bundle_path}
-            cacert=${ca-bundle_crt}
+          capath=${ca-bundle_path}
+          cacert=${ca-bundle_crt}
         '';
 
         ".wgetrc".text = ''
-            ca_directory = ${ca-bundle_path}
-            ca_certificate = ${ca-bundle_crt}
+          ca_directory = ${ca-bundle_path}
+          ca_certificate = ${ca-bundle_crt}
         '';
 
         ".p10k.zsh".source = mkLink ~/dotfiles/p10k/.p10k.zsh;
@@ -73,16 +77,20 @@ in
         ".zshrc".source = mkLink ~/dotfiles/zsh/.zshrc;
         ".zprofile".source = mkLink ~/dotfiles/zsh/.zprofile;
         ".subzsh".source = mkLink ~/dotfiles/zsh/subzsh;
-    };
+      };
   };
 
-  xdg.configFile = let mkLink = config.lib.file.mkOutOfStoreSymlink; in {
-    "aerospace".source = mkLink ~/dotfiles/aerospace/.config/aerospace;
-    "nvim".source = mkLink ~/dotfiles/nvim/.config/nvim;
-    "skhd".source = mkLink ~/dotfiles/skhd/.config/skhd;
-    "tmux".source = mkLink ~/dotfiles/tmux/.config/tmux;
-    "wezterm".source = mkLink ~/dotfiles/wezterm/.config/wezterm;
-    "yabai".source = mkLink ~/dotfiles/yabai/.config/yabai;
+  xdg.configFile =
+    let
+      mkLink = config.lib.file.mkOutOfStoreSymlink;
+    in
+    {
+      "aerospace".source = mkLink ~/dotfiles/aerospace/.config/aerospace;
+      "nvim".source = mkLink ~/dotfiles/nvim/.config/nvim;
+      "skhd".source = mkLink ~/dotfiles/skhd/.config/skhd;
+      "tmux".source = mkLink ~/dotfiles/tmux/.config/tmux;
+      "wezterm".source = mkLink ~/dotfiles/wezterm/.config/wezterm;
+      "yabai".source = mkLink ~/dotfiles/yabai/.config/yabai;
     };
 
   programs = {
@@ -99,11 +107,18 @@ in
     man.enable = true;
     vim.enable = true;
 
+    zoxide = {
+      enable = true;
+      enableZshIntegration = true;
+      enableBashIntegration = true;
+      options = [ "--cmd cd" ];
+    };
+
     neovim = {
-            enable = true;
-            viAlias = true;
-            vimAlias = true;
-        };
+      enable = true;
+      viAlias = true;
+      vimAlias = true;
+    };
 
     home-manager = {
       enable = true;
@@ -159,9 +174,9 @@ in
       package = pkgs.gitFull;
 
       signing = {
-                key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEM+saqSDNRJt5qpi6lltteSsdY7wNVz5Is2ywVFcyzv";
-                signByDefault = true;
-            };
+        key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEM+saqSDNRJt5qpi6lltteSsdY7wNVz5Is2ywVFcyzv";
+        signByDefault = true;
+      };
 
       aliases = {
         amend = "commit --amend -C HEAD";
@@ -325,6 +340,118 @@ in
             IdentityAgent ${onePassPath}
       '';
 
+    };
+
+    zsh = {
+      dotDir = ".config/zsh";
+
+      enable = true;
+      enableCompletion = false;
+
+      autosuggestion.enable = true;
+      syntaxHighlighting.enable = true;
+
+      history = {
+        size = 50000;
+        save = 500000;
+        path = "${config.xdg.configHome}/zsh/history";
+        ignoreDups = true;
+        share = true;
+        extended = true;
+        ignoreSpace = true;
+      };
+
+      sessionVariables = {
+        EDITOR = "nvim";
+        ALTERNATE_EDITOR = "${pkgs.vim}/vin/vi";
+        LC_CTYPE = "en_US.UTF-8";
+        LEDGER_COLOR = "true";
+        LESS = "-FRSXM";
+        LESSCHARSET = "utf-8";
+        PAGER = "less";
+        SSH_AUTH_SOCK = "${onePassPath}";
+        TINC_USE_NIX = "yes";
+        WORDCHARS = "";
+      };
+
+      shellAliases = {
+        vi = "nvim";
+        ls = "${pkgs.coreutils}/bin/ls -h --color=auto";
+        sl = "ls";
+        grep = "grep --color=auto";
+        back = "cd $OLDPWD";
+        reload = "exec $SHELL -l";
+        tkill = "tmux kill-server";
+
+        git = "${pkgs.git}/bin/git";
+        good = "${pkgs.git}/bin/git bisect good";
+        bad = "${pkgs.git}/bin/git bisect bad";
+      };
+
+      profileExtra = ''
+        export GPG_TTY=$(tty)
+        if ! pgrep -x "gpg-agent" > /dev/null; then
+            ${pkgs.gnupg}/bin/gpgconf --launch gpg-agent
+        fi
+
+      '';
+
+      initExtra = ''
+        autoload -Uz compinit && compinit
+
+        bindkey -v
+        bindkey '^f' autosuggest-accept
+        bindkey '^p' history-search-backward
+        bindkey '^n' history-search-forward
+        bindkey '^[w' kill-region
+
+        zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+        zstyle ':completion:*' menu no
+        zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
+        zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
+        zstyle ':completion:*:*:docker:*' option-stacking yes
+        zstyle ':completion:*:*:docker-*:*' option-stacking yes
+      '';
+
+      antidote = {
+        enable = true;
+        plugins = [
+          "getantidote/use-omz"
+
+          "ohmyzsh/ohmyzsh path:plugins/1password"
+          "ohmyzsh/ohmyzsh path:plugins/ansible"
+          "ohmyzsh/ohmyzsh path:plugins/aws"
+          "ohmyzsh/ohmyzsh path:plugins/bazel"
+          "ohmyzsh/ohmyzsh path:plugins/brew"
+          "ohmyzsh/ohmyzsh path:plugins/command-not-found"
+          "ohmyzsh/ohmyzsh path:plugins/direnv"
+          "ohmyzsh/ohmyzsh path:plugins/docker"
+          "ohmyzsh/ohmyzsh path:plugins/helm"
+          "ohmyzsh/ohmyzsh path:plugins/git"
+          "ohmyzsh/ohmyzsh path:plugins/kubectl"
+          "ohmyzsh/ohmyzsh path:plugins/podman"
+          "ohmyzsh/ohmyzsh path:plugins/poetry"
+          "ohmyzsh/ohmyzsh path:plugins/pyenv"
+          "ohmyzsh/ohmyzsh path:plugins/python"
+          "ohmyzsh/ohmyzsh path:plugins/rust"
+          "ohmyzsh/ohmyzsh path:plugins/safe-paste"
+          "ohmyzsh/ohmyzsh path:plugins/tmux"
+          "ohmyzsh/ohmyzsh path:plugins/vagrant"
+          "ohmyzsh/ohmyzsh path:plugins/vi-mode"
+          "ohmyzsh/ohmyzsh path:plugins/virtualenv"
+          "ohmyzsh/ohmyzsh path:plugins/z"
+          "ohmyzsh/ohmyzsh path:plugins/zoxide"
+
+          "zsh-users/zsh-completions path:src kind:fpath"
+          "zsh-users/zsh-autosuggestions"
+          "zsh-users/zsh-history-substring-search"
+          "zdharma-continuum/fast-syntax-highlighting"
+          "Aloxaf/fzf-tab"
+
+          "romkatv/powerlevel10k"
+        ];
+
+      };
     };
 
   };

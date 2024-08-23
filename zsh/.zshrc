@@ -128,6 +128,7 @@ export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
+eval "$(direnv hook zsh)"
 
 export NIX_CONF_DIR=$HOME/.config/nix
 
