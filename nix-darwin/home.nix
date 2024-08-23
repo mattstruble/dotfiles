@@ -218,7 +218,7 @@ in
 
       extraConfig = {
         core = {
-          editor = "neovim";
+          editor = "nvim";
           trustctime = false;
           pager = "${pkgs.less}/bin/less --tabs=4 -RFX";
           logAllRefUpdates = true;
@@ -432,8 +432,9 @@ in
           "ohmyzsh/ohmyzsh path:plugins/command-not-found"
           "ohmyzsh/ohmyzsh path:plugins/direnv"
           "ohmyzsh/ohmyzsh path:plugins/docker"
-          "ohmyzsh/ohmyzsh path:plugins/helm"
           "ohmyzsh/ohmyzsh path:plugins/git"
+          "ohmyzsh/ohmyzsh path:plugins/fzf"
+          "ohmyzsh/ohmyzsh path:plugins/helm"
           "ohmyzsh/ohmyzsh path:plugins/kubectl"
           "ohmyzsh/ohmyzsh path:plugins/podman"
           "ohmyzsh/ohmyzsh path:plugins/poetry"
@@ -451,7 +452,7 @@ in
           "zsh-users/zsh-completions path:src kind:fpath"
           "zsh-users/zsh-autosuggestions"
           "zsh-users/zsh-history-substring-search"
-          "zdharma-continuum/fast-syntax-highlighting"
+          # "zdharma-continuum/fast-syntax-highlighting"
           "Aloxaf/fzf-tab"
 
           "romkatv/powerlevel10k"
