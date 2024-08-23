@@ -36,6 +36,7 @@ in
       NIX_CONF_DIR = "${config.xdg.configHome}/nix";
       VAGRANT_HOME = "${config.xdg.dataHome}/vagrant";
       TZ = "America/New_York";
+      EDITOR = "nvim";
 
       VAGRANT_DEFAULT_PROVIDER = "vmware_desktop";
       VAGRANT_VMWARE_CLONE_DIRECTORY = "${home}/Machines/vagrant";
@@ -66,20 +67,23 @@ in
             ca_certificate = ${ca-bundle_crt}
         '';
 
-        "${config.xdg.configHome}/aerospace".source = mkLink "../aerospace/.config/aerospace";
-        "${config.xdg.configHome}/nvim".source = mkLink "../nvim/.config/nvim";
-        ".p10k.zsh".source = mkLink "../p10k/.p10k.zsh";
-        "${config.xdg.configHome}/skhd".source = mkLink "../skhd/.config/skhd";
-        "${config.xdg.configHome}/tmux".source = mkLink "../tmux/.config/tmux";
-        ".vimrc".source = mkLink "../vim/.vimrc";
-        "${config.xdg.configHome}/wezterm".source = mkLink "../wezterm/.config/wezterm";
-        "${config.xdg.configHome}/yabai".source = mkLink "../yabai/.config/yabai";
+        ".p10k.zsh".source = mkLink ~/dotfiles/p10k/.p10k.zsh;
+        ".vimrc".source = mkLink ~/dotfiles/vim/.vimrc;
 
-        ".zshrc".source = mkLink "../zsh/.zshrc";
-        ".zprofile".source = mkLink "../zsh/.zprofile";
-        ".subzsh".source = mkLink "../zsh/subzsh";
+        ".zshrc".source = mkLink ~/dotfiles/zsh/.zshrc;
+        ".zprofile".source = mkLink ~/dotfiles/zsh/.zprofile;
+        ".subzsh".source = mkLink ~/dotfiles/zsh/subzsh;
     };
   };
+
+  xdg.configFile = let mkLink = config.lib.file.mkOutOfStoreSymlink; in {
+    "aerospace".source = mkLink ~/dotfiles/aerospace/.config/aerospace;
+    "nvim".source = mkLink ~/dotfiles/nvim/.config/nvim;
+    "skhd".source = mkLink ~/dotfiles/skhd/.config/skhd;
+    "tmux".source = mkLink ~/dotfiles/tmux/.config/tmux;
+    "wezterm".source = mkLink ~/dotfiles/wezterm/.config/wezterm;
+    "yabai".source = mkLink ~/dotfiles/yabai/.config/yabai;
+    };
 
   programs = {
     direnv = {
@@ -94,7 +98,12 @@ in
     jq.enable = true;
     man.enable = true;
     vim.enable = true;
-    neovim.enable = true;
+
+    neovim = {
+            enable = true;
+            viAlias = true;
+            vimAlias = true;
+        };
 
     home-manager = {
       enable = true;

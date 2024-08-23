@@ -134,7 +134,7 @@ in
   pv
   pyenv
   pyright
-  (pkgs.lowPrio python311)
+  (pkgs.lowPrio python3)
   reattach-to-user-namespace
   rename
   renameutils
