@@ -394,6 +394,10 @@ in
             ${pkgs.gnupg}/bin/gpgconf --launch gpg-agent
         fi
 
+        export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
+        if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+            . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+        fi
       '';
 
       initExtra = ''
@@ -411,6 +415,8 @@ in
         zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
         zstyle ':completion:*:*:docker:*' option-stacking yes
         zstyle ':completion:*:*:docker-*:*' option-stacking yes
+
+        [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
       '';
 
       antidote = {
