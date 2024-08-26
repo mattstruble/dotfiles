@@ -91,6 +91,20 @@ in
       "tmux".source = mkLink ~/dotfiles/tmux/.config/tmux;
       "wezterm".source = mkLink ~/dotfiles/wezterm/.config/wezterm;
       "yabai".source = mkLink ~/dotfiles/yabai/.config/yabai;
+
+      "gnupg/gpg-agent.conf".text = ''
+        enable-ssh-support
+        default-cache-ttl 86400
+        max-cache-ttl 86400
+        pinentry-program ${pkgs.pinentry_mac}/Applications/pinentry-mac.app/Contents/MacOS/pinentry-mac
+      '';
+
+      "aspell/config".text = ''
+        local-data-dir ${pkgs.aspell}/lib/aspell
+        data-dir ${pkgs.aspellDicts.en}/lib/aspell
+        personal ${config.xdg.configHome}/aspell/en_US.personal
+        repl ${config.xdg.configHome}/aspell/en_US.repl
+      '';
     };
 
   programs = {
@@ -417,7 +431,24 @@ in
         zstyle ':completion:*:*:docker-*:*' option-stacking yes
 
         [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+        if [ $(command -v fortune) ] && [ $UID != '0' ] && [[ $- == *i* ]] && [ $TERM != 'dumb' ]; then
+            ### Cowsay At Login ###
+            if [ $(command -v cowsay) ]; then
+                fortune -a fortunes wisdom | cowsay
+            else
+                fortune -a fortunes wisdom
+            fi
+        fi
       '';
+
+      plugins = [
+        {
+          name = "vi-mode";
+          src = pkgs.zsh-vi-mode;
+          file = "share/zsh-vi-mode/zsh-vi-mode.plugin.zsh";
+        }
+      ];
 
       antidote = {
         enable = true;
@@ -462,5 +493,16 @@ in
     };
 
   };
+
+  targets.darwin = {
+    defaults = {
+      "com.apple.desktopservices" = {
+        DSDontWriteNetworkStores = true;
+        DSDontWriteUSBStores = true;
+      };
+    };
+  };
+
+  news.display = "silent";
 
 }

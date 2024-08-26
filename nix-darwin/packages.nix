@@ -185,4 +185,5 @@ in
   zsh-fzf-history-search
   zsh-powerlevel10k
   zsh-syntax-highlighting
+  zsh-vi-mode
 ]
