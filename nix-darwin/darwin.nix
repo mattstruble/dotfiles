@@ -48,12 +48,13 @@ in
 
       substituters = [
         "https://cache.nixos.org/"
-        ];
+      ];
 
       trusted-substituters = [ ];
 
       trusted-public-keys = [
-                "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="];
+        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      ];
 
       auto-optimise-store = true;
       experimental-features = [
@@ -295,12 +296,12 @@ in
       };
 
     };
-      keyboard = {
-        enableKeyMapping = true;
-        remapCapsLockToEscape = true;
-      };
+    keyboard = {
+      enableKeyMapping = true;
+      remapCapsLockToEscape = true;
+    };
   };
 
-# };
+  # };
 
 }
