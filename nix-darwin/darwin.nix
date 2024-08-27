@@ -110,7 +110,7 @@ in
 
     taps = [
       "1password/tap"
-      "felixkratz/formulae"
+      "FelixKratz/formulae"
       "koekeishiya/formulae"
     ];
 
@@ -301,6 +301,27 @@ in
       remapCapsLockToEscape = true;
     };
   };
+
+  launchd =
+    let
+      iterate = StartInterval: {
+        inherit StartInterval;
+        Nice = 5;
+        LowPriorityIO = true;
+        AbandonProcessGroup = true;
+      };
+      runCommand = command: {
+        inherit command;
+        serviceConfig.RunAtLoad = true;
+        serviceConfig.KeepAlive = true;
+      };
+    in
+    {
+      user.agents = {
+        skhd = runCommand "${pkgs.skhd}";
+        yabai = runCommand "${pkgs.yabai}";
+      };
+    };
 
   # };
 
