@@ -153,6 +153,8 @@ in
       "Dropover" = 1355679052;
       "Endel" = 1346247457;
       "Hidden Bar" = 1452453066;
+      "Hyperduck" = 6444667067;
+      "Grab2Text" = 6475956137;
       "Pure Paste" = 1611378436;
       "Slack" = 803453959;
       "Velja" = 1607635845;
