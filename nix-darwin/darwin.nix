@@ -236,7 +236,7 @@ in
         };
 
         "com.apple.screencapture" = {
-          location = "~/Pictures/screenshots";
+          location = "~/Downloads";
           type = "png";
         };
 
