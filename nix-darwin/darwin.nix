@@ -131,6 +131,7 @@ in
     casks = [
       "1password"
       "1password-cli"
+      "alfred"
       "flux"
       "floorp"
       "font-iosevka-nerd-font"
