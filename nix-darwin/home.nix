@@ -440,6 +440,13 @@ in
                 fortune -a fortunes wisdom
             fi
         fi
+
+        export PATH="$HOME/.pyenv:$PATH"
+        export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+        eval "$(pyenv virtualenv-init -)"
       '';
 
       plugins = [
