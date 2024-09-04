@@ -27,7 +27,7 @@ in
   diffstat
   diffutils
   direnv
-  docker
+  # docker
   docker-compose
   docutils
   fd
@@ -124,7 +124,6 @@ in
   perlPackages.ImageExifTool
   pinentry_mac
   plantuml
-  poetry
   postgresql
   pre-commit
   protobufc

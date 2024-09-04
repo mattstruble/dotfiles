@@ -38,29 +38,60 @@ in
     optimise.automatic = true;
 
     settings = {
-      trusted-users = [
-        "${userName}"
-        "@admin"
-      ];
-
-      max-jobs = 8;
-      cores = 2;
-
-      substituters = [
-        "https://cache.nixos.org/"
-      ];
-
-      trusted-substituters = [ ];
-
-      trusted-public-keys = [
-        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-      ];
-
+      allow-dirty = true;
+      allow-import-from-derivation = true;
       auto-optimise-store = true;
+
+      allowed-users = ["*"];
+
+      build-users-group = "nixbld";
+      builders-use-substitutes = true;
+
+      eval-cache = true;
+
       experimental-features = [
         "nix-command"
         "flakes"
       ];
+
+      extra-nix-path = "nixpkgs=flake:nixpkgs";
+
+      # filter-syscalls = true;
+      flake-registry = "https://github.com/NixOS/flake-registry/raw/master/flake-registry.json";
+      http-connections = 25;
+      http2 = true;
+      impersonate-linux-26 = false;
+
+      keep-going = true;
+
+      max-jobs = "auto";
+
+      store = true;
+      substitute = true;
+      substituters = [
+        "https://cache.nixos.org/"
+      ];
+
+      trusted-substituters = [
+        "https://cache.flakehub.com"
+      ];
+
+      trusted-public-keys = [
+        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+        "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM= cache.flakehub.com-4:Asi8qIv291s0aYLyH6IOnr5Kf6+OF14WVjkE6t3xMio= cache.flakehub.com-5:zB96CRlL7tiPtzA9/WKyPkp3A2vqxqgdgyTVNGShPDU= cache.flakehub.com-6:W4EGFwAGgBj3he7c5fNh9NkOXw0PUVaxygCVKeuvaqU= cache.flakehub.com-7:mvxJ2DZVHn/kRxlIaxYNMuDG1OvMckZu32um1TadOR8= cache.flakehub.com-8:moO+OVS0mnTjBTcOUh2kYLQEd59ExzyoW1QgQ8XAARQ= cache.flakehub.com-9:wChaSeTI6TeCuV/Sg2513ZIM9i0qJaYsF+lZCXg0J6o= cache.flakehub.com-10:2GqeNlIp6AKp4EF2MVbE1kBOp9iBSyo0UPR9KoR0o1Y="
+      ];
+
+      trusted-users = [
+        "${userName}"
+        "@admin"
+    	"@wheel"
+      ];
+
+      # upgrade-nix-store-path-url = "https://install.determinate.systems/nix-upgrade/stable/universal";
+      use-case-hack = false;
+      use-registries = true;
+      use-sqlite-wal = true;
+
     };
 
     # This entry lets us to define a system registry entry so that
@@ -120,9 +151,11 @@ in
       "bibtexconv"
       "borders"
       "docker-completion"
+      "gimme-aws-creds"
       "ical-buddy"
       "markdown-toc"
       "mas"
+      "poetry"
       "pyenv-virtualenv"
       # "python-toml"
       "pyyaml"
@@ -132,6 +165,7 @@ in
       "1password"
       "1password-cli"
       "alfred"
+      "docker"
       "flux"
       "floorp"
       "font-iosevka-nerd-font"

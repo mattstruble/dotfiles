@@ -33,22 +33,26 @@ all: setup start
 
 ### INSTALL
 
-# https://zero-to-nix.com/start/install
-$(NIX-PATH):
-	curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-
-# https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
-$(NIX-DARWIN): $(NIX-PATH)
-	mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
-	cd nix-darwin && nix run nix-darwin -- switch --flake . --impure
-
 $(BREW):
-	$(info "Installing homebrew..")
+	$(info "Installing homebrew...")
 	@/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 	@eval "$$(/opt/homebrew/bin/brew shellenv)"
 
+# https://zero-to-nix.com/start/install
+$(NIX-PATH):
+	$(info "Installing nix...")
+	curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+	@echo "Hello Nix" | nix run "https://flakehub.com/f/NixOS/nixpkgs/*#ponysay"
+	nix-env -f '<nixpkgs>' -iA nixVersions.latest --impure --keep-going
+
+# https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
+$(NIX-DARWIN): $(BREW) $(NIX-PATH)
+	$(info "Installing nix-darwin")
+	# -sudo mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
+	cd nix-darwin && nix run nix-darwin -- switch --flake . --impure
+
 $(XCODE):
-	$(info "Installing XCODE..")
+	$(info "Installing XCODE...")
 	xcode-select --install
 
 .PHONY: install
@@ -66,7 +70,7 @@ install: $(BREW) $(XCODE) $(NIX-DARWIN)
 stow-symlink: .stow-local-ignore .stowrc
 
 .PHONY: stow
-stow: install
+stow: stow-symlink
 	for file in *; do \
 		if [ -d $${file} ]; then \
 			stow $${file}; \

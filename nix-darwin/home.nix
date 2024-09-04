@@ -33,7 +33,7 @@ in
       GNUPGHOME = "${config.xdg.configHome}/gnupg";
       JAVA_OPTS = "-Xverify:none";
       LESSHISTFILE = "${config.xdg.cacheHome}/less/history";
-      NIX_CONF_DIR = "${config.xdg.configHome}/nix";
+      #NIX_CONF_DIR = "${config.xdg.configHome}/nix";
       VAGRANT_HOME = "${config.xdg.dataHome}/vagrant";
       TZ = "America/New_York";
       EDITOR = "nvim";
