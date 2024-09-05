@@ -34,15 +34,23 @@ in
   nix = {
     package = pkgs.nix;
     useDaemon = true;
-    gc.automatic = true;
-    optimise.automatic = true;
+
+    gc = {
+        automatic = true;
+        options = "--delete-older-than 30d";
+    };
+
+    optimise = {
+        user = "${userName}";
+        automatic = true;
+    };
 
     settings = {
       allow-dirty = true;
-      allow-import-from-derivation = true;
-      auto-optimise-store = true;
+      # allow-import-from-derivation = true;
+      # auto-optimise-store = true;
 
-      allowed-users = ["*"];
+      allowed-users = [ "*" ];
 
       build-users-group = "nixbld";
       builders-use-substitutes = true;
@@ -66,7 +74,6 @@ in
 
       max-jobs = "auto";
 
-      store = true;
       substitute = true;
       substituters = [
         "https://cache.nixos.org/"
@@ -84,7 +91,7 @@ in
       trusted-users = [
         "${userName}"
         "@admin"
-    	"@wheel"
+        "@wheel"
       ];
 
       # upgrade-nix-store-path-url = "https://install.determinate.systems/nix-upgrade/stable/universal";
@@ -165,7 +172,7 @@ in
       "1password"
       "1password-cli"
       "alfred"
-      "docker"
+      # "docker"
       "flux"
       "floorp"
       "font-iosevka-nerd-font"

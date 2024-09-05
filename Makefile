@@ -78,7 +78,7 @@ stow: stow-symlink
 		fi \
 	done
 
-unstow: install
+unstow:
 	for file in *; do \
 		if [ -d $${file} ]; then \
 			stow -D $${file}; \
@@ -156,6 +156,11 @@ restart_skhd:
 .PHONY: restart_tmux
 restart_tmux:
 	tmux source-file ~/.tmux.conf
+
+.PHONY: restart_nix_daemon
+restart_nix_daemon:
+	sudo launchctl unload /Library/LaunchDaemons/org.nixos.nix-daemon.plist
+	sudo launchctl load /Library/LaunchDaemons/org.nixos.nix-daemon.plist
 
 .PHONY: restart
 restart: restart_yabai restart_skhd restart_tmux
