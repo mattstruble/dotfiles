@@ -36,13 +36,13 @@ in
     useDaemon = true;
 
     gc = {
-        automatic = true;
-        options = "--delete-older-than 30d";
+      automatic = true;
+      options = "--delete-older-than 30d";
     };
 
     optimise = {
-        user = "${userName}";
-        automatic = true;
+      user = "${userName}";
+      automatic = true;
     };
 
     settings = {
@@ -157,11 +157,13 @@ in
       "bibtex2html"
       "bibtexconv"
       "borders"
+      # "docker"
       "docker-completion"
       "gimme-aws-creds"
       "ical-buddy"
       "markdown-toc"
       "mas"
+      "only-switch"
       "poetry"
       "pyenv-virtualenv"
       # "python-toml"
@@ -172,7 +174,7 @@ in
       "1password"
       "1password-cli"
       "alfred"
-      # "docker"
+      "docker"
       "flux"
       "floorp"
       "font-iosevka-nerd-font"
@@ -199,7 +201,7 @@ in
       "Pure Paste" = 1611378436;
       "Slack" = 803453959;
       "Velja" = 1607635845;
-
+      "Unsplash Wallpapers" = 1284863847;
     };
   };
 

@@ -26,8 +26,9 @@ in
   diffstat
   diffutils
   direnv
-  docker
-  docker-compose
+  # docker
+  # docker-client
+  # docker-compose
   docutils
   fd
   ffmpeg

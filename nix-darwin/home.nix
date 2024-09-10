@@ -469,7 +469,7 @@ in
           "ohmyzsh/ohmyzsh path:plugins/brew"
           "ohmyzsh/ohmyzsh path:plugins/command-not-found"
           "ohmyzsh/ohmyzsh path:plugins/direnv"
-          "ohmyzsh/ohmyzsh path:plugins/docker"
+          # "ohmyzsh/ohmyzsh path:plugins/docker"
           "ohmyzsh/ohmyzsh path:plugins/git"
           "ohmyzsh/ohmyzsh path:plugins/fzf"
           "ohmyzsh/ohmyzsh path:plugins/helm"
