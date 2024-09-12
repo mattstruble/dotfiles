@@ -71,6 +71,7 @@ in
           ca_certificate = ${ca-bundle_crt}
         '';
 
+        ".direnvrc".source = mkLink ~/dotfiles/direnv/.direnvrc;
         ".p10k.zsh".source = mkLink ~/dotfiles/p10k/.p10k.zsh;
         ".vimrc".source = mkLink ~/dotfiles/vim/.vimrc;
 
@@ -163,6 +164,13 @@ in
       enable = true;
       bashrcExtra = lib.mkBefore ''
         source /etc/bashrc
+
+        export PATH="$HOME/.pyenv:$PATH"
+        export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+        eval "$(pyenv virtualenv-init -)"
       '';
     };
 

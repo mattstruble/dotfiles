@@ -163,7 +163,6 @@ in
       "ical-buddy"
       "markdown-toc"
       "mas"
-      "only-switch"
       "poetry"
       "pyenv-virtualenv"
       # "python-toml"
@@ -183,12 +182,14 @@ in
       "mactex"
       "menuwhere"
       "monitorcontrol"
+      "only-switch"
       "standard-notes"
       # "vagrant"
       # "virtualbox"
       "wacom-tablet"
       "wezterm"
       "yubico-yubikey-manager"
+      "zen-browser"
     ];
 
     masApps = {
