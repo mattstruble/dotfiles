@@ -49,7 +49,7 @@ $(NIX-PATH):
 $(NIX-DARWIN): $(BREW) $(NIX-PATH)
 	$(info "Installing nix-darwin")
 	# -sudo mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
-	cd nix-darwin && nix run nix-darwin -- switch --flake . --impure
+	cd nix-darwin && ${NIX-PATH} run nix-darwin -- switch --flake . --impure
 
 $(XCODE):
 	$(info "Installing XCODE...")

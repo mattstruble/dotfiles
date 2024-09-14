@@ -183,6 +183,7 @@ in
       "menuwhere"
       "monitorcontrol"
       "only-switch"
+      "scroll-reverser"
       "standard-notes"
       # "vagrant"
       # "virtualbox"
