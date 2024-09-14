@@ -230,7 +230,7 @@ in
 
     defaults = {
       ".GlobalPreferences" = {
-        "com.apple.mouse.scaling" = 0.8;
+        "com.apple.mouse.scaling" = 1.0;
       };
 
       NSGlobalDomain = {
@@ -348,6 +348,11 @@ in
       enableKeyMapping = true;
       remapCapsLockToEscape = true;
     };
+  };
+
+  services = {
+    yabai.enable = true;
+    skhd.enable = true;
   };
 
   launchd =

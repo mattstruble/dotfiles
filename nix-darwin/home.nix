@@ -347,6 +347,7 @@ in
     ssh = {
       enable = true;
 
+      addKeysToAgent = "confirm";
       controlMaster = "auto";
       controlPath = "${tmpdir}/ssh-%u-%r@%h:%p";
       controlPersist = "1800";
@@ -359,7 +360,7 @@ in
 
       extraConfig = ''
         Host *
-            IdentityAgent ${onePassPath}
+            IdentityAgent "${onePassPath}"
       '';
 
     };
