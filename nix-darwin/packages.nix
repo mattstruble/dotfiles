@@ -43,6 +43,7 @@ in
   gnupg
   gnuplot
   gnused
+  go
   gradle
   groovy
   iperf
