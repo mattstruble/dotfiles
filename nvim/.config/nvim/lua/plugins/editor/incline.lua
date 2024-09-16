@@ -1,8 +1,10 @@
 return {
 	"b0o/incline.nvim",
-	config = function()
-		require("incline").setup()
-	end,
+	opts = {
+		hide = {
+			cursorline = "focused_win",
+		},
+	},
 	-- Optional: Lazy load Incline
 	event = "VeryLazy",
 }

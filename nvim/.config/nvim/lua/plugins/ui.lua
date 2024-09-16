@@ -1,4 +1,7 @@
 local mode = require("utils.mode")
+local transparent_theme = require("lualine.themes.catppuccin-mocha")
+
+transparent_theme.normal.c.bg = NONE
 
 return {
 	{
@@ -23,7 +26,7 @@ return {
 		after = "noice.nvim",
 		opts = {
 			options = {
-				theme = "catppuccin-mocha",
+				theme = transparent_theme,
 				icons_enabled = true,
 				component_separators = "|",
 				section_separators = { left = "", right = "" },

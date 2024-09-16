@@ -9,7 +9,7 @@ config.font_size = 18
 config.enable_tab_bar = false
 
 config.window_background_opacity = 0.7
-config.macos_window_background_blur = 50
+config.macos_window_background_blur = 100
 config.window_padding = {
 	left = 5,
 	right = 5,
