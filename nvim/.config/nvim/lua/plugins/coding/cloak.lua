@@ -28,4 +28,7 @@ return {
 			},
 		})
 	end,
+	keys = {
+		{ "<leader>cv", ":CloakPreviewLine<cr>", desc = "Cloak View Line" },
+	},
 }
