@@ -351,8 +351,14 @@ in
   };
 
   services = {
-    yabai.enable = true;
-    skhd.enable = true;
+    yabai = {
+        enable = true;
+        extraConfig = builtins.readFile ~/.config/yabai/yabairc;
+    };
+    skhd = {
+        enable = true;
+        skhdConfig = builtins.readFile ~/.config/skhd/skhdrc;
+    };
   };
 
   launchd =
@@ -371,8 +377,8 @@ in
     in
     {
       user.agents = {
-        skhd = runCommand "${pkgs.skhd}";
-        yabai = runCommand "${pkgs.yabai}";
+        # skhd = runCommand "${pkgs.skhd}";
+        # yabai = runCommand "${pkgs.yabai}";
       };
     };
 
