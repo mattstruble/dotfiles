@@ -347,7 +347,7 @@ in
     ssh = {
       enable = true;
 
-      addKeysToAgent = "confirm";
+      addKeysToAgent = "yes";
       controlMaster = "auto";
       controlPath = "${tmpdir}/ssh-%u-%r@%h:%p";
       controlPersist = "1800";
