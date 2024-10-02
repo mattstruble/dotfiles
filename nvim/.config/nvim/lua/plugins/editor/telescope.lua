@@ -211,6 +211,7 @@ return {
 						"*.lock",
 						".venv/*",
 						"^.*cache/*",
+						".direnv/*",
 					},
 					vimgrep_arguments = {
 						"rg",
