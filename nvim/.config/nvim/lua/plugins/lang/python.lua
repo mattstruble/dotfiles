@@ -16,6 +16,7 @@ return {
 			local nls = require("null-ls")
 
 			table.insert(opts.sources, nls.builtins.formatting.black)
+			table.insert(opts.sources, nls.builtins.formatting.isort)
 			table.insert(
 				opts.sources,
 				nls.builtins.diagnostics.mypy.with({
@@ -29,6 +30,7 @@ return {
 		opts = {
 			servers = {
 				ruff_lsp = {
+					setup = { autostart = false },
 					init_options = {
 						settings = {
 							args = { "--select", "ALL", "--ignore", "E501,ANN101" },
@@ -36,6 +38,7 @@ return {
 					},
 				},
 				pyright = {
+					setup = { autostart = false },
 					capabilities = (function()
 						local capabilities = vim.lsp.protocol.make_client_capabilities()
 						capabilities.textDocument.publishDiagnostics.tagSupport.valueSet = { 2 }

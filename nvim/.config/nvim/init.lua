@@ -83,24 +83,39 @@ require("lazy").setup({
 			},
 		},
 
+		{
+			"actionshrimp/direnv.nvim",
+			opts = {
+				async = true,
+				on_direnv_finished = function()
+					-- You may also want to pair this with `autostart = false` in any `lspconfig` calls
+					-- vim.cmd("LspStart")
+					vim.cmd("LspRestart")
+				end,
+			},
+		},
+
 		-- nvim-lspconfig global configurations
 		{
 			"neovim/nvim-lspconfig",
             -- stylua: ignore
-			init = function()
-				local keys = require("lazyvim.plugins.lsp.keymaps").get()
-				keys[#keys + 1] = { "gd", function() vim.lsp.buf.definition() end }
-				keys[#keys + 1] = { "gr", function() vim.lsp.buf.references() end }
-				keys[#keys + 1] = { "gD", function() vim.lsp.buf.declaration() end }
-				keys[#keys + 1] = { "K", function() vim.lsp.buf.hover() end }
-				keys[#keys + 1] = { "<leader>rn", function() vim.lsp.buf.rename() end }
-				keys[#keys + 1] = { "<leader>ca", function() vim.lsp.buf.code_action() end }
-				keys[#keys + 1] = { "gl", function() vim.diagnostic.open_float() end }
-				keys[#keys + 1] = { "]d", function() vim.diagnostic.goto_next() end }
-				keys[#keys + 1] = { "[d", function() vim.diagnostic.goto_prev() end }
-				keys[#keys + 1] = { "<leader>f", function() vim.lsp.buf.format({ async = true }) end }
-			end,
+            init = function()
+                local keys = require("lazyvim.plugins.lsp.keymaps").get()
+                keys[#keys + 1] = { "gd", function() vim.lsp.buf.definition() end }
+                keys[#keys + 1] = { "gr", function() vim.lsp.buf.references() end }
+                keys[#keys + 1] = { "gD", function() vim.lsp.buf.declaration() end }
+                keys[#keys + 1] = { "K", function() vim.lsp.buf.hover() end }
+                keys[#keys + 1] = { "<leader>rn", function() vim.lsp.buf.rename() end }
+                keys[#keys + 1] = { "<leader>ca", function() vim.lsp.buf.code_action() end }
+                keys[#keys + 1] = { "gl", function() vim.diagnostic.open_float() end }
+                keys[#keys + 1] = { "]d", function() vim.diagnostic.goto_next() end }
+                keys[#keys + 1] = { "[d", function() vim.diagnostic.goto_prev() end }
+                keys[#keys + 1] = { "<leader>f", function() vim.lsp.buf.format({ async = true }) end }
+            end,
 			opts = {
+				setup = {
+					autostart = false,
+				},
 				diagnostics = {
 					underline = false,
 					update_in_insert = false,
