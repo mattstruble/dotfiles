@@ -114,7 +114,7 @@ require("lazy").setup({
             end,
 			opts = {
 				setup = {
-					autostart = false,
+					-- autostart = false,
 				},
 				diagnostics = {
 					underline = false,

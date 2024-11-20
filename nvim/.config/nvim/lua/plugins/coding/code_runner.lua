@@ -5,14 +5,18 @@
 return {
 	"CRAG666/code_runner.nvim",
 	lazy = true,
+	cmd = "RunCode",
 	config = function()
 		require("code_runner").setup({
-			mode = "toggleterm",
+			-- mode = "tab",
 			filetype = {
-				python = "python $dir/$fileName",
+				python = "python3 -u",
 				lua = "lua $dir/$fileName",
-				c = "cd . && gcc $fileName -o $fileNameWithoutExt && $dir\\$fileNameWithoutExt",
-				cpp = "cd . && g++ $fileName -o $fileNameWithoutExt && $dir\\$fileNameWithoutExt",
+				rust = {
+					"cd $dir &&",
+					"rustc $fileName &&",
+					"$dir/$fileNameWithoutExt",
+				},
 			},
 			term = {
 				position = "bot",

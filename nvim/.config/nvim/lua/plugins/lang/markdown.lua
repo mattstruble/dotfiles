@@ -8,7 +8,6 @@ return {
 		opts = function(_, opts)
 			table.insert(opts.ensure_installed, "markdownlint")
 			table.insert(opts.ensure_installed, "marksman")
-			table.insert(opts.ensure_installed, "prettier")
 		end,
 	},
 	{
@@ -31,6 +30,7 @@ return {
 	{
 		"iamcco/markdown-preview.nvim",
 		lazy = true,
+		enbled = false,
 		cmd = { "MarkdownPreview", "MarkdownPreviewStop", "MarkdownPreviewToggle" },
 		ft = "markdown",
 		build = "cd app && npm install",

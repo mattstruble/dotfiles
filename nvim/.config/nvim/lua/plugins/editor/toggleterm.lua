@@ -6,7 +6,7 @@ return {
 	"akinsho/toggleterm.nvim",
 	version = "*",
 	lazy = true,
-	cmd = "ToggleTerm",
+	cmd = { "ToggleTerm", "TermExec" },
 	config = function()
 		local opts = { noremap = true, silent = true }
 
