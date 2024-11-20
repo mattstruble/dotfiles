@@ -25,6 +25,7 @@ BREW=$(BREW_HOME)/bin/brew
 ### MAKE LOGIC
 ###
 
+export DOTFILES_PATH=${PWD}
 
 ### Make targets
 

@@ -10,6 +10,7 @@ let
   home = builtins.getEnv "HOME";
   tmpdir = "/tmp";
   userName = builtins.getEnv "USER";
+  path = builtins.getEnv "DOTFILES_PATH";
   onePassPath = "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
   # onePassPath = "~/.1password/agent.sock";
 
@@ -71,13 +72,15 @@ in
           ca_certificate = ${ca-bundle_crt}
         '';
 
-        ".direnvrc".source = mkLink ~/dotfiles/direnv/.direnvrc;
-        ".p10k.zsh".source = mkLink ~/dotfiles/p10k/.p10k.zsh;
-        ".vimrc".source = mkLink ~/dotfiles/vim/.vimrc;
+        ".direnvrc".source = mkLink "${path}/direnv/.direnvrc";
+        ".p10k.zsh".source = mkLink "${path}/p10k/.p10k.zsh";
+        ".vimrc".source = mkLink "${path}/vim/.vimrc";
 
-        ".zshrc".source = mkLink ~/dotfiles/zsh/.zshrc;
-        ".zprofile".source = mkLink ~/dotfiles/zsh/.zprofile;
-        ".subzsh".source = mkLink ~/dotfiles/zsh/subzsh;
+        ".zshrc".source = mkLink "${path}/zsh/.zshrc";
+        ".zprofile".source = mkLink "${path}/zsh/.zprofile";
+        ".subzsh".source = mkLink "${path}/zsh/subzsh";
+
+        ".local/bin/vim_opener".source = mkLink "${path}/commands/.local/bin/vim_opener";
       };
   };
 
@@ -86,12 +89,12 @@ in
       mkLink = config.lib.file.mkOutOfStoreSymlink;
     in
     {
-      "aerospace".source = mkLink ~/dotfiles/aerospace/.config/aerospace;
-      "nvim".source = mkLink ~/dotfiles/nvim/.config/nvim;
-      "skhd".source = mkLink ~/dotfiles/skhd/.config/skhd;
-      "tmux".source = mkLink ~/dotfiles/tmux/.config/tmux;
-      "wezterm".source = mkLink ~/dotfiles/wezterm/.config/wezterm;
-      "yabai".source = mkLink ~/dotfiles/yabai/.config/yabai;
+      "aerospace".source = mkLink "${path}/aerospace/.config/aerospace";
+      "nvim".source = mkLink "${path}/nvim/.config/nvim";
+      "skhd".source = mkLink "${path}/skhd/.config/skhd";
+      "tmux".source = mkLink "${path}/tmux/.config/tmux";
+      "wezterm".source = mkLink "${path}/wezterm/.config/wezterm";
+      "yabai".source = mkLink "${path}/yabai/.config/yabai";
 
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support
@@ -399,6 +402,8 @@ in
 
       shellAliases = {
         vi = "nvim";
+        vim = "nvim";
+        v = "vim_opener";
         ls = "${pkgs.coreutils}/bin/ls -h --color=auto";
         sl = "ls";
         grep = "grep --color=auto";
@@ -421,6 +426,9 @@ in
         if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
             . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
         fi
+
+        [ -d "$HOME/bin" ] && PATH="$HOME/bin:$PATH"
+        [ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
       '';
 
       initExtra = ''
@@ -431,6 +439,10 @@ in
         bindkey '^p' history-search-backward
         bindkey '^n' history-search-forward
         bindkey '^[w' kill-region
+
+        bindkey '^[[A' history-substring-search-up # or '\eOA'
+        bindkey '^[[B' history-substring-search-down # or '\eOB'
+        HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
 
         zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
         zstyle ':completion:*' menu no
