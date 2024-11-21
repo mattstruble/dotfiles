@@ -54,7 +54,6 @@ require("lazy").setup({
 		{ import = "lazyvim.plugins.extras.lang.markdown" },
 		{ import = "lazyvim.plugins.extras.lang.ansible" },
 		{ import = "lazyvim.plugins.extras.lang.yaml" },
-		{ import = "lazyvim.plugins.extras.ui.mini-starter" },
 		{ import = "lazyvim.plugins.extras.lsp.none-ls" },
 		{ import = "plugins" },
 		{ import = "plugins.coding" },
@@ -79,7 +78,21 @@ require("lazy").setup({
 			"m4xshen/hardtime.nvim",
 			dependencies = { "MunifTanjim/nui.nvim", "nvim-lua/plenary.nvim" },
 			opts = {
-				disabled_filetypes = { "qf", "netrw", "NvimTree", "lazy", "mason", "toggleterm" },
+				disabled_filetypes = {
+					"qf",
+					"netrw",
+					"NvimTree",
+					"lazy",
+					"mason",
+					"toggleterm",
+					"neo-tree",
+					"neo-tree-popup",
+					"oil",
+				},
+				resetting_keys = {
+					["y"] = {},
+					["p"] = {},
+				},
 			},
 		},
 
