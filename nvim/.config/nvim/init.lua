@@ -66,9 +66,17 @@ require("lazy").setup({
 				local cmp = require("cmp")
 				local cmp_select = { behavior = cmp.SelectBehavior.Select }
 
-				opts.sources = {
-					{ name = "snippets", keyword_length = 3 },
+				opts.completion = {
+					keyword_length = 3,
 				}
+
+				opts.snippet = {
+					expand = function(args)
+						require("luasnip").lsp_expand(args.body)
+					end,
+				}
+
+				table.insert(opts.sources, { name = "luasnip" })
 
 				opts.mapping["<C-p>"] = cmp.mapping.select_prev_item(cmp_select)
 				opts.mapping["<C-n>"] = cmp.mapping.select_next_item(cmp_select)
