@@ -222,6 +222,17 @@ require("lazy").setup({
 				"nvimtools/none-ls-extras.nvim",
 			},
 		},
+
+		{
+			-- TODO: add key maps
+			"nvim-neotest/neotest",
+			dependencies = {
+				"nvim-neotest/nvim-nio",
+				"nvim-lua/plenary.nvim",
+				"antoinemadec/FixCursorHold.nvim",
+				"nvim-treesitter/nvim-treesitter",
+			},
+		},
 	},
 }, opts)
 

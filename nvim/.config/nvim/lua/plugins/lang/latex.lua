@@ -1,3 +1,9 @@
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+	pattern = { "*.tex" },
+	desc = "Set jupyter notebook file types",
+	command = "setfiletype tex",
+})
+
 return {
 	{
 		"williamboman/mason.nvim",
@@ -9,11 +15,14 @@ return {
 		"nvimtools/none-ls.nvim",
 		opts = function(_, opts)
 			local nls = require("null-ls")
+			table.insert(opts.sources, nls.builtins.diagnostics.proselint)
+			table.insert(opts.sources, nls.builtins.diagnostics.textidote)
 		end,
 	},
 	{
 		"abeleinin/papyrus",
 		lazy = true,
+		ft = "tex",
 		config = function()
 			vim.g.papyrus_latex_engine = "pdflatex"
 			vim.g.papyrus_viewer = "zathura"

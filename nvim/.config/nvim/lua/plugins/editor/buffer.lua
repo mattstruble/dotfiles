@@ -22,7 +22,7 @@ return {
 			auto_start = true,
 			ignore_sources = {
 				git = true,
-				patterns = { "%.git/" },
+				patterns = { "%.git/", "%.venv/" },
 				symlink = true,
 			},
 		},

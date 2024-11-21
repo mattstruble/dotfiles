@@ -39,6 +39,7 @@ local toaster = [[
         ]]
 return {
 	"echasnovski/mini.starter",
+	enabled = false,
 	opts = {
 		items = { { name = "", action = "", section = "" } },
 		header = toaster,
