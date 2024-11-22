@@ -19,7 +19,7 @@ in
   black
   cacert
   checkmake
-  coreutils
+  # coreutils
   cowsay
   curl
   darwin.cctools
