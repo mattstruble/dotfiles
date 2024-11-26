@@ -51,5 +51,15 @@ yabai -m rule --add app="^AnyConnect$" manage=off
 yabai -m rule --add app="^Outlook Preferences$" manage=off
 yabai -m rule --add app="^Cisco AnyConnect Secure Mobility Client$" manage=off
 
+# Set applications default space on start
+# Putting ^ before the space number will set focus after it opens
+# https://d12frosted.io/posts/2022-04-23-yabai-spaces.html
+yabai -m rule --add app="^Zen Browser$" space=^1
+yabai -m rule --add app="^WezTerm$" space=^1
+yabai -m rule --add app="^Slack$" space=2
+yabai -m rule --add app="^Microsoft Outlook$" space=2
+yabai -m rule --add app="^Zoom Workplace$" space=3
+yabai -m rule --add app="^Standard Notes$" space=3
+
 # Janky Borders
 borders active_color=0xffe946a7 inactive_color=0xff494d64 width=5.0 &
