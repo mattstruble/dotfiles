@@ -71,6 +71,7 @@ return {
 	},
 	{
 		"rcarriga/nvim-notify",
+		enabled = false,
 		lazy = true,
 		event = "VeryLazy",
 		keys = {
