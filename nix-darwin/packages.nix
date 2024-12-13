@@ -20,6 +20,7 @@ in
   cacert
   checkmake
   # coreutils
+  codespell
   cowsay
   curl
   darwin.cctools
@@ -59,6 +60,7 @@ in
   ldns
   libfido2
   markdownlint-cli
+  mypy
   neovim
   nix-diff
   nix-index
