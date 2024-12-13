@@ -3,6 +3,6 @@
 --------------------
 return {
 	"tpope/vim-surround",
-	event = "InsertEnter",
+	event = "BufReadPost",
 	lazy = true,
 }

@@ -10,9 +10,7 @@ return {
 		"nvim-telescope/telescope.nvim",
 		"nvim-treesitter/nvim-treesitter",
 	},
-	config = function()
-		require("refactoring").setup()
-	end,
+	config = true,
     -- stylua: ignore
     keys = {
         {"<leader>re", "<Esc><Cmd>lua require('refactoring').refactor('Extract Function')<CR>", mode="v", desc="Refactor Extract Function"},
