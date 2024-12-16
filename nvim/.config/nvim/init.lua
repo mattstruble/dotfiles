@@ -44,6 +44,7 @@ require("lazy").setup({
 		},
 		{ import = "lazyvim.plugins" },
 		{ import = "lazyvim.plugins.extras.dap.core" },
+		{ import = "lazyvim.plugins.extras.coding.blink" },
 		{ import = "lazyvim.plugins.extras.lang.python" },
 		{ import = "lazyvim.plugins.extras.lang.docker" },
 		{ import = "lazyvim.plugins.extras.lang.terraform" },
@@ -54,36 +55,48 @@ require("lazy").setup({
 		{ import = "lazyvim.plugins.extras.lang.markdown" },
 		{ import = "lazyvim.plugins.extras.lang.ansible" },
 		{ import = "lazyvim.plugins.extras.lang.yaml" },
+		{ import = "lazyvim.plugins.extras.lang.nix" },
+		{ import = "lazyvim.plugins.extras.lang.toml" },
 		{ import = "lazyvim.plugins.extras.lsp.none-ls" },
 		{ import = "plugins" },
 		{ import = "plugins.coding" },
 		{ import = "plugins.editor" },
 		{ import = "plugins.lang" },
 
+		-- {
+		-- 	"hrsh7th/nvim-cmp",
+		-- 	opts = function(_, opts)
+		-- 		local cmp = require("cmp")
+		-- 		local cmp_select = { behavior = cmp.SelectBehavior.Select }
+		--
+		-- 		opts.completion = {
+		-- 			keyword_length = 3,
+		-- 		}
+		--
+		-- 		opts.snippet = {
+		-- 			expand = function(args)
+		-- 				require("luasnip").lsp_expand(args.body)
+		-- 			end,
+		-- 		}
+		--
+		-- 		table.insert(opts.sources, { name = "luasnip" })
+		--
+		-- 		opts.mapping["<C-p>"] = cmp.mapping.select_prev_item(cmp_select)
+		-- 		opts.mapping["<C-n>"] = cmp.mapping.select_next_item(cmp_select)
+		-- 		opts.mapping["<C-Space>"] = cmp.mapping.complete()
+		-- 		opts.mapping["<Tab>"] = nil
+		-- 		opts.mapping["<S-Tab>"] = nil
+		-- 	end,
+		-- },
 		{
-			"hrsh7th/nvim-cmp",
-			opts = function(_, opts)
-				local cmp = require("cmp")
-				local cmp_select = { behavior = cmp.SelectBehavior.Select }
-
-				opts.completion = {
-					keyword_length = 3,
-				}
-
-				opts.snippet = {
-					expand = function(args)
-						require("luasnip").lsp_expand(args.body)
-					end,
-				}
-
-				table.insert(opts.sources, { name = "luasnip" })
-
-				opts.mapping["<C-p>"] = cmp.mapping.select_prev_item(cmp_select)
-				opts.mapping["<C-n>"] = cmp.mapping.select_next_item(cmp_select)
-				opts.mapping["<C-Space>"] = cmp.mapping.complete()
-				opts.mapping["<Tab>"] = nil
-				opts.mapping["<S-Tab>"] = nil
-			end,
+			"saghen/blink.cmp",
+			opts = {
+				completion = {
+					trigger = {
+						show_on_insert_on_trigger_character = false,
+					},
+				},
+			},
 		},
 
 		{
