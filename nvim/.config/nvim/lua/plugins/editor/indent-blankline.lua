@@ -11,6 +11,7 @@ local highlight = {
 return {
 	{
 		"lukas-reineke/indent-blankline.nvim",
+		enabled = false,
 		lazy = true,
 		main = "ibl",
 		dependencies = { "HiPhish/rainbow-delimiters.nvim" },
@@ -73,6 +74,8 @@ return {
 	},
 	{
 		"lukas-reineke/virt-column.nvim",
+		enabled = false,
+
 		lazy = true,
 		enabled = false,
 		event = {

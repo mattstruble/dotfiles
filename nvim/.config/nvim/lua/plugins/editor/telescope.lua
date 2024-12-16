@@ -4,12 +4,14 @@
 return {
 	{
 		"nvim-telescope/telescope-fzf-native.nvim",
+		enabled = false,
 		lazy = true,
 		build = "make",
 		name = "telescope-fzf",
 	},
 	{
 		"nvim-telescope/telescope-frecency.nvim",
+		enabled = false,
 		lazy = true,
 		enabled = false,
 		dependencies = { "kkharji/sqlite.lua" },
@@ -20,6 +22,7 @@ return {
 
 	{
 		"prochri/telescope-all-recent.nvim",
+		enabled = false,
 		lazy = true,
 		dependencies = { "kkharji/sqlite.lua" },
 		opts = {
@@ -32,6 +35,8 @@ return {
 	},
 	{
 		"ahmedkhalf/project.nvim",
+		enabled = false,
+
 		dependencies = {
 			"nvim-telescope/telescope.nvim",
 		},
@@ -47,6 +52,8 @@ return {
 	},
 	{
 		"nvim-telescope/telescope.nvim",
+		enabled = false,
+
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			"telescope-fzf",

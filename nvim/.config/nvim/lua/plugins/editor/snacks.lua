@@ -3,18 +3,24 @@ return {
 	priority = 1000,
 	lazy = false,
 	opts = {
+		animate = { enabled = true },
 		bigfile = { enabled = true },
 		quickfile = { enabled = true },
 		notifier = {
 			enabled = true,
 			timeout = 3000,
 		},
+		input = { enabled = true },
+		indent = { enabled = true },
 		words = { enabled = true },
+		lazygit = { enabled = true },
+		scroll = { enabled = false },
 		styles = {
 			notifications = {
 				wo = { wrap = true },
 			},
 		},
+		zen = { enabled = true },
 		dashboard = {
 			enabled = true,
 			formats = {
@@ -113,6 +119,13 @@ return {
 				Snacks.rename.rename_file()
 			end,
 			desc = "Rename File",
+		},
+		{
+			"<leader>zz",
+			function()
+				Snacks.zen()
+			end,
+			desc = "Zen mode",
 		},
 	},
 }
