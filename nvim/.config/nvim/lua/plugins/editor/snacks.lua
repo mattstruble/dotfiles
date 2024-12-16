@@ -123,7 +123,7 @@ return {
 		{
 			"<leader>zz",
 			function()
-				Snacks.zen()
+				Snacks.zen.zen()
 			end,
 			desc = "Zen mode",
 		},
