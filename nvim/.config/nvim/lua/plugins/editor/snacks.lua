@@ -3,7 +3,7 @@ return {
 	priority = 1000,
 	lazy = false,
 	opts = {
-		animate = { enabled = true },
+		animate = { enabled = false },
 		bigfile = { enabled = true },
 		quickfile = { enabled = true },
 		notifier = {
