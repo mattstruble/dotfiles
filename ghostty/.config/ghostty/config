@@ -3,7 +3,7 @@ theme = "catppuccin-mocha"
 
 font-family = "Iosevka NFM"
 
-font-size = 18
+font-size = 15
 font-style = SemiBold
 
 mouse-hide-while-typing = true
