@@ -177,6 +177,7 @@ in
       "flux"
       "floorp"
       "font-iosevka-nerd-font"
+      "ghostty"
       "godot"
       "iterm2"
       "mactex"
@@ -352,12 +353,12 @@ in
 
   services = {
     yabai = {
-        enable = true;
-        extraConfig = builtins.readFile ~/.config/yabai/yabairc;
+      enable = true;
+      extraConfig = builtins.readFile ~/.config/yabai/yabairc;
     };
     skhd = {
-        enable = true;
-        skhdConfig = builtins.readFile ~/.config/skhd/skhdrc;
+      enable = true;
+      skhdConfig = builtins.readFile ~/.config/skhd/skhdrc;
     };
   };
 

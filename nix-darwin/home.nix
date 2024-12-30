@@ -95,6 +95,7 @@ in
       "tmux".source = mkLink "${path}/tmux/.config/tmux";
       "wezterm".source = mkLink "${path}/wezterm/.config/wezterm";
       "yabai".source = mkLink "${path}/yabai/.config/yabai";
+      "ghostty".source = mkLink "${path}/ghostty/.config/ghostty";
 
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support
