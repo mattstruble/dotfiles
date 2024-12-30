@@ -1,5 +1,6 @@
 return {
 	"aaronik/treewalker.nvim",
+	enabled = false,
 	keys = {
 		{ "<C-d>", ":Treewalker Down<cr>", desc = "Move Down to next neighbor node" },
 		{ "<C-f>", ":Treewalker Up<cr>", desc = "Move Up to next neighbor node" },

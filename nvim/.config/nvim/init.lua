@@ -117,6 +117,7 @@ require("lazy").setup({
 				resetting_keys = {
 					["y"] = {},
 					["p"] = {},
+					["P"] = {},
 				},
 			},
 		},
