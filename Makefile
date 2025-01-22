@@ -50,6 +50,9 @@ $(NIX-PATH):
 $(NIX-DARWIN): $(BREW) $(NIX-PATH)
 	$(info "Installing nix-darwin")
 	# -sudo mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
+	nix-channel --add https://github.com/LnL7/nix-darwin/archive/nix-darwin-24.11.tar.gz darwin
+	nix-channel --update
+	nix-build https://github.com/LnL7/nix-darwin/archive/nix-darwin-24.11.tar.gz -A darwin-rebuild
 	cd nix-darwin && ${NIX-PATH} run nix-darwin -- switch --flake . --impure
 
 $(XCODE):
@@ -94,7 +97,7 @@ setup: install
 ### REBUILD
 
 .PHONY: nix_rebuild
-nix_rebuild: $(NIX-DARWIN)
+nix_rebuild:
 	cd nix-darwin && darwin-rebuild switch --flake . --impure
 
 .PHONY: rebuild refresh
@@ -106,16 +109,16 @@ refresh: rebuild
 
 .PHONY: update_nix
 update_nix: $(NIX-DARWIN-PATH)
-	nix-channel --update darwin
-	darwin-rebuild changelog
+	nix-channel --update
+	cd nix-darwin && nix flake update
 
 .PHONY: update
-update: update_nix
+update: update_nix rebuild
 
 ### CLEAN
 
 clean_nix:
-	nix-collect-garbage
+	nix-store --gc
 
 clean: clean_nix
 

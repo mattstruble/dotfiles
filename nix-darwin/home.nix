@@ -141,16 +141,16 @@ in
 
     home-manager = {
       enable = true;
-      path = "${config.xdg.configHome}/nix/home-manager";
+      # path = "${config.xdg.configHome}/nix/home-manager";
     };
 
-    texlive = {
-      enable = true;
-      extraPackages = tpkgs: {
-        inherit (tpkgs) scheme-full texdoc latex2e-help-texinfo;
-        pkgFilter = pkg: pkg.tlType == "run" || pkg.tlType == "bin" || pkg.pname == "latex2e-help-texinfo";
-      };
-    };
+    # texlive = {
+    #   enable = true;
+    #   extraPackages = tpkgs: {
+    #     inherit (tpkgs) scheme-full texdoc latex2e-help-texinfo;
+    #     pkgFilter = pkg: pkg.tlType == "run" || pkg.tlType == "bin" || pkg.pname == "latex2e-help-texinfo";
+    #   };
+    # };
 
     fzf = {
       enable = true;

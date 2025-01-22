@@ -13,14 +13,16 @@ let
   xdg_configHome = "${home}/.config";
   xdg_dataHome = "${home}/local/share";
   xdg_cacheHome = "${home}/.cache";
+  path = builtins.getEnv "DOTFILES_PATH";
 
 in
 {
   security.pam.enableSudoTouchIdAuth = true;
 
+  environment.darwinConfig = "${path}/nix-darwin";
+
   services = {
     nix-daemon.enable = true;
-    activate-system.enable = true;
   };
 
   users = {
