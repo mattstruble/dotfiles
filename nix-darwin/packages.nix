@@ -108,7 +108,6 @@ in
   rsync
   ruby
   ruff
-  ruff-lsp
   rustup
   rustfmt
   shfmt

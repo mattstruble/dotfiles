@@ -148,7 +148,7 @@ require("lazy").setup({
 			"neovim/nvim-lspconfig",
 			opts = {
 				setup = {
-					-- autostart = false,
+					autostart = false,
 				},
 				diagnostics = {
 					underline = false,
@@ -169,7 +169,7 @@ require("lazy").setup({
 					},
 				},
 				inlay_hints = { enabled = false },
-				autoformate = true,
+				autoformat = true,
 				format_notify = false,
 			},
 		},
