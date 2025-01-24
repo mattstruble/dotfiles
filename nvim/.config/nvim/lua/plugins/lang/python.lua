@@ -6,7 +6,6 @@ return {
 		opts = {
 			ensure_installed = {
 				"ruff",
-				"mypy",
 				"debugpy",
 			},
 		},
@@ -15,7 +14,7 @@ return {
 		"mfussenegger/nvim-lint",
 		opts = {
 			linters_by_ft = {
-				python = { "ruff", "pydocstyle" },
+				python = { "pydocstyle" },
 			},
 		},
 	},
