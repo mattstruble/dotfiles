@@ -1,18 +1,21 @@
 return {
 	{
 		"williamboman/mason.nvim",
-		opts = function(_, opts)
-			table.insert(opts.ensure_installed, "actionlint")
-			table.insert(opts.ensure_installed, "gitlint")
-		end,
+		opts = {
+			ensure_installed = {
+				"actionlint",
+				"gitlint",
+			},
+		},
 	},
 	{
-		"nvimtools/none-ls.nvim",
-		opts = function(_, opts)
-			local nls = require("null-ls")
-
-			table.insert(opts.sources, nls.builtins.code_actions.gitsigns)
-		end,
+		"mfussenegger/nvim-lint",
+		opts = {
+			linters_by_ft = {
+				yaml = { "actionlint" },
+				git = { "gitlint" },
+			},
+		},
 	},
 	{
 		"wintermute-cell/gitignore.nvim",

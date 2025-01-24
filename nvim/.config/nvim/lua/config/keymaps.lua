@@ -42,7 +42,7 @@ vim.keymap.set("v", "y", "ygv<esc>")
 ---
 -- The Primeagen
 ---
-keymap.set("n", "<leader>f", vim.lsp.buf.format)
+keymap.set("n", "<leader>f", require("conform").format)
 
 -- Allow highlighting and moving blocks of code in visual mode
 keymap.set("v", "J", ":m '>+1<CR>gv=gv")

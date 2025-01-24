@@ -1,17 +1,19 @@
 return {
 	{
 		"williamboman/mason.nvim",
-		opts = function(_, opts)
-			table.insert(opts.ensure_installed, "ansible-lint")
-			table.insert(opts.ensure_installed, "ansible-language-server")
-		end,
+		opts = {
+			ensure_installed = {
+				"ansible-lint",
+				"ansible-language-server",
+			},
+		},
 	},
 	{
-		"nvimtools/none-ls.nvim",
-		opts = function(_, opts)
-			local nls = require("null-ls")
-
-			table.insert(opts.sources, nls.builtins.diagnostics.ansiblelint)
-		end,
+		"mfussenegger/nvim-lint",
+		opts = {
+			linters_by_ft = {
+				ansible = { "ansible_lint" },
+			},
+		},
 	},
 }

@@ -2,15 +2,17 @@ return {
 	{
 		"williamboman/mason.nvim",
 		opts = {
-			"shfmt",
-			"bash-language-server",
+			ensure_installed = {
+				"yamllint",
+				"yamlfmt",
+			},
 		},
 	},
 	{
 		"mfussenegger/nvim-lint",
 		opts = {
 			linters_by_ft = {
-				sh = { "shellcheck" },
+				yaml = { "yamllint" },
 			},
 		},
 	},
@@ -18,7 +20,7 @@ return {
 		"stevearc/conform.nvim",
 		opts = {
 			formatters_by_ft = {
-				sh = { "shfmt", "shellharden" },
+				yaml = { "yamlfmt" },
 			},
 		},
 	},

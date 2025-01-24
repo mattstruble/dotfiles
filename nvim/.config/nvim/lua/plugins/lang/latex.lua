@@ -7,9 +7,27 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
 return {
 	{
 		"williamboman/mason.nvim",
-		opts = function(_, opts)
-			table.insert(opts.ensure_installed, "ltex-ls")
-		end,
+		opts = {
+			ensure_installed = {
+				"ltex-ls",
+			},
+		},
+	},
+	{
+		"mfussenegger/nvim-lint",
+		opts = {
+			linters_by_ft = {
+				python = { "lacheck" },
+			},
+		},
+	},
+	{
+		"stevearc/conform.nvim",
+		opts = {
+			formatters_by_ft = {
+				tex = { "tex-fmt" },
+			},
+		},
 	},
 	{
 		"nvimtools/none-ls.nvim",

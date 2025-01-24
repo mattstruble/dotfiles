@@ -57,7 +57,7 @@ require("lazy").setup({
 		{ import = "lazyvim.plugins.extras.lang.yaml" },
 		{ import = "lazyvim.plugins.extras.lang.nix" },
 		{ import = "lazyvim.plugins.extras.lang.toml" },
-		{ import = "lazyvim.plugins.extras.lsp.none-ls" },
+		-- { import = "lazyvim.plugins.extras.lsp.none-ls" },
 		{ import = "plugins" },
 		{ import = "plugins.coding" },
 		{ import = "plugins.editor" },
@@ -133,6 +133,17 @@ require("lazy").setup({
 				end,
 			},
 		},
+
+		-- conform global configurations
+		-- {
+		-- 	"stevearc/conform.nvim",
+		-- 	opts = {
+		-- 		format_on_save = {
+		-- 			timeout_ms = 500,
+		-- 			lsp_format = "fallback",
+		-- 		},
+		-- 	},
+		-- },
 
 		-- nvim-lspconfig global configurations
 		{

@@ -39,6 +39,8 @@ in
   gitMinimal
   git-extras
   git-crypt
+  gitlint
+  gdtoolkit_4
   gnugrep
   gnumake
   gnupg
@@ -117,6 +119,7 @@ in
   sqlite
   sqlite-analyzer
   sqldiff
+  sqruff
   squashfsTools
   stern
   stow
@@ -125,6 +128,8 @@ in
   terraform-lsp
   terminal-notifier
   # texliveSmall
+  texlivePackages.lacheck
+  tex-fmt
   tmux
   translate-shell
   tree
@@ -136,6 +141,7 @@ in
   wget
   write-good
   yabai
+  yamlfmt
   yaml-language-server
   yamllint
   yarn

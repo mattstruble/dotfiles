@@ -1,22 +1,45 @@
 return {
 	{
 		"williamboman/mason.nvim",
-		opts = function(_, opts)
-			table.insert(opts.ensure_installed, "rust-analyzer")
-			table.insert(opts.ensure_installed, "codelldb")
-		end,
+		opts = {
+			ensure_installed = {
+				"rust-analyzer",
+				"codelldb",
+				"rustfmt",
+			},
+		},
 	},
 	{
 		"nvim-treesitter/nvim-treesitter",
-		opts = function(_, opts)
-			table.insert(opts.ensure_installed, "rust")
-		end,
+		opts = {
+			ensure_installed = { "rust" },
+		},
 	},
 	{
-		"nvimtools/none-ls.nvim",
-		opts = function(_, opts)
-			local nls = require("null-ls")
-		end,
+		"stevearc/conform.nvim",
+		opts = {
+			formatters_by_ft = {
+				rust = { "rustfmt", lsp_format = "fallback" },
+			},
+		},
+	},
+	{
+		"mfussenegger/nvim-lint",
+		opts = {
+			linters = {
+				cargo = {
+					cmd = "cargo",
+					stdin = false,
+					args = { "check" },
+					stream = "both",
+					ignore_exitcode = false,
+					env = nil,
+				},
+			},
+			linters_by_ft = {
+				rust = { "cargo" },
+			},
+		},
 	},
 	{
 		"neovim/nvim-lspconfig",

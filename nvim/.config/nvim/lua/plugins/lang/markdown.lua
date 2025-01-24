@@ -5,19 +5,29 @@
 return {
 	{
 		"williamboman/mason.nvim",
-		opts = function(_, opts)
-			table.insert(opts.ensure_installed, "markdownlint")
-			table.insert(opts.ensure_installed, "marksman")
-		end,
+		opts = {
+			ensure_installed = {
+				"markdownlint",
+				"marksman",
+				"markdownfmt",
+			},
+		},
 	},
 	{
-		"nvimtools/none-ls.nvim",
-		opts = function(_, opts)
-			local nls = require("null-ls")
-
-			table.insert(opts.sources, nls.builtins.formatting.markdownlint)
-			table.insert(opts.sources, nls.builtins.diagnostics.markdownlint)
-		end,
+		"mfussenegger/nvim-lint",
+		opts = {
+			linters_by_ft = {
+				markdown = { "markdownlint" },
+			},
+		},
+	},
+	{
+		"stevearc/conform.nvim",
+		opts = {
+			formatters_by_ft = {
+				markdown = { "markdownfmt" },
+			},
+		},
 	},
 	{
 		"mzlogin/vim-markdown-toc",

@@ -3,27 +3,28 @@ local py = require("utils.python")
 return {
 	{
 		"williamboman/mason.nvim",
-		opts = function(_, opts)
-			table.insert(opts.ensure_installed, "black")
-			table.insert(opts.ensure_installed, "ruff")
-			table.insert(opts.ensure_installed, "debugpy")
-			table.insert(opts.ensure_installed, "mypy")
-		end,
+		opts = {
+			ensure_installed = {
+				"ruff",
+				"mypy",
+			},
+		},
 	},
 	{
-		"nvimtools/none-ls.nvim",
-		opts = function(_, opts)
-			local nls = require("null-ls")
-
-			table.insert(opts.sources, nls.builtins.formatting.black)
-			table.insert(opts.sources, nls.builtins.formatting.isort)
-			table.insert(
-				opts.sources,
-				nls.builtins.diagnostics.mypy.with({
-					extra_args = { "--ignore-missing-imports" },
-				})
-			)
-		end,
+		"mfussenegger/nvim-lint",
+		opts = {
+			linters_by_ft = {
+				python = { "mypy", "ruff", "pydocstyle" },
+			},
+		},
+	},
+	{
+		"stevearc/conform.nvim",
+		opts = {
+			formatters_by_ft = {
+				python = { "ruff_fix", "ruff_format" },
+			},
+		},
 	},
 	{
 		"neovim/nvim-lspconfig",
