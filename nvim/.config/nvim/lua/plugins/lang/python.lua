@@ -14,7 +14,7 @@ return {
 		"mfussenegger/nvim-lint",
 		opts = {
 			linters_by_ft = {
-				python = { "mypy", "ruff", "pydocstyle" },
+				python = { "ruff", "pydocstyle" },
 			},
 		},
 	},
@@ -30,14 +30,6 @@ return {
 		"neovim/nvim-lspconfig",
 		opts = {
 			servers = {
-				ruff_lsp = {
-					setup = { autostart = false },
-					init_options = {
-						settings = {
-							args = { "--select", "ALL", "--ignore", "E501,ANN101" },
-						},
-					},
-				},
 				pyright = {
 					setup = { autostart = false },
 					capabilities = (function()
