@@ -30,14 +30,6 @@ return {
 		},
 	},
 	{
-		"nvimtools/none-ls.nvim",
-		opts = function(_, opts)
-			local nls = require("null-ls")
-			table.insert(opts.sources, nls.builtins.diagnostics.proselint)
-			table.insert(opts.sources, nls.builtins.diagnostics.textidote)
-		end,
-	},
-	{
 		"abeleinin/papyrus",
 		lazy = true,
 		ft = "tex",

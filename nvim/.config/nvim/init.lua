@@ -57,7 +57,6 @@ require("lazy").setup({
 		{ import = "lazyvim.plugins.extras.lang.yaml" },
 		{ import = "lazyvim.plugins.extras.lang.nix" },
 		{ import = "lazyvim.plugins.extras.lang.toml" },
-		-- { import = "lazyvim.plugins.extras.lsp.none-ls" },
 		{ import = "plugins" },
 		{ import = "plugins.coding" },
 		{ import = "plugins.editor" },
@@ -242,7 +241,6 @@ require("lazy").setup({
 			"hinell/lsp-timeout.nvim",
 			enabled = false,
 			dependencies = {
-				"nvimtools/none-ls.nvim",
 				"neovim/nvim-lspconfig",
 			},
 		},
@@ -250,13 +248,6 @@ require("lazy").setup({
 		{
 			"nvim-pack/nvim-spectre",
 			enabled = false,
-		},
-
-		{
-			"nvimtools/none-ls.nvim",
-			dependencies = {
-				"nvimtools/none-ls-extras.nvim",
-			},
 		},
 
 		{
