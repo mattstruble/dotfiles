@@ -7,6 +7,7 @@ return {
 			ensure_installed = {
 				"ruff",
 				"mypy",
+				"debugpy",
 			},
 		},
 	},
@@ -61,6 +62,7 @@ return {
 	},
 	{
 		"nvim-neotest/neotest",
+		dependencies = { "nvim-neotest/neotest-python" },
 		opts = {
 			adapters = {
 				["neotest-python"] = {
@@ -72,6 +74,7 @@ return {
 	},
 	{
 		"mfussenegger/nvim-dap",
+		dependencies = { "mfussenegger/nvim-dap-python" },
 		config = function()
 			local path = require("mason-registry").get_package("debugpy"):get_install_path()
 			require("dap-python").setup(path .. "/venv/bin/python")
