@@ -118,10 +118,31 @@ update: update_nix rebuild
 
 ### CLEAN
 
+.PHONY: clean_nix
 clean_nix:
 	nix-store --gc
 
+.PHONY: clean
 clean: clean_nix
+
+### UNINSTALL
+
+.PHONY: uninstall-nix-darwin
+uninstall-nix-darwin:
+	-yes | darwin-uninstaller
+
+.PHONY: uninstall-nix
+uninstall-nix: uninstall-nix-darwin
+	-yes | /nix/nix-installer uninstall
+
+.PHONY: uninstall-config
+uninstall-config:
+	rm -rf ~/.config/*
+
+.PHONY: uninstall
+uninstall: uninstall-nix uninstall-config
+
+
 
 ### CONFIGURE
 
