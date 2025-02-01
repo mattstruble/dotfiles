@@ -49,8 +49,6 @@ in
 
     settings = {
       allow-dirty = true;
-      # allow-import-from-derivation = true;
-      # auto-optimise-store = true;
 
       allowed-users = [ "*" ];
 
@@ -205,6 +203,7 @@ in
       "Grab2Text" = 6475956137;
       "Pure Paste" = 1611378436;
       "Slack" = 803453959;
+      "TickTick" = 966085870;
       "Velja" = 1607635845;
       "Unsplash Wallpapers" = 1284863847;
     };
