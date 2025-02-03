@@ -1,4 +1,12 @@
+let
+  home = builtins.getEnv "HOME";
+in
 {
+  home = {
+    sessionVariables = {
+      OBSIDIAN_VAULT = "${home}/Library/CloudStorage/Box-Box/Obsidian/Vault";
+    };
+  };
   programs = {
     git = {
       userName = "Matt Struble";
