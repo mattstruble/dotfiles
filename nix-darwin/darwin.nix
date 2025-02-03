@@ -183,6 +183,7 @@ in
       "mactex"
       "menuwhere"
       "monitorcontrol"
+      "obsidian"
       "only-switch"
       "scroll-reverser"
       "standard-notes"
