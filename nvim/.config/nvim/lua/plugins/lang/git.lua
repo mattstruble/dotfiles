@@ -19,6 +19,7 @@ return {
 	},
 	{
 		"wintermute-cell/gitignore.nvim",
+		enabled = false,
 		lazy = true,
 		dependencies = {
 			"nvim-telescope/telescope.nvim",

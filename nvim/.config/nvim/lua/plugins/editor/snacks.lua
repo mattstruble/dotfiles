@@ -5,16 +5,25 @@ return {
 	opts = {
 		animate = { enabled = false },
 		bigfile = { enabled = true },
+		explorer = {
+			replace_netrw = true,
+		},
 		quickfile = { enabled = true },
 		notifier = {
 			enabled = true,
 			timeout = 3000,
+		},
+		picker = {
+			matcher = {
+				frecency = true,
+			},
 		},
 		input = { enabled = true },
 		indent = { enabled = true },
 		words = { enabled = true },
 		lazygit = { enabled = true },
 		scroll = { enabled = false },
+		statuscolumn = { enabled = true },
 		styles = {
 			notifications = {
 				wo = { wrap = true },
