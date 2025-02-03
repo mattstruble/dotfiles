@@ -51,9 +51,6 @@ $(NIX-PATH):
 $(NIX-DARWIN): $(BREW) $(NIX-PATH)
 	$(info "Installing nix-darwin")
 	# -sudo mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
-	nix-channel --add https://github.com/LnL7/nix-darwin/archive/nix-darwin-24.11.tar.gz darwin
-	nix-channel --update
-	nix-build https://github.com/LnL7/nix-darwin/archive/nix-darwin-24.11.tar.gz -A darwin-rebuild
 	cd nix-darwin && ${NIX-PATH} run nix-darwin -- switch --flake . --impure
 
 $(XCODE):
