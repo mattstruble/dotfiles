@@ -36,7 +36,7 @@ in
   fortune
   fzf
   fzf-zsh
-  gitMinimal
+  # gitMinimal
   git-extras
   git-crypt
   gitlint
@@ -63,7 +63,7 @@ in
   libfido2
   markdownlint-cli
   mypy
-  neovim
+  # neovim
   nix-diff
   nix-index
   nix-info
@@ -108,12 +108,12 @@ in
   rsync
   ruby
   ruff
-  rustup
+  # rustup
   rustfmt
   shfmt
   shellcheck
   shellharden
-  skhd
+  # skhd
   sops
   sqlite
   sqlite-analyzer
@@ -139,7 +139,7 @@ in
   virtualenv
   wget
   write-good
-  yabai
+  # yabai
   yamlfmt
   yaml-language-server
   yamllint

@@ -144,6 +144,9 @@ in
       autoUpdate = true;
       upgrade = true;
       cleanup = "zap";
+      extraFlags = [
+        "--force"
+      ];
     };
 
     taps = [
@@ -158,7 +161,7 @@ in
       "bibtexconv"
       "borders"
       # "docker"
-      "docker-completion"
+      # "docker-completion"
       "gimme-aws-creds"
       "ical-buddy"
       "markdown-toc"
@@ -166,7 +169,9 @@ in
       "poetry"
       "pyenv-virtualenv"
       # "python-toml"
-      "pyyaml"
+      # "pyyaml"
+      "yabai"
+      "skhd"
     ];
 
     casks = [
@@ -179,8 +184,8 @@ in
       "font-iosevka-nerd-font"
       "ghostty"
       "godot"
-      "iterm2"
-      "mactex"
+      # "iterm2"
+      # "mactex"
       "menuwhere"
       "monitorcontrol"
       "obsidian"
@@ -190,7 +195,7 @@ in
       # "vagrant"
       # "virtualbox"
       "wacom-tablet"
-      "wezterm"
+      # "wezterm"
       "yubico-yubikey-manager"
       "zen-browser"
     ];
@@ -363,28 +368,28 @@ in
       skhdConfig = builtins.readFile ~/.config/skhd/skhdrc;
     };
   };
-
-  launchd =
-    let
-      iterate = StartInterval: {
-        inherit StartInterval;
-        Nice = 5;
-        LowPriorityIO = true;
-        AbandonProcessGroup = true;
-      };
-      runCommand = command: {
-        inherit command;
-        serviceConfig.RunAtLoad = true;
-        serviceConfig.KeepAlive = true;
-      };
-    in
-    {
-      user.agents = {
-        # skhd = runCommand "${pkgs.skhd}";
-        # yabai = runCommand "${pkgs.yabai}";
-      };
-    };
-
+  #
+  # launchd =
+  #   let
+  #     iterate = StartInterval: {
+  #       inherit StartInterval;
+  #       Nice = 5;
+  #       LowPriorityIO = true;
+  #       AbandonProcessGroup = true;
+  #     };
+  #     runCommand = command: {
+  #       inherit command;
+  #       serviceConfig.RunAtLoad = true;
+  #       serviceConfig.KeepAlive = true;
+  #     };
+  #   in
+  #   {
+  #     user.agents = {
+  #       skhd = runCommand "${pkgs.skhd}";
+  #       yabai = runCommand "${pkgs.yabai}";
+  #     };
+  #   };
+  #
   # };
 
 }
