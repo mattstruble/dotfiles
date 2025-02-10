@@ -18,6 +18,7 @@ in
   perl
   black
   cacert
+  cargo
   checkmake
   # coreutils
   codespell
@@ -61,7 +62,9 @@ in
   libevent
   ldns
   libfido2
+  luarocks
   markdownlint-cli
+  markdownlint-cli2
   mypy
   # neovim
   nix-diff
