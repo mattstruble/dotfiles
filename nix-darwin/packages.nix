@@ -66,7 +66,7 @@ in
   markdownlint-cli
   markdownlint-cli2
   mypy
-  # neovim
+  neovim
   nix-diff
   nix-index
   nix-info
