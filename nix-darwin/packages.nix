@@ -125,6 +125,7 @@ in
   terraform
   terraform-ls
   terraform-lsp
+  terragrunt
   terminal-notifier
   # texliveSmall
   texlivePackages.lacheck
