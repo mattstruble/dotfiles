@@ -7,6 +7,9 @@ return {
 	lazy = true,
 	ft = "markdown",
 	opts = {
+		completion = {
+			nvim_cmp = true,
+		},
 		workspaces = {
 			{
 				name = "vault",

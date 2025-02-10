@@ -88,10 +88,20 @@ require("lazy").setup({
 		-- },
 		{
 			"saghen/blink.cmp",
+			dependencies = {
+				{ "saghen/blink.compat", lazy = true, version = false },
+			},
 			opts = {
 				completion = {
 					trigger = {
 						show_on_insert_on_trigger_character = false,
+					},
+				},
+				sources = {
+					compat = {
+						"obsidian",
+						"obsidian_new",
+						"obsidian_tags",
 					},
 				},
 			},

@@ -40,7 +40,7 @@ return {
 	{
 		"iamcco/markdown-preview.nvim",
 		lazy = true,
-		enbled = false,
+		enbaled = false,
 		cmd = { "MarkdownPreview", "MarkdownPreviewStop", "MarkdownPreviewToggle" },
 		ft = "markdown",
 		build = "cd app && npm install",
