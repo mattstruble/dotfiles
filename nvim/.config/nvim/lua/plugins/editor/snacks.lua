@@ -17,6 +17,7 @@ return {
 			matcher = {
 				frecency = true,
 			},
+			ui_select = true,
 		},
 		input = { enabled = true },
 		indent = { enabled = true },
