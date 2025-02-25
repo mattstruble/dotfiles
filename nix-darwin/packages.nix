@@ -38,7 +38,7 @@ in
   fzf
   fzf-zsh
   gitMinimal
-  # git-extras
+  git-extras
   # git-crypt
   gitlint
   gdtoolkit_4
