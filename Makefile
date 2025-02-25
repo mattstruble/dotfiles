@@ -43,7 +43,7 @@ $(BREW):
 # https://zero-to-nix.com/start/install
 $(NIX-PATH):
 	$(info "Installing nix...")
-	curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix/tag/${DETERMINATE_VERSION} | sh -s -- install
+	curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 	@echo "Hello Nix" | nix run "https://flakehub.com/f/NixOS/nixpkgs/*#ponysay"
 	nix-env -f '<nixpkgs>' -iA nixVersions.latest --impure --keep-going
 

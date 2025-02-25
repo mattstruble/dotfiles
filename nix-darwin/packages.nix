@@ -116,7 +116,7 @@ in
   shfmt
   shellcheck
   shellharden
-  # skhd
+  skhd
   sops
   sqlite
   sqlite-analyzer
@@ -143,7 +143,7 @@ in
   virtualenv
   wget
   write-good
-  # yabai
+  yabai
   yamlfmt
   yaml-language-server
   yamllint

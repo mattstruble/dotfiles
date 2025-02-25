@@ -57,6 +57,7 @@
         in
         {
           MacStruble = configure "MacStruble" "x86_64-darwin";
+          APKQTFWJ12ED96 = configure "APKQTFWJ12ED96" "aarch64-darwin";
           AP94ML85DF565C = configure "AP94ML85DF565C" "x86_64-darwin";
         };
 

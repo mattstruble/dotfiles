@@ -21,9 +21,9 @@ in
 
   environment.darwinConfig = "${path}/nix-darwin";
 
-  services = {
-    nix-daemon.enable = true;
-  };
+  # services = {
+  #   nix-daemon.enable = true;
+  # };
 
   users = {
     users."${userName}" = {
@@ -34,17 +34,18 @@ in
   };
 
   nix = {
+    enable = false;
     package = pkgs.nix;
-    useDaemon = true;
+    # useDaemon = true;
 
     gc = {
-      automatic = true;
-      options = "--delete-older-than 30d";
+      #automatic = true;
+      #options = "--delete-older-than 30d";
     };
 
     optimise = {
-      user = "${userName}";
-      automatic = true;
+      #user = "${userName}";
+      #automatic = true;
     };
 
     settings = {
@@ -170,8 +171,8 @@ in
       "pyenv-virtualenv"
       # "python-toml"
       # "pyyaml"
-      "yabai"
-      "skhd"
+      # "yabai"
+      # "skhd"
     ];
 
     casks = [
@@ -198,6 +199,7 @@ in
       # "wezterm"
       "yubico-yubikey-manager"
       "zen-browser"
+      "zoom"
     ];
 
     masApps = {
