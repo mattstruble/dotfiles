@@ -154,6 +154,7 @@ in
       "1password/tap"
       "FelixKratz/formulae"
       "koekeishiya/formulae"
+      "nikitabobko/tap"
     ];
 
     brews = [
@@ -164,6 +165,7 @@ in
       # "docker"
       # "docker-completion"
       "gimme-aws-creds"
+      "git-credential-oauth"
       "ical-buddy"
       "markdown-toc"
       "mas"
@@ -178,6 +180,7 @@ in
     casks = [
       "1password"
       "1password-cli"
+      "aerospace"
       "alfred"
       "docker"
       "flux"
@@ -360,16 +363,16 @@ in
     };
   };
 
-  services = {
-    yabai = {
-      enable = true;
-      extraConfig = builtins.readFile ~/.config/yabai/yabairc;
-    };
-    skhd = {
-      enable = true;
-      skhdConfig = builtins.readFile ~/.config/skhd/skhdrc;
-    };
-  };
+  # services = {
+  #   yabai = {
+  #     enable = true;
+  #     extraConfig = builtins.readFile ~/.config/yabai/yabairc;
+  #   };
+  #   skhd = {
+  #     enable = true;
+  #     skhdConfig = builtins.readFile ~/.config/skhd/skhdrc;
+  #   };
+  # };
   #
   # launchd =
   #   let

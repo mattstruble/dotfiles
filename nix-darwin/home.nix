@@ -91,10 +91,10 @@ in
     {
       "aerospace".source = mkLink "${path}/aerospace/.config/aerospace";
       "nvim".source = mkLink "${path}/nvim/.config/nvim";
-      "skhd".source = mkLink "${path}/skhd/.config/skhd";
+      # "skhd".source = mkLink "${path}/skhd/.config/skhd";
       "tmux".source = mkLink "${path}/tmux/.config/tmux";
       "wezterm".source = mkLink "${path}/wezterm/.config/wezterm";
-      "yabai".source = mkLink "${path}/yabai/.config/yabai";
+      # "yabai".source = mkLink "${path}/yabai/.config/yabai";
       "ghostty".source = mkLink "${path}/ghostty/.config/ghostty";
 
       "gnupg/gpg-agent.conf".text = ''
