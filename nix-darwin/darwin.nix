@@ -17,8 +17,8 @@ let
 
 in
 {
-  security.pam.enableSudoTouchIdAuth = true;
-
+  # security.pam.enableSudoTouchIdAuth = true;
+  security.pam.services.sudo_local.touchIdAuth = true;
   environment.darwinConfig = "${path}/nix-darwin";
 
   # services = {

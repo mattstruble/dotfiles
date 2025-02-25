@@ -197,7 +197,7 @@ in
 
     git = {
       enable = true;
-      package = pkgs.gitFull;
+      package = pkgs.gitMinimal;
 
       signing = {
         key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEM+saqSDNRJt5qpi6lltteSsdY7wNVz5Is2ywVFcyzv";

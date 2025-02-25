@@ -37,9 +37,9 @@ in
   fortune
   fzf
   fzf-zsh
-  # gitMinimal
-  git-extras
-  git-crypt
+  gitMinimal
+  # git-extras
+  # git-crypt
   gitlint
   gdtoolkit_4
   gnugrep
