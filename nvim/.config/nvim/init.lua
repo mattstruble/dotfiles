@@ -61,31 +61,6 @@ require("lazy").setup({
         { import = "plugins.editor" },
         { import = "plugins.lang" },
 
-        -- {
-        -- 	"hrsh7th/nvim-cmp",
-        -- 	opts = function(_, opts)
-        -- 		local cmp = require("cmp")
-        -- 		local cmp_select = { behavior = cmp.SelectBehavior.Select }
-        --
-        -- 		opts.completion = {
-        -- 			keyword_length = 3,
-        -- 		}
-        --
-        -- 		opts.snippet = {
-        -- 			expand = function(args)
-        -- 				require("luasnip").lsp_expand(args.body)
-        -- 			end,
-        -- 		}
-        --
-        -- 		table.insert(opts.sources, { name = "luasnip" })
-        --
-        -- 		opts.mapping["<C-p>"] = cmp.mapping.select_prev_item(cmp_select)
-        -- 		opts.mapping["<C-n>"] = cmp.mapping.select_next_item(cmp_select)
-        -- 		opts.mapping["<C-Space>"] = cmp.mapping.complete()
-        -- 		opts.mapping["<Tab>"] = nil
-        -- 		opts.mapping["<S-Tab>"] = nil
-        -- 	end,
-        -- },
         {
             "saghen/blink.cmp",
             dependencies = {
@@ -161,18 +136,7 @@ require("lazy").setup({
             },
         },
 
-        -- conform global configurations
-        -- {
-        -- 	"stevearc/conform.nvim",
-        -- 	opts = {
-        -- 		format_on_save = {
-        -- 			timeout_ms = 500,
-        -- 			lsp_format = "fallback",
-        -- 		},
-        -- 	},
-        -- },
-
-        -- nvim-lspconfig global configurations
+        -- LSP global configurations
         {
             "neovim/nvim-lspconfig",
             opts = {
@@ -264,15 +228,6 @@ require("lazy").setup({
             priority = 1000, -- load this first
         },
 
-        -- -- Keep LSP ram usage low
-        -- {
-        --     "hinell/lsp-timeout.nvim",
-        --     enabled = false,
-        --     dependencies = {
-        --         "neovim/nvim-lspconfig",
-        --     },
-        -- },
-
         {
             "zeioth/garbage-day.nvim",
             dependencies = "neovim/nvim-lspconfig",
@@ -320,5 +275,18 @@ vim.api.nvim_create_autocmd("BufReadPost", {
         if mark[1] > 0 and mark[1] <= lcount then
             pcall(vim.api.nvim_win_set_cursor, 0, mark)
         end
+    end,
+})
+
+-- Show LSP diagnostics on hover
+-- https://github.com/neovim/nvim-lspconfig/wiki/UI-Customization#show-line-diagnostics-automatically-in-hover-window
+-- https://www.reddit.com/r/neovim/comments/1168p97/how_can_i_make_lspconfig_wrap_around_these_hints/
+vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+    group = vim.api.nvim_create_augroup("float_diagnostic", { clear = true }),
+    callback = function()
+        vim.diagnostic.open_float(nil, {
+            focus = false,
+            border = "rounded",
+        })
     end,
 })

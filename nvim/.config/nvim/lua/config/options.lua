@@ -50,3 +50,9 @@ opt.splitbelow = true
 
 opt.iskeyword:append("-")
 opt.updatetime = 50
+
+-- Show LSP diagnostics (inlay hints) in a hover window / popup
+-- https://github.com/neovim/nvim-lspconfig/wiki/UI-Customization#show-line-diagnostics-automatically-in-hover-window
+-- https://www.reddit.com/r/neovim/comments/1168p97/how_can_i_make_lspconfig_wrap_around_these_hints/
+-- Time it takes to show the popup after you hover over the line with an error
+vim.o.updatetime = 400
