@@ -38,6 +38,7 @@ in
       VAGRANT_HOME = "${config.xdg.dataHome}/vagrant";
       TZ = "America/New_York";
       EDITOR = "nvim";
+      XDG_CONFIG_HOME = "${config.xdg.configHome}";
 
       VAGRANT_DEFAULT_PROVIDER = "vmware_desktop";
       VAGRANT_VMWARE_CLONE_DIRECTORY = "${home}/Machines/vagrant";
