@@ -18,6 +18,8 @@ let
   ca-bundle_crt = "${ca-bundle_path}/ca-bundle.crt";
   brew_path =
     if pkgs.stdenv.targetPlatform.isx86_64 then "/usr/local/Homebrew/bin" else "/opt/homebrew/bin";
+  globalPackages = import ./packages.nix pkgs;
+  localPackages = import ./hosts/${hostname}/packages.nix pkgs;
 in
 {
   imports = [ ./hosts/${hostname}/home.nix ];
@@ -26,7 +28,7 @@ in
     stateVersion = "23.11";
     enableNixpkgsReleaseCheck = false;
 
-    packages = import ./packages.nix pkgs;
+    packages = globalPackages ++ localPackages;
 
     sessionVariables = {
       FONTCONFIG_FILE = "${config.xdg.configHome}/fontconfig/fonts.conf";

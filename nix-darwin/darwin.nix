@@ -132,13 +132,6 @@ in
 
   fonts.packages = with pkgs; [ iosevka ];
 
-  # progams = {
-  #     zsh = {
-  #         enable = true;
-  #         enableCompletion = false;
-  #     }
-  # };
-
   homebrew = {
     enable = true;
     onActivation = {
@@ -188,18 +181,13 @@ in
       "font-iosevka-nerd-font"
       "ghostty"
       "godot"
-      # "iterm2"
-      # "mactex"
       "menuwhere"
       "monitorcontrol"
       "obsidian"
       "only-switch"
       "scroll-reverser"
       "standard-notes"
-      # "vagrant"
-      # "virtualbox"
       "wacom-tablet"
-      # "wezterm"
       "yubico-yubikey-manager"
       "zen-browser"
       "zoom"
