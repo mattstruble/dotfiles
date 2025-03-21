@@ -19,7 +19,9 @@ in
 {
   # security.pam.enableSudoTouchIdAuth = true;
   security.pam.services.sudo_local.touchIdAuth = true;
-  environment.darwinConfig = "${path}/nix-darwin";
+  environment = {
+    darwinConfig = "${path}/nix-darwin";
+  };
 
   # services = {
   #   nix-daemon.enable = true;
@@ -146,51 +148,31 @@ in
     taps = [
       "1password/tap"
       "FelixKratz/formulae"
-      "koekeishiya/formulae"
       "nikitabobko/tap"
     ];
 
     brews = [
-      "aws-shell"
-      "bibtex2html"
       "bibtexconv"
       "borders"
-      # "docker"
-      # "docker-completion"
-      "gimme-aws-creds"
-      "git-credential-oauth"
       "ical-buddy"
       "markdown-toc"
-      "mas"
-      "poetry"
       "pyenv-virtualenv"
-      # "python-toml"
-      # "pyyaml"
-      # "yabai"
-      # "skhd"
     ];
 
     casks = [
       "1password"
-      "1password-cli"
       "aerospace"
       "alfred"
-      "docker"
       "flux"
-      "floorp"
       "font-iosevka-nerd-font"
       "ghostty"
-      "godot"
       "menuwhere"
       "monitorcontrol"
       "obsidian"
       "only-switch"
       "scroll-reverser"
-      "standard-notes"
       "wacom-tablet"
-      "yubico-yubikey-manager"
       "zen-browser"
-      "zoom"
     ];
 
     masApps = {

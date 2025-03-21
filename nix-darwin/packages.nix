@@ -7,8 +7,7 @@ let
     if pkgs.stdenv.targetPlatform.isx86_64 then haskell.lib.justStaticExecutables else pkgs.lib.id;
 in
 [
-  # _1password  # currently labeled as broken
-  # _1password-gui
+  _1password-cli
   asciidoctor
   aspell
   aspellDicts.en
@@ -16,11 +15,11 @@ in
   ansible-lint
   awscli2
   perl
+  bibtex2html
   black
   cacert
   cargo
   checkmake
-  # coreutils
   codespell
   cowsay
   curl
@@ -28,20 +27,17 @@ in
   diffstat
   diffutils
   direnv
-  # docker
-  # docker-client
-  # docker-compose
   docutils
   fd
   ffmpeg
   fortune
   fzf
   fzf-zsh
+  gimme-aws-creds
   gitMinimal
   git-extras
-  # git-crypt
+  git-credential-oauth
   gitlint
-  gdtoolkit_4
   gnugrep
   gnumake
   gnupg
@@ -65,8 +61,9 @@ in
   luarocks
   markdownlint-cli
   markdownlint-cli2
+  mas
   mypy
-  neovim
+  (pkgs.lowPrio neovim)
   nix-diff
   nix-index
   nix-info
@@ -80,7 +77,6 @@ in
   nodePackages.eslint
   nodePackages.js-beautify
   nodejs
-  obsidian
   opam
   openjdk
   opensc
@@ -94,10 +90,10 @@ in
   perlPackages.ImageExifTool
   pinentry_mac
   plantuml
+  poetry
   postgresql
   pre-commit
   protobufc
-  protonmail-bridge
   psrecord
   pstree
   pv
@@ -111,12 +107,10 @@ in
   rsync
   ruby
   ruff
-  # rustup
   rustfmt
   shfmt
   shellcheck
   shellharden
-  # skhd
   sops
   sqlite
   sqlite-analyzer
@@ -130,7 +124,6 @@ in
   terraform-lsp
   terragrunt
   terminal-notifier
-  # texliveSmall
   texlivePackages.lacheck
   tex-fmt
   tmux
@@ -143,7 +136,6 @@ in
   virtualenv
   wget
   write-good
-  # yabai
   yamlfmt
   yaml-language-server
   yamllint

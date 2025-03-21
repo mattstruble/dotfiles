@@ -18,7 +18,7 @@
   };
 
   outputs =
-    inputs: with inputs; rec {
+    inputs: with inputs; {
       darwinConfigurations =
         let
           userName = builtins.getEnv "USER";
@@ -29,7 +29,7 @@
                 inherit system;
                 config = {
                   allowUnfree = true;
-                  allowBroken = false;
+                  allowBroken = true;
                   allowInsecure = false;
                   allowUnsupportedSystem = false;
                 };
@@ -58,11 +58,13 @@
         {
           MacStruble = configure "MacStruble" "x86_64-darwin";
           APKQTFWJ12ED96 = configure "APKQTFWJ12ED96" "aarch64-darwin";
-          AP94ML85DF565C = configure "AP94ML85DF565C" "x86_64-darwin";
         };
 
       # Expose the package set, including overlays, for convenience.
-      darwinPackages = self.darwinConfigurations."MacStruble".pkgs;
+      darwinPackages = {
+        "MacStruble" = self.darwinConfigurations."MacStruble".pkgs;
+        "APKQTFWJ12ED96" = self.darwinConfigurations."APKQTFWJ12ED96".pkgs;
+      };
     };
 
 }
