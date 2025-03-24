@@ -30,7 +30,7 @@
                 inherit system;
                 config = {
                   allowUnfree = true;
-                  allowBroken = true;
+                  allowBroken = false;
                   allowInsecure = false;
                   allowUnsupportedSystem = false;
                 };

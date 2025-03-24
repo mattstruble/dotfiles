@@ -161,14 +161,12 @@ in
 
     casks = [
       "1password"
-      "aerospace"
       "alfred"
       "flux"
       "font-iosevka-nerd-font"
       "ghostty"
       "menuwhere"
       "monitorcontrol"
-      "obsidian"
       "only-switch"
       "scroll-reverser"
       "wacom-tablet"

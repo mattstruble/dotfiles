@@ -8,6 +8,7 @@ let
 in
 [
   _1password-cli
+  aerospace
   asciidoctor
   aspell
   aspellDicts.en
@@ -30,6 +31,7 @@ in
   docutils
   fd
   ffmpeg
+  firefox
   fortune
   fzf
   fzf-zsh

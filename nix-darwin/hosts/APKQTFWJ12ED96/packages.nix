@@ -7,5 +7,6 @@ let
     if pkgs.stdenv.targetPlatform.isx86_64 then haskell.lib.justStaticExecutables else pkgs.lib.id;
 in
 [
+  # github-desktop
   # zoom-us
 ]
