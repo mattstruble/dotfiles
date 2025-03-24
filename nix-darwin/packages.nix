@@ -31,7 +31,6 @@ in
   docutils
   fd
   ffmpeg
-  firefox
   fortune
   fzf
   fzf-zsh

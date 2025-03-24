@@ -20,7 +20,10 @@ let
     if pkgs.stdenv.targetPlatform.isx86_64 then "/usr/local/Homebrew/bin" else "/opt/homebrew/bin";
 in
 {
-  imports = [ ./hosts/${hostname}/home.nix ];
+  imports = [
+    ./hosts/${hostname}/home.nix
+    ./programs/firefox.nix
+  ];
 
   home = {
     stateVersion = "23.11";
