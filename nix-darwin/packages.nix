@@ -77,6 +77,7 @@ in
   nodePackages.eslint
   nodePackages.js-beautify
   nodejs
+  obsidian
   opam
   openjdk
   opensc

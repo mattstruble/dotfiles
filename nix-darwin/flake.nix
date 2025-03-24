@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -40,6 +41,14 @@
                 inherit hostname inputs;
               };
               modules = [
+                nix-homebrew.darwinModules.nix-homebrew
+                {
+                  nix-homebrew = {
+                    enable = true;
+                    user = "${userName}";
+                    autoMigrate = true;
+                  };
+                }
                 ./darwin.nix
                 home-manager.darwinModules.home-manager
                 {

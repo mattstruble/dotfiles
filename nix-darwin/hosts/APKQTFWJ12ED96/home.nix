@@ -2,6 +2,7 @@ let
   home = builtins.getEnv "HOME";
 in
 {
+  imports = [ ../../profiles/macos.nix ];
   home = {
     sessionVariables = {
       OBSIDIAN_VAULT = "${home}/Library/CloudStorage/Box-Box/Obsidian/Vault";

@@ -333,38 +333,4 @@ in
     };
   };
 
-  # services = {
-  #   yabai = {
-  #     enable = true;
-  #     extraConfig = builtins.readFile ~/.config/yabai/yabairc;
-  #   };
-  #   skhd = {
-  #     enable = true;
-  #     skhdConfig = builtins.readFile ~/.config/skhd/skhdrc;
-  #   };
-  # };
-  #
-  # launchd =
-  #   let
-  #     iterate = StartInterval: {
-  #       inherit StartInterval;
-  #       Nice = 5;
-  #       LowPriorityIO = true;
-  #       AbandonProcessGroup = true;
-  #     };
-  #     runCommand = command: {
-  #       inherit command;
-  #       serviceConfig.RunAtLoad = true;
-  #       serviceConfig.KeepAlive = true;
-  #     };
-  #   in
-  #   {
-  #     user.agents = {
-  #       skhd = runCommand "${pkgs.skhd}";
-  #       yabai = runCommand "${pkgs.yabai}";
-  #     };
-  #   };
-  #
-  # };
-
 }

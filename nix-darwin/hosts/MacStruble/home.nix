@@ -1,4 +1,5 @@
 {
+  imports = [ ../../profiles/macos.nix ];
   programs = {
     git = {
       userName = "Matt Struble";
