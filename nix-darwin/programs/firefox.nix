@@ -156,9 +156,11 @@ in
               (extension "sponsorblock" "sponsorBlocker@ajay.app")
               (extension "unpaywall" "{f209234a-76f0-4735-9920-eb62507a54cd}")
               (extension "vimium-ff" "{d7742d87-e61d-4b78-b8a1-b469842139fa}")
+              (extension "random_user_agent" "{b43b974b-1d3a-4232-b226-eaa2ac6ebb69}")
             ];
 
           "3rdparty".Extensions = {
+            # uBlock Origin
             "uBlock0@raymondhill.net".adminSettings = {
               userSettings = rec {
                 cloudStorageEnabled = lib.mkForce false;
@@ -218,6 +220,7 @@ in
           # https://avoidthehack.com/firefox-privacy-config
           # https://privacysavvy.com/security/safe-browsing/firefox-privacy-security-ultimate-guide/
           # https://allaboutcookies.org/firefox-privacy-settings
+          # https://www.privacyguides.org/en/desktop-browsers/#recommended-firefox-configuration
           Preferences = {
             "beacon.enabled" = false; # stops sending additional analytics to webservers
             "browser.topsites.contile.enabled" = lock-false;
@@ -236,6 +239,7 @@ in
             "browser.newtabpage.activity-stream.system.showSponsored" = lock-false;
             "browser.newtabpage.activity-stream.showSponsoredTopSites" = lock-false;
             "browser.newtabpage.activity-stream.telemetry" = lock-false;
+            "browser.preferences.defaultPerformanceSettings.enabled" = false;
             "browser.send_pings" = false; # prevent websites from tracking clicks
             "browser.urlbar.speculativeConnect.enabled" = lock-false; # stops prefetching urls to prevent unwanted connections
             "cookiebanners.service.mode" = 1; # auto reject cookie banner
@@ -245,6 +249,8 @@ in
             "extensions.screenshots.disabled" = lock-true;
             "extensions.formautofill.addresses.enabled" = lock-false;
             "geo.enabled" = lock-false; # Disables geolaction tracking
+            "layers.acceleration.disabled" = true;
+            "media.autoplay.blocking_policy" = 2;
             "media.navigator.enabled" = lock-false; # Prevents websites from retrieving webcam / microphone status
             "media.peerconnection.enabled" = lock-false; # disable webrtc
             "media.videocontrols.picture-in-picture.enable-when-switching-tabs.enabled" = lock-true;
@@ -260,6 +266,7 @@ in
             "privacy.firstparty.isolate" = true;
             "privacy.globalprivacycontrol.enabled" = lock-true;
             "privacy.resistFingerprinting" = true; # More resistant browser fingerprinting
+            "privacy.resistFingerprinting.letterboxing" = true;
             "privacy.trackingprotection.socialtracking.enabled" = lock-true;
             "sidebar.verticalTabs" = true;
             "sidebar.revamp" = true;
@@ -269,6 +276,7 @@ in
               "launcherVisible" = false;
             };
             "sidebar.visibility" = "always-show";
+            "signon.management.page.breach-alerts.enabled" = false; # Disable firefox password checking against a breach database
             "webgl.disabled" = true; # prevent fingerprinting
           };
         };
