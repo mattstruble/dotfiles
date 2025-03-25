@@ -7,6 +7,7 @@
 
   # Replace default symlinking functionality with copying
   # https://github.com/YorikSar/dotfiles/blob/f83b0b5f32d9f6f410eafe42be44d2a14b7effb8/nix/profiles/macos.nix
+  # FIXME: Get xattr working in nix rebuild so that unchanged apps aren't copied every time
   home.file."Applications/Home Manager Apps".enable = false;
   home.activation.copyApps =
     let

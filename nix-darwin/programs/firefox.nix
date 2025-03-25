@@ -1,7 +1,12 @@
 # Configure firefox addons and settings
 # https://discourse.nixos.org/t/declare-firefox-extensions-and-settings/36265
 # https://github.com/Kreyren/nixos-config/blob/bd4765eb802a0371de7291980ce999ccff59d619/nixos/users/kreyren/home/modules/web-browsers/firefox/firefox.nix#L116-L148
-{ config, pkgs, ... }:
+{ self
+, config
+, pkgs
+, lib
+, ...
+}:
 
 let
   lock-false = {
@@ -27,7 +32,6 @@ in
           BackgroundAppUpdate = false;
           DefaultDownloadDirectory = "~/Downloads/";
           DisableAccounts = true;
-          DisableDesktopBackground = true;
           DisableFirefoxScreenshots = true;
           DisableFirefoxStudies = true;
           DisableForgetButton = true;
@@ -35,7 +39,7 @@ in
           DisableMasterPasswordCreation = true;
           DisablePasswordReveal = true;
           DisableProfileImport = true;
-          DisableProfileRefresh = true;
+          DisableProfileRefresh = false;
           DisablePocket = true;
           DisableTelemetry = true;
           DisplayBookmarksToolbar = "never";
@@ -154,15 +158,68 @@ in
               (extension "vimium-ff" "{d7742d87-e61d-4b78-b8a1-b469842139fa}")
             ];
 
+          "3rdparty".Extensions = {
+            "uBlock0@raymondhill.net".adminSettings = {
+              userSettings = rec {
+                cloudStorageEnabled = lib.mkForce false;
+                importedLists = [
+                  "https://big.oisd.nl"
+                  "https://github.com/DandelionSprout/adfilt/raw/master/LegitimateURLShortener.txt"
+                  # https://github.com/mchangrh/yt-neuter/blob/main/README.md
+                  "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/yt-neuter.txt"
+                  "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/sponsorblock.txt"
+                  "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/noview.txt"
+                ];
+                externalLists = lib.concatStringsSep "\n" importedLists;
+              };
+              selectedFilterLists = [
+                "adguard-annoyance"
+                "adguard-cookies"
+                "adguard-generic"
+                "adguard-mobile"
+                "adguard-mobile-app-banners"
+                "adguard-other-annoyances"
+                "adguard-popup-overlays"
+                "adguard-social"
+                "adguard-spyware"
+                "adguard-spyware-url"
+                "adguard-widgets"
+                "block-lan"
+                "curben-phishing"
+                "dpollock-0"
+                "easylist"
+                "easyprivacy"
+                "plowe-0"
+                "ublock-abuse"
+                "ublock-annoyances"
+                "ublock-cookies-adguard"
+                "ublock-badware"
+                "ublock-filters"
+                "ublock-privacy"
+                "ublock-quick-fixes"
+                "ublock-unbreak"
+                "urlhaus-1"
+                "https://big.oisd.nl"
+                "https://github.com/DandelionSprout/adfilt/raw/master/LegitimateURLShortener.txt"
+                "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/yt-neuter.txt"
+                "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/sponsorblock.txt"
+                "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/noview.txt"
+              ];
+              hiddenSettings = {
+                # https://github.com/mchangrh/yt-neuter/blob/main/README.md#scriptlets
+                userResourceLocation = "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/scriptlets.js";
+              };
+            };
+
+          };
+
           # --- PREFERENCES ---
           # Check about:config for options
           # https://avoidthehack.com/firefox-privacy-config
           # https://privacysavvy.com/security/safe-browsing/firefox-privacy-security-ultimate-guide/
           # https://allaboutcookies.org/firefox-privacy-settings
           Preferences = {
-            "extensions.pocket.enabled" = lock-false;
-            "extensions.screenshots.disabled" = lock-true;
-            "extensions.formautofill.addresses.enabled" = lock-false;
+            "beacon.enabled" = false; # stops sending additional analytics to webservers
             "browser.topsites.contile.enabled" = lock-false;
             "browser.formfill.enable" = lock-false;
             "browser.search.suggest.enabled" = lock-false;
@@ -178,22 +235,32 @@ in
             "browser.newtabpage.activity-stream.showSponsored" = lock-false;
             "browser.newtabpage.activity-stream.system.showSponsored" = lock-false;
             "browser.newtabpage.activity-stream.showSponsoredTopSites" = lock-false;
-            "privacy.trackingprotection.socialtracking.enabled" = lock-true;
-            "privacy.donottrackheader.enabled" = lock-true;
-            "media.peerconnection.enabled" = lock-false;
-            "geo.enabled" = lock-false;
-            "network.cookie.cookieBehavior" = 4; # Cookie Jar
-            "media.navigator.enabled" = lock-false;
-            "dom.event.clipboardevents.enabled" = lock-false;
-            "privacy.globalprivacycontrol.enabled" = lock-true;
-            "privacy.fingerprintingProtection" = lock-true;
-            "privacy.resistFingerprinting" = lock-true;
-            "privacy.firstparty.isolate" = lock-true;
-            "browser.send_pings" = lock-false;
-            "beacon.enabled" = lock-false;
-            "privacy.bounceTrackingProtection.mode" = 1;
-
+            "browser.newtabpage.activity-stream.telemetry" = lock-false;
+            "browser.send_pings" = false; # prevent websites from tracking clicks
+            "browser.urlbar.speculativeConnect.enabled" = lock-false; # stops prefetching urls to prevent unwanted connections
+            "cookiebanners.service.mode" = 1; # auto reject cookie banner
+            "cookiebanners.service.mode.privateBrowsing" = 1; # auto reject cookie banner
+            "dom.event.clipboardevents.enabled" = lock-false; # Prevents data collection on what's copied
+            "extensions.pocket.enabled" = lock-false;
+            "extensions.screenshots.disabled" = lock-true;
+            "extensions.formautofill.addresses.enabled" = lock-false;
+            "geo.enabled" = lock-false; # Disables geolaction tracking
+            "media.navigator.enabled" = lock-false; # Prevents websites from retrieving webcam / microphone status
+            "media.peerconnection.enabled" = lock-false; # disable webrtc
             "media.videocontrols.picture-in-picture.enable-when-switching-tabs.enabled" = lock-true;
+            "network.cookie.cookieBehavior" = 4; # Cookie Jar, prevents storage to known trackers
+            "network.http.referer.XOriginPolicy" = 1; # Send referrer to only same top-level domain
+            "network.http.referer.XOriginTrimmingPolicy" = 2; # Send referrer with only scheme,host, and port information
+            # "network.dns.disablePrefetch" = lock-false;
+            # "network.predictor.enabled" = lock-true;
+            # "network.prefetch-next" = lock-true;
+            "privacy.bounceTrackingProtection.mode" = 1; # Detects and blocks trackers
+            "privacy.donottrackheader.enabled" = true;
+            "privacy.fingerprintingProtection" = lock-true;
+            "privacy.firstparty.isolate" = true;
+            "privacy.globalprivacycontrol.enabled" = lock-true;
+            "privacy.resistFingerprinting" = true; # More resistant browser fingerprinting
+            "privacy.trackingprotection.socialtracking.enabled" = lock-true;
             "sidebar.verticalTabs" = true;
             "sidebar.revamp" = true;
             "sidebar.backupState" = {
@@ -202,14 +269,7 @@ in
               "launcherVisible" = false;
             };
             "sidebar.visibility" = "always-show";
-
-            "network.http.referer.XOriginPolicy" = 1;
-            "network.http.referer.XOriginTrimmingPolicy" = 2;
-            "browser.urlbar.speculativeConnect.enabled" = lock-false;
-            "network.dns.disablePrefetch" = lock-true;
-            "network.predictor.enabled" = lock-false;
-            "network.prefetch-next" = lock-false;
-            "cookiebanners.service.mode.privateBrowsing" = 1;
+            "webgl.disabled" = true; # prevent fingerprinting
           };
         };
       };
