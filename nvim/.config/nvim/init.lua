@@ -16,7 +16,7 @@ vim.opt.rtp:prepend(lazypath)
 
 local opts = {
     install = {
-        colorscheme = { "nightfly" },
+        colorscheme = { "catppuccin-mocha" },
     },
     ui = {
         border = "rounded",
@@ -26,7 +26,6 @@ local opts = {
     },
 }
 
--- require("lazy").setup("plugins", opts)
 require("lazy").setup({
     spec = {
         {
@@ -252,15 +251,6 @@ require("lazy").setup({
     },
 }, opts)
 
--- rounded borders
-vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
-    border = "rounded",
-})
-
-vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
-    border = "rounded",
-})
-
 -- Diagnostics
 vim.fn.sign_define("DiagnosticSignError", { text = " ", texthl = "DiagnosticSignError" })
 vim.fn.sign_define("DiagnosticSignWarn", { text = " ", texthl = "DiagnosticSignWarn" })
@@ -278,15 +268,14 @@ vim.api.nvim_create_autocmd("BufReadPost", {
     end,
 })
 
--- Show LSP diagnostics on hover
--- https://github.com/neovim/nvim-lspconfig/wiki/UI-Customization#show-line-diagnostics-automatically-in-hover-window
--- https://www.reddit.com/r/neovim/comments/1168p97/how_can_i_make_lspconfig_wrap_around_these_hints/
-vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
-    group = vim.api.nvim_create_augroup("float_diagnostic", { clear = true }),
-    callback = function()
-        vim.diagnostic.open_float(nil, {
-            focus = false,
-            border = "rounded",
-        })
-    end,
+-- Show LSP diagnostics on hover using new neovim 0.11 virtual lines
+-- https://gpanders.com/blog/whats-new-in-neovim-0-11/#virtual-lines
+vim.diagnostic.config({
+    virtual_text = false,
+    virtual_lines = {
+        current_line = true,
+    },
+    severity_sort = true,
+    underline = true,
+    signs = true
 })
