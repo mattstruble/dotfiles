@@ -157,6 +157,7 @@ in
               (extension "unpaywall" "{f209234a-76f0-4735-9920-eb62507a54cd}")
               (extension "vimium-ff" "{d7742d87-e61d-4b78-b8a1-b469842139fa}")
               (extension "random_user_agent" "{b43b974b-1d3a-4232-b226-eaa2ac6ebb69}")
+              (extension "refined-github-" "{a4c4eda4-fb84-4a84-b4a1-f7c1cbf2a1ad}")
             ];
 
           "3rdparty".Extensions = {
@@ -255,8 +256,8 @@ in
             "media.peerconnection.enabled" = lock-false; # disable webrtc
             "media.videocontrols.picture-in-picture.enable-when-switching-tabs.enabled" = lock-true;
             "network.cookie.cookieBehavior" = 4; # Cookie Jar, prevents storage to known trackers
-            "network.http.referer.XOriginPolicy" = 1; # Send referrer to only same top-level domain
-            "network.http.referer.XOriginTrimmingPolicy" = 2; # Send referrer with only scheme,host, and port information
+            # "network.http.referer.XOriginPolicy" = 1; # Send referrer to only same top-level domain
+            # "network.http.referer.XOriginTrimmingPolicy" = 2; # Send referrer with only scheme,host, and port information
             # "network.dns.disablePrefetch" = lock-false;
             # "network.predictor.enabled" = lock-true;
             # "network.prefetch-next" = lock-true;
