@@ -140,7 +140,7 @@ require("lazy").setup({
             "neovim/nvim-lspconfig",
             opts = {
                 setup = {
-                    autostart = false,
+                    autostart = true,
                 },
                 diagnostics = {
                     underline = false,
@@ -160,7 +160,7 @@ require("lazy").setup({
                         prefix = "",
                     },
                 },
-                inlay_hints = { enabled = false },
+                inlay_hints = { enabled = true },
                 autoformat = true,
                 format_notify = false,
             },
@@ -220,7 +220,7 @@ require("lazy").setup({
             },
         },
 
-        -- cache plugins so they load faster
+        -- Cache plugins so they load faster
         {
             "lewis6991/impatient.nvim",
             lazy = false,
