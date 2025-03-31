@@ -1,9 +1,3 @@
-vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-    pattern = { "*.tex" },
-    desc = "Set jupyter notebook file types",
-    command = "setfiletype tex",
-})
-
 return {
     {
         "williamboman/mason.nvim",

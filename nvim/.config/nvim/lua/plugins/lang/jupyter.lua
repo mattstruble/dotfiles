@@ -1,9 +1,3 @@
-vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-    pattern = { "*.ipynb" },
-    desc = "Set jupyter notebook file types",
-    command = "setfiletype jupyter",
-})
-
 return {
     "GCBallesteros/NotebookNavigator.nvim",
     keys = {
