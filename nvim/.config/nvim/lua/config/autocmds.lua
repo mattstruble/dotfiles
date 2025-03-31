@@ -8,26 +8,7 @@ A.nvim_create_autocmd("TextYankPost", {
     callback = function() vim.highlight.on_yank() end,
 })
 
--- Tweak terminal on open and go into insert mode
--- https://github.com/aorith/dotfiles/blob/f9069ac4ac165af7429bff0327ef38fee7d723dd/topics/neovim/nvim/lua/aorith/core/autocmds.lua
-A.nvim_create_autocmd("TermOpen", {
-    group = my_au,
-    callback = function()
-        vim.opt.number = false
-        vim.opt.relativenumber = false
-        vim.opt.signcolumn = "no"
-        A.nvim_command("startinsert")
-    end,
-})
-
--- Automatically close terminal Buffers when their Process is done
--- https://github.com/aorith/dotfiles/blob/f9069ac4ac165af7429bff0327ef38fee7d723dd/topics/neovim/nvim/lua/aorith/core/autocmds.lua
-vim.api.nvim_create_autocmd("TermClose", {
-    group = my_au,
-    callback = function() vim.cmd("bdelete") end,
-})
-
--- go to the last line before closing the file
+-- Go to the last line before closing the file
 -- https://github.com/aorith/dotfiles/blob/f9069ac4ac165af7429bff0327ef38fee7d723dd/topics/neovim/nvim/lua/aorith/core/autocmds.lua
 A.nvim_create_autocmd("BufReadPost", {
     group = my_au,
@@ -39,7 +20,7 @@ A.nvim_create_autocmd("BufReadPost", {
     end,
 })
 
--- close some filetypes with <q>
+-- Close some filetypes with <q>
 -- https://github.com/aorith/dotfiles/blob/f9069ac4ac165af7429bff0327ef38fee7d723dd/topics/neovim/nvim/lua/aorith/core/autocmds.lua
 A.nvim_create_autocmd("FileType", {
     group = my_au,
