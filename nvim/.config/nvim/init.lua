@@ -220,13 +220,6 @@ require("lazy").setup({
             },
         },
 
-        -- Cache plugins so they load faster
-        {
-            "lewis6991/impatient.nvim",
-            lazy = false,
-            priority = 1000, -- load this first
-        },
-
         {
             "zeioth/garbage-day.nvim",
             dependencies = "neovim/nvim-lspconfig",
