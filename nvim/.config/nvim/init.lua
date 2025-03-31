@@ -273,3 +273,31 @@ vim.diagnostic.config({
     underline = true,
     signs = true
 })
+
+-- Show LSP diagnostics (inlay hints) in a hover window / popup
+-- https://github.com/neovim/nvim-lspconfig/wiki/UI-Customization#show-line-diagnostics-automatically-in-hover-window
+-- https://www.reddit.com/r/neovim/comments/1168p97/how_can_i_make_lspconfig_wrap_around_these_hints/
+-- Time it takes to show the popup after you hover over the line with an error
+vim.o.updatetime = 400
+
+-- LSP Folding
+-- https://old.reddit.com/r/neovim/comments/1jmqd7t/sorry_ufo_these_7_lines_replaced_you/
+vim.o.foldenable = true
+vim.o.foldlevel = 99
+vim.o.foldmethod = "expr"
+vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.o.foldtext = ""
+
+-- https://old.reddit.com/r/neovim/comments/1jmqd7t/sorry_ufo_these_7_lines_replaced_you/mkec07y/?context=2
+vim.api.nvim_create_autocmd("LspAttach", {
+    callback = function(args)
+        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        if client and client:supports_method("textDocument/foldingRange") then
+            local win = vim.api.nvim_get_current_win()
+
+            vim.wo[win][0].foldmethod = "expr"
+            vim.wo[win][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
+        end
+    end,
+})
+vim.api.nvim_create_autocmd("LspDetach", { command = "setl foldexpr<" })
