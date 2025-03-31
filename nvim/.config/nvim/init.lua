@@ -168,6 +168,9 @@ require("lazy").setup({
 
         {
             "nvim-neo-tree/neo-tree.nvim",
+            lazy = false,
+            ---@module "neo-tree"
+            ---@type neotree.Config
             opts = {
                 close_if_last_window = true,
                 default_component_configs = {
