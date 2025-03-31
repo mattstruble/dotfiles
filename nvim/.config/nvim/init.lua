@@ -247,17 +247,6 @@ require("lazy").setup({
     },
 }, opts)
 
--- Automatically jump to the last cursor spot in file before exiting
-vim.api.nvim_create_autocmd("BufReadPost", {
-    callback = function()
-        local mark = vim.api.nvim_buf_get_mark(0, '"')
-        local lcount = vim.api.nvim_buf_line_count(0)
-        if mark[1] > 0 and mark[1] <= lcount then
-            pcall(vim.api.nvim_win_set_cursor, 0, mark)
-        end
-    end,
-})
-
 -- Show LSP diagnostics on hover using new neovim 0.11 virtual lines
 -- https://gpanders.com/blog/whats-new-in-neovim-0-11/#virtual-lines
 vim.diagnostic.config({
@@ -267,7 +256,14 @@ vim.diagnostic.config({
     },
     severity_sort = true,
     underline = true,
-    signs = true
+    signs = true,
+    float = {
+        focusable = false,
+        style = "minimal",
+        border = "rounded",
+        source = true,
+        header = "",
+    }
 })
 
 -- Show LSP diagnostics (inlay hints) in a hover window / popup
@@ -283,17 +279,3 @@ vim.o.foldlevel = 99
 vim.o.foldmethod = "expr"
 vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.o.foldtext = ""
-
--- https://old.reddit.com/r/neovim/comments/1jmqd7t/sorry_ufo_these_7_lines_replaced_you/mkec07y/?context=2
-vim.api.nvim_create_autocmd("LspAttach", {
-    callback = function(args)
-        local client = vim.lsp.get_client_by_id(args.data.client_id)
-        if client and client:supports_method("textDocument/foldingRange") then
-            local win = vim.api.nvim_get_current_win()
-
-            vim.wo[win][0].foldmethod = "expr"
-            vim.wo[win][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
-        end
-    end,
-})
-vim.api.nvim_create_autocmd("LspDetach", { command = "setl foldexpr<" })
