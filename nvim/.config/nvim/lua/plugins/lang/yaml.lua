@@ -20,7 +20,7 @@ return {
     "stevearc/conform.nvim",
     opts = {
       formatters_by_ft = {
-        yaml = { "yamlfmt" },
+        yaml = { "yamlfmt", "trim_newlines" },
       },
     },
   },
