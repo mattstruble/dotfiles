@@ -14,6 +14,8 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+require("globals")
+
 local opts = {
   install = {
     colorscheme = { "catppuccin-mocha" },
@@ -33,10 +35,10 @@ require("lazy").setup({
       opts = {
         icons = {
           diagnostics = {
-            Error = " ",
-            Warn = " ",
-            Hint = " ",
-            Info = " ",
+            Error = tools.ui.diagnostics.error_cod,
+            Warn = tools.ui.diagnostics.warn_cod,
+            Hint = tools.ui.diagnostics.hint_cod,
+            Info = tools.ui.diagnostics.info_cod,
           },
         },
       },

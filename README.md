@@ -44,3 +44,4 @@ and their own dotfile repositories.
 - <https://github.com/younger-1/nvim/>
 - <https://github.com/avocadeys/NVCat>
 - <https://github.com/aorith/dotfiles>
+- <https://github.com/mcauley-penney/nvim>
