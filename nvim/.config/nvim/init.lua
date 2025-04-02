@@ -8,7 +8,7 @@ if not vim.loop.fs_stat(lazypath) then
     "clone",
     "--filter=blob:none",
     "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable",     -- latest stable release
+    "--branch=stable", -- latest stable release
     lazypath,
   })
 end
@@ -63,15 +63,18 @@ require("lazy").setup({
     {
       "saghen/blink.cmp",
       dependencies = {
-        { "saghen/blink.compat", lazy = true, version = false },
+        { "saghen/blink.compat",      lazy = true, version = false },
+        { "echasnovski/mini.snippets" },
       },
       opts = {
+        snippets = { preset = 'mini_snippets' },
         completion = {
           trigger = {
             show_on_insert_on_trigger_character = false,
           },
         },
         sources = {
+          default = { "lsp", "path", "snippets", "buffer" },
           compat = {
             "obsidian",
             "obsidian_new",
@@ -89,7 +92,7 @@ require("lazy").setup({
         },
         oldfiles = {
           cwd_only = true,
-          stat_file = true,           -- verify files exist on disk
+          stat_file = true, -- verify files exist on disk
           include_current_session = true,
         },
         previewers = {
