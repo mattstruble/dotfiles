@@ -98,7 +98,7 @@ display_popup() {
         --propertyOrder "datetime,title" \
         --noCalendarNames \
         --formatOutput \
-        --includeEventProps "title,datetime,notes,url,attendees" \
+        --includeEventProps "title,datetime,notes,attendees" \
         --includeOnlyEventsFromNowOn \
         --limitItems 1 \
         --excludeAllDayEvents \
