@@ -162,6 +162,7 @@ in
     casks = [
       "1password"
       "alfred"
+      "firefox"
       "flux"
       "font-iosevka-nerd-font"
       "ghostty"

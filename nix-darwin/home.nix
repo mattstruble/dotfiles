@@ -22,7 +22,7 @@ in
 {
   imports = [
     ./hosts/${hostname}/home.nix
-    ./programs/firefox.nix
+    # ./programs/firefox.nix
   ];
 
   home = {
