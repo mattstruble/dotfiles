@@ -5,7 +5,15 @@ return {
             ensure_installed = {
                 "codespell",
                 "write-good",
-                "harper-ls"
+                "harper-ls",
+            },
+        },
+    },
+    {
+        "williamboman/mason-lspconfig.nvim",
+        opts = {
+            ensure_installed = {
+                "harper_ls",
             },
         },
     },
@@ -33,20 +41,20 @@ return {
                             linters = {
                                 BoringWords = true,
                                 WrongQuotes = true,
-                                ToDoHyphen = true
+                                ToDoHyphen = true,
                             },
                             codeActions = {
                                 ForceStable = true,
                             },
                             markdown = {
-                                IgnoreLinkTitle = true
+                                IgnoreLinkTitle = true,
                             },
                             diagnosticSeverity = "hint",
-                            isolateEnglish = false
-                        }
-                    }
-                }
-            }
-        }
-    }
+                            isolateEnglish = false,
+                        },
+                    },
+                },
+            },
+        },
+    },
 }

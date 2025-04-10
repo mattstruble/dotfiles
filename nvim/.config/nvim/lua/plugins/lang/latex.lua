@@ -8,6 +8,14 @@ return {
         },
     },
     {
+        "williamboman/mason-lspconfig.nvim",
+        opts = {
+            ensure_installed = {
+                "ltex",
+            },
+        },
+    },
+    {
         "mfussenegger/nvim-lint",
         opts = {
             linters_by_ft = {
