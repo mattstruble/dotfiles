@@ -245,7 +245,7 @@ in
             "browser.urlbar.speculativeConnect.enabled" = lock-false; # stops prefetching urls to prevent unwanted connections
             "cookiebanners.service.mode" = 1; # auto reject cookie banner
             "cookiebanners.service.mode.privateBrowsing" = 1; # auto reject cookie banner
-            "dom.event.clipboardevents.enabled" = lock-false; # Prevents data collection on what's copied
+            "dom.event.clipboardevents.enabled" = lock-true; # Prevents data collection on what's copied, if false breaks copying urls and pasting into sites like discord
             "extensions.pocket.enabled" = lock-false;
             "extensions.screenshots.disabled" = lock-true;
             "extensions.formautofill.addresses.enabled" = lock-false;
