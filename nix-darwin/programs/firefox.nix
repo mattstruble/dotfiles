@@ -158,6 +158,7 @@ in
               (extension "vimium-ff" "{d7742d87-e61d-4b78-b8a1-b469842139fa}")
               (extension "random_user_agent" "{b43b974b-1d3a-4232-b226-eaa2ac6ebb69}")
               (extension "refined-github-" "{a4c4eda4-fb84-4a84-b4a1-f7c1cbf2a1ad}")
+              (extension "spoof-geolocation" "{61173a74-ece7-4ef3-86a7-525538b78430}")
             ];
 
           "3rdparty".Extensions = {
@@ -261,6 +262,7 @@ in
             # "network.dns.disablePrefetch" = lock-false;
             # "network.predictor.enabled" = lock-true;
             # "network.prefetch-next" = lock-true;
+            "permissions.default.geo" = 3; # Prompt for websites asking for geo data https://support.mozilla.org/en-US/questions/1409365
             "privacy.bounceTrackingProtection.mode" = 1; # Detects and blocks trackers
             "privacy.donottrackheader.enabled" = true;
             "privacy.fingerprintingProtection" = lock-true;
