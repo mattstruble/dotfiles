@@ -21,7 +21,9 @@ return {
         "mfussenegger/nvim-lint",
         opts = {
             linters_by_ft = {
-                ["*"] = { "codespell", "write_good" },
+                ["*"] = { "codespell" },
+                markdown = { "write_good" },
+                text = { "write_good" },
             },
         },
     },
