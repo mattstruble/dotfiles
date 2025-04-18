@@ -6,7 +6,7 @@ return {
             analysis = {
                 extraPaths = py.pep582(vim.fn.getcwd()),
                 diagnosticSeverityOverrides = {
-                    reportUnusedCallResult = "information",
+                    reportUnusedCallResult = false,
                 },
             },
         },

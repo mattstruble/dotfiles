@@ -164,11 +164,22 @@ require("lazy").setup({
                     .. "/nvim-lspconfig"
                 vim.opt.runtimepath:append(lspConfigPath)
             end,
-            config = function() end,
+            config = function()
+                LazyVim.lsp.on_attach(
+                    function(client, buffer)
+                        require("lazyvim.plugins.lsp.keymaps").on_attach(
+                            client,
+                            buffer
+                        )
+                    end
+                )
+            end,
         },
+        { "williamboman/mason.nvim", lazy = false },
         {
             "williamboman/mason-lspconfig.nvim",
             dependencies = { "williamboman/mason.nvim" },
+            lazy = false,
             config = function(_, opts)
                 require("mason-lspconfig").setup({
                     ensure_installed = opts.ensure_installed,
