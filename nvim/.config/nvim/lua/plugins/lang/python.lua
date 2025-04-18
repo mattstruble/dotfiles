@@ -36,42 +36,6 @@ return {
         },
     },
     {
-        "neovim/nvim-lspconfig",
-        opts = {
-            servers = {
-                pyright = {
-                    setup = { autostart = false },
-                    capabilities = (function()
-                        local capabilities =
-                            vim.lsp.protocol.make_client_capabilities()
-                        capabilities.textDocument.publishDiagnostics.tagSupport.valueSet =
-                            { 2 }
-                        return capabilities
-                    end)(),
-                    settings = {
-                        python = {
-                            analysis = {
-                                typeCheckingMode = "basic",
-                                useLibraryCodeForTypes = true,
-                                completeFunctionParens = true,
-                                extraPaths = py.pep582(vim.fn.getcwd()),
-                            },
-                            pythonPath = py.venv(vim.fn.getcwd()),
-                            venvPath = py.venv(vim.fn.getcwd()),
-                        },
-                    },
-                    on_new_config = function(new_config, new_root_dir)
-                        py.env(new_root_dir)
-                        new_config.settings.python.venvPath =
-                            py.venv(new_root_dir)
-                        -- new_config.settings.python.pythonPath = py.venv(new_root_dir)
-                        -- new_config.settings.python.analysis.extraPaths = { py.pep582(new_root_dir) }
-                    end,
-                },
-            },
-        },
-    },
-    {
         "nvim-neotest/neotest",
         dependencies = { "nvim-neotest/neotest-python" },
         opts = {

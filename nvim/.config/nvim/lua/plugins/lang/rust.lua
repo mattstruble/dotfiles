@@ -50,20 +50,6 @@ return {
         },
     },
     {
-        "neovim/nvim-lspconfig",
-        opts = {
-            servers = {
-                rust_analyzer = {
-                    ["rust-analyzer"] = {
-                        diagnostics = {
-                            enable = true,
-                        },
-                    },
-                },
-            },
-        },
-    },
-    {
         "simrat39/rust-tools.nvim",
         ft = "rust",
         config = function()
