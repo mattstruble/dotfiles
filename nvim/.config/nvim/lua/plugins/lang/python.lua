@@ -15,7 +15,7 @@ return {
         opts = {
             ensure_installed = {
                 "ruff",
-                "pyright",
+                "basedpyright",
             },
         },
     },
