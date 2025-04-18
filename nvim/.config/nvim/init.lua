@@ -148,8 +148,7 @@ require("lazy").setup({
                 "williamboman/mason-lspconfig.nvim",
                 "saghen/blink.cmp",
             },
-            lazy = false,
-            priority = 50,
+            lazy = true,
             opts = {
                 setup = {
                     autostart = true,
@@ -158,6 +157,14 @@ require("lazy").setup({
                 autoformat = true,
                 format_notify = false,
             },
+            -- no need to load plugin since we only need the configs moving forward
+            -- https://old.reddit.com/r/neovim/comments/1jxv6c0/nvimlspconfig_has_now_migrated_to_use_the_new/mmvzko7/
+            init = function()
+                local lspConfigPath = require("lazy.core.config").options.root
+                    .. "/nvim-lspconfig"
+                vim.opt.runtimepath:append(lspConfigPath)
+            end,
+            config = function() end,
         },
         {
             "williamboman/mason-lspconfig.nvim",

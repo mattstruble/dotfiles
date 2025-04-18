@@ -2,10 +2,15 @@ local py = require("utils.python")
 
 return {
     settings = {
-        python = {
+        basedpyright = {
             analysis = {
                 extraPaths = py.pep582(vim.fn.getcwd()),
+                diagnosticSeverityOverrides = {
+                    reportUnusedCallResult = "information",
+                },
             },
+        },
+        python = {
             pythonPath = py.venv(vim.fn.getcwd()),
             venvPath = py.venv(vim.fn.getcwd()),
         },
