@@ -18,10 +18,10 @@ keymap.set("n", "<leader>-", "<C-x>")
 -- keymap.set("n", "<leader>se", "<C-w>=") -- make split equal width
 -- keymap.set("n", "<leader>sx", ":close<CR>") -- close current split
 
-keymap.set("n", "<leader>to", ":tabnew<CR>")   -- open new tab
+keymap.set("n", "<leader>to", ":tabnew<CR>") -- open new tab
 keymap.set("n", "<leader>tx", ":tabclose<CR>") -- close curr tab
-keymap.set("n", "<leader>tn", ":tabn<CR>")     -- go to next tab
-keymap.set("n", "<leader>tp", ":tabp<CR>")     -- go to previous tab
+keymap.set("n", "<leader>tn", ":tabn<CR>") -- go to next tab
+keymap.set("n", "<leader>tp", ":tabp<CR>") -- go to previous tab
 
 -- much easier to me to undo and re-do all within the same letter
 vim.keymap.set("n", "U", "<C-r>")
@@ -81,3 +81,15 @@ keymap.set("n", "<leader>Y", [["+Y]])
 
 -- Delete without overwriting buffer
 keymap.set({ "n", "v" }, "<leader>d", [["_d]])
+
+-- Only search within the visual area when in visual mode
+vim.keymap.set("x", "/", "<Esc>/\\%V") -- search wiithin visual selection
+
+-- Duplicate line and comment first line, adds [count] to front.
+-- https://old.reddit.com/r/neovim/comments/1k4efz8/share_your_proudest_config_oneliners/mob2hwx/
+vim.keymap.set(
+    "n",
+    "ycc",
+    '"yy" . v:count1 . "gcc\']p"',
+    { remap = true, expr = true }
+)
