@@ -1,7 +1,6 @@
 "Autoreload files when changed externally
 " https://stackoverflow.com/questions/2157914/can-vim-monitor-realtime-changes-to-a-file
-set autoread | au CursorHold * checktime | call feedkeys("lh")
-set updatetime=1000
+set autoread | au CursorHold * checktime
 
 set splitbelow splitright
 
