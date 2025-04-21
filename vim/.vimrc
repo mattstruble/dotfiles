@@ -1,10 +1,14 @@
 "Autoreload files when changed externally
-set autoread
-if has('nvim') "Prevent errors when using standard vim
-    autocmd VimEnter * AutoreadLoop
-endif
-
-autocmd BufRead,BufNewFile Jenkinsfile* set filetype=groovy
-autocmd BufRead,BufNewFile Dockerfile* set filetype=dockerfile
+" https://stackoverflow.com/questions/2157914/can-vim-monitor-realtime-changes-to-a-file
+set autoread | au CursorHold * checktime | call feedkeys("lh")
+set updatetime=1000
 
 set splitbelow splitright
+
+" Correct spelling mistakes on the fly
+" https://old.reddit.com/r/neovim/comments/1k4efz8/share_your_proudest_config_oneliners/mo9ethh/
+set spelllang=en
+au BufRead *.txt setlocal spell
+au BufRead *.md setlocal spell
+
+inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u

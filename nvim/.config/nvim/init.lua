@@ -316,3 +316,10 @@ vim.o.foldlevel = 99
 vim.o.foldmethod = "expr"
 vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.o.foldtext = ""
+
+-- Load .vimrc
+vim.cmd([[
+set runtimepath^=~/.vim runtimepath+=~/.vim/after
+let &packpath = &runtimepath
+source ~/.vimrc
+]])
