@@ -119,6 +119,7 @@ require("lazy").setup({
                     "neo-tree",
                     "neo-tree-popup",
                     "oil",
+                    "snacks_terminal",
                 },
                 resetting_keys = {
                     ["y"] = {},
@@ -193,6 +194,7 @@ require("lazy").setup({
             ---@type neotree.Config
             opts = {
                 close_if_last_window = true,
+                popup_border_style = "winborder",
                 default_component_configs = {
                     git_status = {
                         symbols = {
@@ -219,6 +221,7 @@ require("lazy").setup({
                 filesystem = {
                     filtered_items = {
                         hide_dotfiles = false,
+                        hide_gitignored = true,
                         hide_by_pattern = {
                             ".git",
                         },
@@ -237,9 +240,13 @@ require("lazy").setup({
                     follow_current_file = {
                         enabled = true,
                     },
+                    group_empty_dirs = true,
                     hijack_netrw_behavior = "disabled",
                     use_libuv_file_watcher = true,
                 },
+            },
+            keys = {
+                { "<leader>e", "<cmd>Neotree toggle<cr>" },
             },
         },
 
