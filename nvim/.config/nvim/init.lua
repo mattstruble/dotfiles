@@ -180,15 +180,10 @@ require("lazy").setup({
             "williamboman/mason-lspconfig.nvim",
             dependencies = { "williamboman/mason.nvim" },
             lazy = false,
-            config = function(_, opts)
-                require("mason-lspconfig").setup({
-                    ensure_installed = opts.ensure_installed,
-                    automatic_installation = true,
-                    handlers = {
-                        function(server) vim.lsp.enable(server) end,
-                    },
-                })
-            end,
+            opts = {
+                automatic_enable = true,
+                automatic_installation = true,
+            },
         },
 
         {
