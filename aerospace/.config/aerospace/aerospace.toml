@@ -209,6 +209,11 @@ if.window-title-regex-substring = '^(?![Pp]icture[- ]in[- ][Pp]icture$)\w+'
 run = 'move-node-to-workspace 1'
 
 [[on-window-detected]]
+if.app-id = 'org.mozilla.firefox'
+if.window-title-regex-substring = '^(?![Pp]icture[- ]in[- ][Pp]icture$)\w+'
+run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
 if.window-title-regex-substring = '[Pp]icture[- ]in[- ][Pp]icture'
 run = 'layout floating'
 
