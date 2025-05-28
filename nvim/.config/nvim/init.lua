@@ -194,7 +194,7 @@ require("lazy").setup({
             ---@type neotree.Config
             opts = {
                 close_if_last_window = true,
-                popup_border_style = "winborder",
+                -- popup_border_style = "winborder",
                 default_component_configs = {
                     git_status = {
                         symbols = {
