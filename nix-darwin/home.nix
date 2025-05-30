@@ -10,7 +10,7 @@ let
   tmpdir = "/tmp";
   userName = import ./hosts/${hostname}/username.nix;
   home = "/Users/${userName}";
-  path = builtins.getEnv "DOTFILES_PATH";
+  path = "${home}/dotfiles";
   onePassPath = "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
   # onePassPath = "~/.1password/agent.sock";
 

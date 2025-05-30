@@ -13,7 +13,7 @@ let
   xdg_configHome = "${home}/.config";
   xdg_dataHome = "${home}/local/share";
   xdg_cacheHome = "${home}/.cache";
-  path = builtins.getEnv "DOTFILES_PATH";
+  path = "${home}/dotfiles";
 
 in
 {
