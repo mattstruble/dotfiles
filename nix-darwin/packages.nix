@@ -30,7 +30,9 @@ in
   direnv
   docutils
   fd
+  fennel-ls
   ffmpeg
+  fnlfmt
   fortune
   fzf
   fzf-zsh
@@ -59,6 +61,7 @@ in
   libevent
   ldns
   libfido2
+  (pkgs.lowPrio lua)
   luarocks
   markdownlint-cli
   markdownlint-cli2

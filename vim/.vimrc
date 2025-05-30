@@ -11,3 +11,7 @@ au BufRead *.txt setlocal spell
 au BufRead *.md setlocal spell
 
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
+
+" Allow loading current directory .vimrc or .nvim.lua
+set exrc
+set secure " Disallow shell, autocmd, and write commands

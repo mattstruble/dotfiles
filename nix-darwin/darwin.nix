@@ -154,7 +154,11 @@ in
     brews = [
       "bibtexconv"
       "borders"
+      "fennel"
+      "fennel-ls"
+      "fnlfmt"
       "ical-buddy"
+      "love"
       "markdown-toc"
       "pyenv-virtualenv"
     ];
