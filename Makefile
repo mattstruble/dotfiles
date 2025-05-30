@@ -96,7 +96,7 @@ setup: install
 
 .PHONY: nix_rebuild
 nix_rebuild:
-	cd nix-darwin && darwin-rebuild switch --flake . --impure
+	cd nix-darwin && sudo darwin-rebuild switch --flake . --impure
 
 .PHONY: rebuild refresh
 rebuild: nix_rebuild
@@ -108,7 +108,7 @@ refresh: rebuild
 .PHONY: update_nix
 update_nix: $(NIX-DARWIN-PATH)
 	nix-channel --update
-	cd nix-darwin && nix flake update
+	cd nix-darwin && sudo nix flake update
 
 .PHONY: update
 update: update_nix rebuild

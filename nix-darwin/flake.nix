@@ -22,7 +22,6 @@
     inputs: with inputs; {
       darwinConfigurations =
         let
-          userName = builtins.getEnv "USER";
           configure =
             hostname: system:
             darwin.lib.darwinSystem {
@@ -55,7 +54,7 @@
                   home-manager = {
                     useGlobalPkgs = true;
                     backupFileExtension = "backup";
-                    users."${userName}" = import ./home.nix;
+                    users = import ./hosts/${hostname}/home.nix;
                     extraSpecialArgs = {
                       inherit hostname inputs;
                     };

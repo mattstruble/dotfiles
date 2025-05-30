@@ -7,9 +7,9 @@
 }:
 
 let
-  home = builtins.getEnv "HOME";
   tmpdir = "/tmp";
-  userName = builtins.getEnv "USER";
+  userName = import ./hosts/${hostname}/username.nix;
+  home = "/Users/${userName}";
   path = builtins.getEnv "DOTFILES_PATH";
   onePassPath = "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
   # onePassPath = "~/.1password/agent.sock";
@@ -20,11 +20,6 @@ let
     if pkgs.stdenv.targetPlatform.isx86_64 then "/usr/local/Homebrew/bin" else "/opt/homebrew/bin";
 in
 {
-  imports = [
-    ./hosts/${hostname}/home.nix
-    # ./programs/firefox.nix
-  ];
-
   home = {
     stateVersion = "23.11";
     enableNixpkgsReleaseCheck = false;

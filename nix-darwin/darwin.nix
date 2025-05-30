@@ -7,8 +7,8 @@
 }:
 
 let
-  home = builtins.getEnv "HOME";
-  userName = builtins.getEnv "USER";
+  userName = import ./hosts/${hostname}/username.nix;
+  home = "/Users/${userName}";
   tmpdir = "/tmp";
   xdg_configHome = "${home}/.config";
   xdg_dataHome = "${home}/local/share";
@@ -155,10 +155,8 @@ in
       "bibtexconv"
       "borders"
       "fennel"
-      "fennel-ls"
       "fnlfmt"
       "ical-buddy"
-      "love"
       "markdown-toc"
       "pyenv-virtualenv"
     ];
@@ -170,6 +168,7 @@ in
       "flux"
       "font-iosevka-nerd-font"
       "ghostty"
+      "love"
       "menuwhere"
       "monitorcontrol"
       "only-switch"
