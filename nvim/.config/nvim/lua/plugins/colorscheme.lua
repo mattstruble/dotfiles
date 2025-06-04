@@ -4,9 +4,23 @@ return {
         name = "catppuccin",
         priority = 1000,
         lazy = false,
-        enabled = true,
+        enabled = false,
+        config = function() vim.cmd.colorscheme("catppuccin-mocha") end,
+    },
+    {
+        "ribru17/bamboo.nvim",
+        name = "bamboo",
+        lazy = false,
+        priority = 1000,
         config = function()
-            vim.cmd.colorscheme("catppuccin-mocha")
+            require("bamboo").setup({
+                transparent = true,
+                dim_inactive = true,
+                lualine = {
+                    transparent = true,
+                },
+            })
+            require("bamboo").load()
         end,
     },
 }

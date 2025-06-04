@@ -271,6 +271,9 @@ require("lazy").setup({
                 "nvim-treesitter/nvim-treesitter",
             },
         },
+        {
+            "xiyaowong/virtcolumn.nvim",
+        },
     },
 }, opts)
 
