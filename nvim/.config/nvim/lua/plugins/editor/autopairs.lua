@@ -2,7 +2,6 @@
 -- Mini Pairs
 -- https://github.com/desdic/neovim/blob/235b2cceb99562c5032bd978aa365d5880971248/lua/plugins/mini-pairs.lua
 --------------------------
-
 return {
     "echasnovski/mini.pairs",
     event = "VeryLazy",
@@ -29,7 +28,7 @@ return {
                 action = "open",
                 pair = "[]",
                 neigh_pattern = ".[%s%z%)}%]]",
-                register = { cr = false },
+                register = { cr = true },
                 -- foo|bar -> press "[" -> foo[bar
                 -- foobar| -> press "[" -> foobar[]
                 -- |foobar -> press "[" -> [foobar
@@ -44,7 +43,7 @@ return {
                 pair = "{}",
                 -- neigh_pattern = ".[%s%z%)}]",
                 neigh_pattern = ".[%s%z%)}%]]",
-                register = { cr = false },
+                register = { cr = true },
                 -- foo|bar -> press "{" -> foo{bar
                 -- foobar| -> press "{" -> foobar{}
                 -- |foobar -> press "{" -> {foobar
@@ -58,7 +57,7 @@ return {
                 pair = "()",
                 -- neigh_pattern = ".[%s%z]",
                 neigh_pattern = ".[%s%z%)]",
-                register = { cr = false },
+                register = { cr = true },
                 -- foo|bar -> press "(" -> foo(bar
                 -- foobar| -> press "(" -> foobar()
                 -- |foobar -> press "(" -> (foobar
