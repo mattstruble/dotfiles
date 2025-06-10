@@ -101,6 +101,7 @@ display_popup() {
         --includeEventProps "title,datetime,notes,attendees" \
         --includeOnlyEventsFromNowOn \
         --limitItems 1 \
+        --maxNumNoteChars 200 \
         --excludeAllDayEvents \
         --excludeCals "$EXCLUDE_CALS" \
         eventsToday
