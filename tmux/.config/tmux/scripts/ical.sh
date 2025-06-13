@@ -101,7 +101,7 @@ display_popup() {
         --includeEventProps "title,datetime,notes,attendees" \
         --includeOnlyEventsFromNowOn \
         --limitItems 1 \
-        --maxNumNoteChars 200 \
+        --maxNumNoteChars 500 \
         --excludeAllDayEvents \
         --excludeCals "$EXCLUDE_CALS" \
         eventsToday
@@ -109,7 +109,7 @@ display_popup() {
 
 print_tmux_status() {
     if [[ $minutes_till_meeting -lt $ALERT_IF_IN_NEXT_MINUTES &&
-        $minutes_till_meeting -gt -60 ]]; then
+        $minutes_till_meeting -gt -20 ]]; then
         icon="$NERD_FONT_MEETING"
         text="$time $title ($minutes_till_meeting minutes)"
     else
