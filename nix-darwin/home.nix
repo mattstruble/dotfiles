@@ -358,7 +358,7 @@ in
       serverAliveInterval = 60;
 
       hashKnownHosts = true;
-      userKnownHostsFile = "${home}/ssh/known_hosts";
+      userKnownHostsFile = "${home}/.ssh/known_hosts";
 
       extraConfig = ''
         Host *
