@@ -149,38 +149,26 @@ require("lazy").setup({
                 "williamboman/mason-lspconfig.nvim",
                 "saghen/blink.cmp",
             },
-            lazy = true,
             opts = {
+                diagnostics = {
+                    virtual_text = {
+                        severity = vim.diagnostic.severity.ERROR,
+                        spacing = 4,
+                        prefix = "",
+                    },
+                },
                 setup = {
                     autostart = true,
                 },
-                inlay_hints = { enabled = true },
+                inlay_hints = { enabled = false },
                 autoformat = true,
                 format_notify = false,
             },
-            -- no need to load plugin since we only need the configs moving forward
-            -- https://old.reddit.com/r/neovim/comments/1jxv6c0/nvimlspconfig_has_now_migrated_to_use_the_new/mmvzko7/
-            init = function()
-                local lspConfigPath = require("lazy.core.config").options.root
-                    .. "/nvim-lspconfig"
-                vim.opt.runtimepath:append(lspConfigPath)
-            end,
-            config = function()
-                LazyVim.lsp.on_attach(
-                    function(client, buffer)
-                        require("lazyvim.plugins.lsp.keymaps").on_attach(
-                            client,
-                            buffer
-                        )
-                    end
-                )
-            end,
         },
-        { "williamboman/mason.nvim", lazy = false },
+        { "williamboman/mason.nvim", opts = {} },
         {
             "williamboman/mason-lspconfig.nvim",
             dependencies = { "williamboman/mason.nvim" },
-            lazy = false,
             opts = {
                 automatic_enable = true,
                 automatic_installation = true,
