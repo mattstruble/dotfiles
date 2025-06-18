@@ -137,3 +137,19 @@ vim.api.nvim_create_autocmd("TextYankPost", {
         end
     end,
 })
+
+-- Set keymap for vim.lsp.buf.rename
+A.nvim_create_autocmd("LspAttach", {
+    group = my_au,
+    callback = function(args)
+        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        local bufnr = args.buf
+        local opts = { noremap = true, silent = true, buffer = bufnr }
+        vim.keymap.set(
+            "n",
+            "<leader>crn",
+            vim.lsp.buf.rename,
+            { desc = "CR Name", noremap = true, silent = true, buffer = bufnr }
+        )
+    end,
+})
