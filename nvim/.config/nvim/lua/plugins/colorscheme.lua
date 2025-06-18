@@ -14,7 +14,7 @@ return {
         priority = 1000,
         config = function()
             require("bamboo").setup({
-                transparent = false,
+                transparent = true,
                 dim_inactive = true,
                 lualine = {
                     transparent = true,
