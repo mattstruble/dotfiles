@@ -174,7 +174,6 @@ in
       "only-switch"
       "scroll-reverser"
       "wacom-tablet"
-      "zen-browser"
     ];
 
     masApps = {
