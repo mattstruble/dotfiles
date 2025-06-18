@@ -3,15 +3,15 @@
 --------------------
 
 return {
-	"ThePrimeagen/refactoring.nvim",
-	enabled = false,
-	lazy = true,
-	dependencies = {
-		"nvim-lua/plenary.nvim",
-		"nvim-telescope/telescope.nvim",
-		"nvim-treesitter/nvim-treesitter",
-	},
-	config = true,
+    "ThePrimeagen/refactoring.nvim",
+    enabled = true,
+    lazy = true,
+    dependencies = {
+        "nvim-lua/plenary.nvim",
+        "nvim-telescope/telescope.nvim",
+        "nvim-treesitter/nvim-treesitter",
+    },
+    config = true,
     -- stylua: ignore
     keys = {
         {"<leader>re", "<Esc><Cmd>lua require('refactoring').refactor('Extract Function')<CR>", mode="v", desc="Refactor Extract Function"},
