@@ -167,7 +167,7 @@ in
       "1password"
       "alfred"
       "firefox"
-      "flux"
+      "flux-app"
       "font-iosevka-nerd-font"
       "ghostty"
       "love"

@@ -187,3 +187,7 @@ restart_nix_daemon:
 
 .PHONY: restart
 restart: restart_yabai restart_skhd restart_tmux
+
+.PHONY: fix-compinit
+fix-compinit:
+	compaudit | xargs chmod g-w
