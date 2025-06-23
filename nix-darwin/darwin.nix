@@ -158,7 +158,9 @@ in
       "fnlfmt"
       "ical-buddy"
       "markdown-toc"
+      "mas"
       "pyenv-virtualenv"
+      "zsh-completions"
     ];
 
     casks = [
@@ -169,6 +171,7 @@ in
       "font-iosevka-nerd-font"
       "ghostty"
       "love"
+      "librewolf"
       "menuwhere"
       "monitorcontrol"
       "only-switch"

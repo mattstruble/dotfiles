@@ -4,7 +4,7 @@ return {
         opts = {
             ensure_installed = {
                 "nixpkgs-fmt",
-                "nil_ls",
+                -- "nil_ls",
                 "nixfmt",
             },
         },
@@ -13,7 +13,7 @@ return {
         "williamboman/mason-lspconfig.nvim",
         opts = {
             ensure_installed = {
-                "nil_ls",
+                -- "nil_ls",
             },
         },
     },

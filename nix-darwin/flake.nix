@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
-    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -12,10 +11,7 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    firefox-addons = {
-      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    arkenfox-userjs.url = "github:petrkozorezov/arkenfox-userjs-nix";
   };
 
   outputs =
@@ -40,14 +36,6 @@
                 inherit hostname inputs;
               };
               modules = [
-                nix-homebrew.darwinModules.nix-homebrew
-                {
-                  nix-homebrew = {
-                    enable = false;
-                    user = "${userName}";
-                    autoMigrate = true;
-                  };
-                }
                 ./darwin.nix
                 home-manager.darwinModules.home-manager
                 {
@@ -64,7 +52,7 @@
             };
         in
         {
-          MacStruble = configure "MacStruble" "x86_64-darwin";
+          MacStruble = configure "MacStruble" "aarch64-darwin";
           APKQTFWJ12ED96 = configure "APKQTFWJ12ED96" "aarch64-darwin";
         };
 

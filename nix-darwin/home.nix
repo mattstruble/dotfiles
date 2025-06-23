@@ -16,8 +16,8 @@ let
 
   ca-bundle_path = "${pkgs.cacert}/etc/ssl/certs";
   ca-bundle_crt = "${ca-bundle_path}/ca-bundle.crt";
-  brew_path =
-    if pkgs.stdenv.targetPlatform.isx86_64 then "/usr/local/Homebrew/bin" else "/opt/homebrew/bin";
+  brew_path = "/opt/homebrew/bin";
+  # if pkgs.stdenv.targetPlatform.isx86_64 then "/usr/local/Homebrew/bin" else "/opt/homebrew/bin";
 in
 {
   home = {
@@ -143,11 +143,10 @@ in
       # path = "${config.xdg.configHome}/nix/home-manager";
     };
 
-    # texlive = {
+    # firefox = {
     #   enable = true;
-    #   extraPackages = tpkgs: {
-    #     inherit (tpkgs) scheme-full texdoc latex2e-help-texinfo;
-    #     pkgFilter = pkg: pkg.tlType == "run" || pkg.tlType == "bin" || pkg.pname == "latex2e-help-texinfo";
+    #   profiles.myprofile.settings = inputs.arkenfox-userjs.lib.userjs // {
+    #     # your overrides here, e.g.
     #   };
     # };
 
@@ -429,6 +428,10 @@ in
 
         [ -d "$HOME/bin" ] && PATH="$HOME/bin:$PATH"
         [ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
+
+        if type brew &>/dev/null; then
+          FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
+        fi
       '';
 
       initContent = ''

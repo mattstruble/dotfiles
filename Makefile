@@ -51,7 +51,7 @@ $(NIX-PATH):
 $(NIX-DARWIN): $(BREW) $(NIX-PATH)
 	$(info "Installing nix-darwin")
 	# -sudo mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
-	cd nix-darwin && ${NIX-PATH} run nix-darwin -- switch --flake . --impure
+	cd nix-darwin && sudo ${NIX-PATH} run nix-darwin -- switch --flake . --impure
 
 $(XCODE):
 	$(info "Installing XCODE...")
@@ -108,7 +108,7 @@ refresh: rebuild
 .PHONY: update_nix
 update_nix: $(NIX-DARWIN-PATH)
 	nix-channel --update
-	cd nix-darwin && sudo nix flake update
+	cd nix-darwin && sudo nix flake update --extra-experimental-features nix-command --extra-experimental-features flakes
 
 .PHONY: update
 update: update_nix rebuild

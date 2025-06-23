@@ -18,11 +18,6 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
     source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# macos intel brew
-if [[ -f "/usr/local/Homebrew/bin/brew" ]] then
-    eval "$(/usr/local/Homebrew/bin/brew shellenv)"
-fi
-
 # macos apple silicon brew
 if [[ -f "/opt/homebrew/bin/brew" ]] then
   eval "$(/opt/homebrew/bin/brew shellenv)"

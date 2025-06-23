@@ -1,19 +1,17 @@
 {
   "nodes": {
-    "brew-src": {
-      "flake": false,
+    "arkenfox-userjs": {
       "locked": {
-        "lastModified": 1749511373,
-        "narHash": "sha256-7u1TdHQaUCzzgf/n8T3bQosuYXyNBEPU/3WQQqozE5o=",
-        "owner": "Homebrew",
-        "repo": "brew",
-        "rev": "7b4ef99fed96966269ee35994407fa4c06097a4d",
+        "lastModified": 1741310314,
+        "narHash": "sha256-gH0xKCqbJThKJKNxKpuPRuTKj0dQ4JnDoo92xBxg3gU=",
+        "owner": "petrkozorezov",
+        "repo": "arkenfox-userjs-nix",
+        "rev": "1047b199f7676fa44904b10bb49bba2a84cf250c",
         "type": "github"
       },
       "original": {
-        "owner": "Homebrew",
-        "ref": "4.5.6",
-        "repo": "brew",
+        "owner": "petrkozorezov",
+        "repo": "arkenfox-userjs-nix",
         "type": "github"
       }
     },
@@ -24,39 +22,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1749873626,
-        "narHash": "sha256-1Mc/D/1RwwmDKY59f4IpDBgcQttxffm+4o0m67lQ8hc=",
+        "lastModified": 1750618568,
+        "narHash": "sha256-w9EG5FOXrjXGfbqCcQg9x1lMnTwzNDW5BMXp8ddy15E=",
         "owner": "LnL7",
         "repo": "nix-darwin",
-        "rev": "2f140d6ac8840c6089163fb43ba95220c230f22b",
+        "rev": "1dd19f19e4b53a1fd2e8e738a08dd5fe635ec7e5",
         "type": "github"
       },
       "original": {
         "owner": "LnL7",
         "repo": "nix-darwin",
         "type": "github"
-      }
-    },
-    "firefox-addons": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "dir": "pkgs/firefox-addons",
-        "lastModified": 1750219402,
-        "narHash": "sha256-b3y7V7db0VwLGtpcLRmT1Aa9dpAKoHQdem55UhgB/fw=",
-        "owner": "rycee",
-        "repo": "nur-expressions",
-        "rev": "a00ce73b626ed274fbfe9f51627861e140b08f6d",
-        "type": "gitlab"
-      },
-      "original": {
-        "dir": "pkgs/firefox-addons",
-        "owner": "rycee",
-        "repo": "nur-expressions",
-        "type": "gitlab"
       }
     },
     "home-manager": {
@@ -66,44 +42,26 @@
         ]
       },
       "locked": {
-        "lastModified": 1750263149,
-        "narHash": "sha256-VYSGDzq4ds4LIYvyEYG+RBqGMGBZhES2tvnmU4TJBn0=",
+        "lastModified": 1750614446,
+        "narHash": "sha256-6WH0aRFay79r775RuTqUcnoZNm6A4uHxU1sbcNIk63s=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "85e68c6a388ef1dfc799aaa01f00758c58e87d89",
+        "rev": "7c35504839f915abec86a96435b881ead7eb6a2b",
         "type": "github"
       },
       "original": {
         "owner": "nix-community",
         "repo": "home-manager",
-        "type": "github"
-      }
-    },
-    "nix-homebrew": {
-      "inputs": {
-        "brew-src": "brew-src"
-      },
-      "locked": {
-        "lastModified": 1749952250,
-        "narHash": "sha256-V2ix0knpdJXirQ+4pjbnggjdSALTsFWGIP/NDpaQkdU=",
-        "owner": "zhaofengli-wip",
-        "repo": "nix-homebrew",
-        "rev": "37126f06f4890f019af3d7606ce5d30a457afcd0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "zhaofengli-wip",
-        "repo": "nix-homebrew",
         "type": "github"
       }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1750268545,
-        "narHash": "sha256-9CBxih8ERwi4lHM6eUtRnjP4O0/czVPfSYUxdlRERhg=",
+        "lastModified": 1750633598,
+        "narHash": "sha256-vkMEyqUgeYhfGdJ+6NBLukK3eY6VgGXfnA/Q75l8XzA=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "106daa382b3a5625c9698cbff9f13bbee8c62dbe",
+        "rev": "054ed056033dccf372a8b3c7aa41760f9f12437d",
         "type": "github"
       },
       "original": {
@@ -114,10 +72,9 @@
     },
     "root": {
       "inputs": {
+        "arkenfox-userjs": "arkenfox-userjs",
         "darwin": "darwin",
-        "firefox-addons": "firefox-addons",
         "home-manager": "home-manager",
-        "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs"
       }
     }
