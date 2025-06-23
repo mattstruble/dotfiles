@@ -171,7 +171,7 @@ require("lazy").setup({
             dependencies = { "williamboman/mason.nvim" },
             opts = {
                 automatic_enable = true,
-                automatic_installation = true,
+                automatic_installation = false,
             },
         },
 
