@@ -15,6 +15,7 @@ return {
             },
             diagnosticSeverity = "hint",
             isolateEnglish = false,
+            dialect = "American",
         },
     },
 }
