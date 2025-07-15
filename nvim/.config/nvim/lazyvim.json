@@ -1,6 +1,8 @@
 {
   "extras": [
     "lazyvim.plugins.extras.coding.mini-snippets",
+    "lazyvim.plugins.extras.editor.mini-diff",
+    "lazyvim.plugins.extras.editor.mini-files",
     "lazyvim.plugins.extras.util.mini-hipatterns"
   ],
   "install_version": 7,

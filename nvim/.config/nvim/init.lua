@@ -171,6 +171,7 @@ require("lazy").setup({
 
         {
             "nvim-neo-tree/neo-tree.nvim",
+            enabled = false,
             lazy = false,
             ---@module "neo-tree"
             ---@type neotree.Config
