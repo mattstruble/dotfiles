@@ -18,7 +18,7 @@ require("globals")
 
 local opts = {
     install = {
-        colorscheme = { "catppuccin-mocha" },
+        colorscheme = { "bamboo" },
     },
     ui = {
         border = "rounded",
@@ -306,6 +306,12 @@ vim.diagnostic.config({
 -- https://www.reddit.com/r/neovim/comments/1168p97/how_can_i_make_lspconfig_wrap_around_these_hints/
 -- Time it takes to show the popup after you hover over the line with an error
 vim.o.updatetime = 400
+
+-- Time it takes for neovim to wait for completion of key sequence
+vim.o.timeoutlen = 300
+
+-- Max height of popups to 5 items
+vim.o.pumheight = 5
 
 -- LSP Folding
 -- https://old.reddit.com/r/neovim/comments/1jmqd7t/sorry_ufo_these_7_lines_replaced_you/
