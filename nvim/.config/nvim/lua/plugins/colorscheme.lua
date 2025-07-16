@@ -23,4 +23,10 @@ return {
             require("bamboo").load()
         end,
     },
+    {
+        "LazyVim/LazyVim",
+        opts = {
+            colorscheme = "bamboo",
+        },
+    },
 }
