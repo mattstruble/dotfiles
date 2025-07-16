@@ -197,6 +197,16 @@ in
       enable = true;
       package = pkgs.gitMinimal;
 
+      ignores = [
+        "*~"
+        "*.swp"
+        ".DS_Store"
+        "*.null-ls*"
+        ".direnv"
+        ".envrc"
+        "Thumbs.db"
+      ];
+
       signing = {
         key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEM+saqSDNRJt5qpi6lltteSsdY7wNVz5Is2ywVFcyzv";
         signByDefault = true;
