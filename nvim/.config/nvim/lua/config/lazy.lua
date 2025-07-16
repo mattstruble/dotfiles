@@ -32,7 +32,6 @@ require("lazy").setup({
         { import = "lazyvim.plugins.extras.editor.fzf" },
         { import = "lazyvim.plugins.extras.editor.mini-diff" },
         { import = "lazyvim.plugins.extras.editor.mini-files" },
-        { import = "lazyvim.plugins.extras.editor.gitsigns" },
         { import = "lazyvim.plugins.extras.util.mini-hipatterns" },
         { import = "plugins" },
     },
@@ -44,9 +43,6 @@ require("lazy").setup({
     change_detection = {
         enabled = true,
         notify = false,
-    },
-    install = {
-        colorscheme = { "bamboo" },
     },
     ui = {
         border = "rounded",
