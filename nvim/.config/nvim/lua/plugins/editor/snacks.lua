@@ -30,6 +30,7 @@ return {
                 wo = { wrap = true },
             },
         },
+        terminal = {},
         zen = { enabled = true },
         dashboard = {
             enabled = true,
@@ -120,6 +121,11 @@ return {
             "<leader>zz",
             function() Snacks.zen.zen() end,
             desc = "Zen mode",
+        },
+        {
+            "<C-/>",
+            function() Snacks.terminal() end,
+            desc = "Terminal",
         },
     },
 }
