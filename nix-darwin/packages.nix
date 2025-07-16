@@ -12,6 +12,7 @@ in
   asciidoctor
   aspell
   aspellDicts.en
+  ast-grep
   ansible
   ansible-lint
   awscli2
@@ -20,6 +21,7 @@ in
   black
   cacert
   cargo
+  chafa
   checkmake
   codespell
   cowsay
@@ -36,6 +38,7 @@ in
   fortune
   fzf
   fzf-zsh
+  ghostscript
   gimme-aws-creds
   gitMinimal
   git-extras
@@ -49,6 +52,7 @@ in
   go
   gradle
   groovy
+  imagemagick
   iperf
   jiq
   jq
@@ -66,6 +70,7 @@ in
   markdownlint-cli
   markdownlint-cli2
   mas
+  mermaid-cli
   mypy
   (pkgs.lowPrio neovim)
   nix-diff
@@ -124,6 +129,7 @@ in
   squashfsTools
   stern
   stow
+  tectonic
   terraform
   terraform-ls
   terraform-lsp
@@ -136,9 +142,11 @@ in
   tree
   tree-sitter
   (pkgs.lowPrio ctags)
+  ueberzugpp
   uncrustify
   universal-ctags
   virtualenv
+  viu
   wget
   write-good
   yamlfmt
