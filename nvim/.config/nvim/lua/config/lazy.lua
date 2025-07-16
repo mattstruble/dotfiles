@@ -85,6 +85,7 @@ require("lazy").setup({
 })
 
 require("config.autocmds")
+require("config.diagnostics")
 
 vim.api.nvim_create_autocmd("User", {
     pattern = "VeryLazy",
