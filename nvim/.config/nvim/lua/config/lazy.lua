@@ -1,3 +1,4 @@
+require("config.globals")
 require("config.options")
 
 -- Begin Lazy install and plugin setup
@@ -26,7 +27,21 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
     spec = {
-        { "LazyVim/LazyVim", import = "lazyvim.plugins" },
+        {
+            "LazyVim/LazyVim",
+            opts = {
+                icons = {
+                    diagnostics = {
+                        Error = tools.ui.diagnostics.error_cod,
+                        Warn = tools.ui.diagnostics.warn_cod,
+                        Hint = tools.ui.diagnostics.hint_cod,
+                        Info = tools.ui.diagnostics.info_cod,
+                    },
+                },
+            },
+
+            import = "lazyvim.plugins",
+        },
         { import = "lazyvim.plugins.extras.coding.blink" },
         { import = "lazyvim.plugins.extras.coding.mini-snippets" },
         { import = "lazyvim.plugins.extras.editor.fzf" },
