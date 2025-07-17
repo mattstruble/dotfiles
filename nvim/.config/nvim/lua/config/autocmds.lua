@@ -169,3 +169,20 @@ A.nvim_create_autocmd("LspAttach", {
     end,
     desc = "LSP: Disable hover capability from Ruff",
 })
+
+-- Toggle relative line numbers based on insert
+local numbertoggle =
+    vim.api.nvim_create_augroup("NumberToggle", { clear = true })
+vim.api.nvim_create_autocmd({ "BufEnter", "InsertLeave", "FocusGained" }, {
+    pattern = "*",
+    callback = function() vim.wo.relativenumber = true end,
+    group = numbertoggle,
+    desc = "Turn on relative line numbering when buffer is entered.",
+})
+
+vim.api.nvim_create_autocmd({ "BufLeave", "InsertEnter", "FocusLost" }, {
+    pattern = "*",
+    callback = function() vim.wo.relativenumber = false end,
+    group = numbertoggle,
+    desc = "Turn off relative line numbering when buffer is exited.",
+})
