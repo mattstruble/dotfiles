@@ -57,6 +57,7 @@ in
   jiq
   jq
   jupyter
+  just
   killall
   kubectl
   lazygit
@@ -127,6 +128,7 @@ in
   sqldiff
   sqruff
   squashfsTools
+  ssh-to-age
   stern
   stow
   tectonic
