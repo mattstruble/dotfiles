@@ -5,6 +5,12 @@ return {
             { "echasnovski/mini.snippets" },
         },
         opts = {
+            enabled = function()
+                return not vim.tbl_contains(
+                    { "markdown", "minifiles" },
+                    vim.bo.filetype
+                )
+            end,
             snippets = { preset = "mini_snippets" },
             completion = {
                 trigger = {
