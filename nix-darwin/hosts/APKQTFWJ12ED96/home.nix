@@ -11,9 +11,10 @@ in
     home = {
       sessionVariables = {
         OBSIDIAN_VAULT = "${home}/Library/CloudStorage/Box-Box/Obsidian/Vault";
-        NODE_EXTRA_CA_CERTS = "${home}/.ssl-cert/Nike-Root-Authority-NG.pem";
-        REQUESTS_CA_BUNDLE = "${home}/.ssl-cert/Nike-Root-Authority-NG.pem";
-        SSL_CERT_FILE = "${home}/.ssl-cert/Nike-Root-Authority-NG.pem";
+        NODE_EXTRA_CA_CERTS = "${home}/.ssl-cert/NikeRootCA-base64.pem";
+        REQUESTS_CA_BUNDLE = "${home}/.ssl-cert/NikeRootCA-base64.pem";
+        SSL_CERT_FILE = "${home}/.ssl-cert/NikeRootCA-base64.pem";
+        CURL_CA_BUNDLE = "${home}/.ssl-cert/NikeRootCA-base64.pem";
       };
     };
     programs = {
