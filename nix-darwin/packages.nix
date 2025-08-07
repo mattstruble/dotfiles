@@ -7,7 +7,6 @@ let
     if pkgs.stdenv.targetPlatform.isx86_64 then haskell.lib.justStaticExecutables else pkgs.lib.id;
 in
 [
-  _1password-cli
   aerospace
   asciidoctor
   aspell
@@ -135,7 +134,7 @@ in
   terraform
   terraform-ls
   terraform-lsp
-  terragrunt
+  # terragrunt
   terminal-notifier
   texlivePackages.lacheck
   tex-fmt

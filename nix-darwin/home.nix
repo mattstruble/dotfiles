@@ -20,6 +20,10 @@ let
   # if pkgs.stdenv.targetPlatform.isx86_64 then "/usr/local/Homebrew/bin" else "/opt/homebrew/bin";
 in
 {
+  imports = [
+    programs/zen-browser.nix
+  ];
+
   home = {
     stateVersion = "23.11";
     enableNixpkgsReleaseCheck = false;
@@ -112,6 +116,7 @@ in
     };
 
   programs = {
+
     direnv = {
       enable = true;
       enableBashIntegration = true;
