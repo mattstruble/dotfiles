@@ -93,3 +93,18 @@ vim.keymap.set(
     '"yy" . v:count1 . "gcc\']p"',
     { remap = true, expr = true }
 )
+
+-- Navigate between quickfix items
+-- https://github.com/exosyphon/nvim/blob/main/lua/exosyphon/remaps.lua
+vim.keymap.set(
+    "n",
+    "<leader>h",
+    "<cmd>cnext<CR>zz",
+    { desc = "Forward qfixlist" }
+)
+vim.keymap.set(
+    "n",
+    "<leader>;",
+    "<cmd>cprev<CR>zz",
+    { desc = "Backward qfixlist" }
+)

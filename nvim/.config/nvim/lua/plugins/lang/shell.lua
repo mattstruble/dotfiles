@@ -1,13 +1,13 @@
 return {
     {
-        "williamboman/mason.nvim",
+        "mason-org/mason.nvim",
         opts = {
             "shfmt",
             "bash-language-server",
         },
     },
     {
-        "williamboman/mason-lspconfig.nvim",
+        "mason-org/mason-lspconfig.nvim",
         opts = {
             "bashls",
         },

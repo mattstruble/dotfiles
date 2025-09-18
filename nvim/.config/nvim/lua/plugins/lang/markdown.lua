@@ -4,7 +4,7 @@
 
 return {
     {
-        "williamboman/mason.nvim",
+        "mason-org/mason.nvim",
         opts = {
             ensure_installed = {
                 "markdownlint",
@@ -14,7 +14,7 @@ return {
         },
     },
     {
-        "williamboman/mason-lspconfig.nvim",
+        "mason-org/mason-lspconfig.nvim",
         opts = {
             ensure_installed = {
                 "marksman",

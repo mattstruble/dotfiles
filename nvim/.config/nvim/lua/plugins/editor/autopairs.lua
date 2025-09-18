@@ -3,7 +3,7 @@
 -- https://github.com/desdic/neovim/blob/235b2cceb99562c5032bd978aa365d5880971248/lua/plugins/mini-pairs.lua
 --------------------------
 return {
-    "echasnovski/mini.pairs",
+    "nvim-mini/mini.pairs",
     event = "VeryLazy",
     keys = {
         {

@@ -1,13 +1,13 @@
 return {
     {
-        "williamboman/mason.nvim",
+        "mason-org/mason.nvim",
         opts = {
             "groovy-language-server",
             "npm-groovy-lint",
         },
     },
     {
-        "williamboman/mason-lspconfig.nvim",
+        "mason-org/mason-lspconfig.nvim",
         opts = {
             "groovyls",
         },

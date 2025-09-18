@@ -3,21 +3,23 @@ return {
     keys = {
         {
             "]h",
-            function()
-                require("notebook-navigator").move_cell("d")
-            end,
+            function() require("notebook-navigator").move_cell("d") end,
         },
         {
             "[h",
-            function()
-                require("notebook-navigator").move_cell("u")
-            end,
+            function() require("notebook-navigator").move_cell("u") end,
         },
-        { "<leader>X", "<cmd>lua require('notebook-navigator').run_cell()<cr>" },
-        { "<leader>x", "<cmd>lua require('notebook-navigator').run_and_move()<cr>" },
+        {
+            "<leader>X",
+            "<cmd>lua require('notebook-navigator').run_cell()<cr>",
+        },
+        {
+            "<leader>x",
+            "<cmd>lua require('notebook-navigator').run_and_move()<cr>",
+        },
     },
     dependencies = {
-        "echasnovski/mini.comment",
+        "nvim-mini/mini.comment",
         "hkupty/iron.nvim",
         "anuvyklack/hydra.nvim",
     },

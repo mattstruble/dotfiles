@@ -2,7 +2,7 @@ return {
     {
         "saghen/blink.cmp",
         dependencies = {
-            { "echasnovski/mini.snippets" },
+            { "nvim-mini/mini.snippets" },
         },
         opts = {
             enabled = function()
@@ -25,8 +25,8 @@ return {
     {
         "neovim/nvim-lspconfig",
         dependencies = {
-            "williamboman/mason.nvim",
-            "williamboman/mason-lspconfig.nvim",
+            "mason-org/mason.nvim",
+            "mason-org/mason-lspconfig.nvim",
             "saghen/blink.cmp",
         },
         opts = {
@@ -45,10 +45,10 @@ return {
             format_notify = false,
         },
     },
-    { "williamboman/mason.nvim", opts = {} },
+    { "mason-org/mason.nvim", opts = {} },
     {
-        "williamboman/mason-lspconfig.nvim",
-        dependencies = { "williamboman/mason.nvim" },
+        "mason-org/mason-lspconfig.nvim",
+        dependencies = { "mason-org/mason.nvim" },
         opts = {
             automatic_enable = true,
             automatic_installation = true,

@@ -2,7 +2,7 @@ return {
     { "Olical/conjure" },
     { "atweiden/vim-fennel" },
     {
-        "williamboman/mason.nvim",
+        "mason-org/mason.nvim",
         opts = {
             ensure_installed = {
                 "fennel-ls",
@@ -10,7 +10,7 @@ return {
         },
     },
     {
-        "williamboman/mason-lspconfig.nvim",
+        "mason-org/mason-lspconfig.nvim",
         opts = {
             ensure_installed = {
                 "fennel-ls",
