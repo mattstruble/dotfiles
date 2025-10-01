@@ -6,7 +6,6 @@ return {
         opts = {
             ensure_installed = {
                 "ruff",
-                "debugpy",
             },
         },
     },
@@ -15,7 +14,7 @@ return {
         opts = {
             ensure_installed = {
                 "ruff",
-                "basedpyright",
+                "pyrefly",
             },
         },
     },
