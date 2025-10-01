@@ -363,22 +363,22 @@ in
     ssh = {
       enable = true;
 
-      addKeysToAgent = "yes";
-      controlMaster = "auto";
-      controlPath = "${tmpdir}/ssh-%u-%r@%h:%p";
-      controlPersist = "1800";
+      matchBlocks = {
+        "*" = {
+          compression = true;
+          addKeysToAgent = "yes";
+          controlMaster = "auto";
+          controlPath = "${tmpdir}/ssh-%u-%r@%h:%p";
+          controlPersist = "1800";
 
-      forwardAgent = true;
-      serverAliveInterval = 60;
+          forwardAgent = true;
+          serverAliveInterval = 60;
 
-      hashKnownHosts = true;
-      userKnownHostsFile = "${home}/.ssh/known_hosts";
-
-      extraConfig = ''
-        Host *
-            IdentityAgent "${onePassPath}"
-      '';
-
+          hashKnownHosts = true;
+          userKnownHostsFile = "${home}/.ssh/known_hosts";
+          identityAgent = "${onePassPath}";
+        };
+      };
     };
 
     zsh = {
