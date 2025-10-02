@@ -50,6 +50,9 @@ on-focus-changed = "move-mouse window-lazy-center"
 # Exec ws change script
 # exec-on-workspace-change = ['~/.config/aerospace/on-ws-change.sh']
 
+# Note: on-monitor-configuration-changed is not available in all AeroSpace versions
+# Use the manual switch-mode.sh script instead
+
 # Gaps between windows (inner-*) and between monitor edges (outer-*).
 # Possible values:
 # - Constant:     gaps.outer.top = 8
@@ -178,6 +181,10 @@ alt-shift-z = 'move-node-to-workspace Z'
 alt-shift-m = 'fullscreen'
 alt-m = 'fullscreen'
 
+# Mode switching shortcuts
+alt-shift-ctrl-l = 'exec-and-forget ~/.config/aerospace/switch-mode.sh laptop'
+alt-shift-ctrl-m = 'exec-and-forget ~/.config/aerospace/switch-mode.sh monitor'
+
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
 alt-tab = 'workspace-back-and-forth'
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
@@ -203,39 +210,41 @@ alt-shift-j = ['join-with down', 'mode main']
 alt-shift-k = ['join-with up', 'mode main']
 alt-shift-l = ['join-with right', 'mode main']
 
+# Browser rules - default to laptop mode (B), scripts will move to monitor mode when needed
 [[on-window-detected]]
 if.app-id = 'app.zen-browser.zen'
 if.window-title-regex-substring = '^(?![Pp]icture[- ]in[- ][Pp]icture$)\w+'
-run = 'move-node-to-workspace 1'
+run = 'move-node-to-workspace B'
 
 [[on-window-detected]]
 if.app-id = 'org.mozilla.firefox'
 if.window-title-regex-substring = '^(?![Pp]icture[- ]in[- ][Pp]icture$)\w+'
-run = 'move-node-to-workspace 1'
+run = 'move-node-to-workspace B'
 
 [[on-window-detected]]
 if.window-title-regex-substring = '[Pp]icture[- ]in[- ][Pp]icture'
 run = 'layout floating'
 
+# Default to laptop mode workspaces, scripts will move to monitor mode when needed
 [[on-window-detected]]
 if.app-id = 'com.mitchellh.ghostty'
-run = 'move-node-to-workspace 1'
+run = 'move-node-to-workspace T'
 
 [[on-window-detected]]
 if.app-id = 'com.microsoft.Outlook'
-run = 'move-node-to-workspace 2'
+run = 'move-node-to-workspace O'
 
 [[on-window-detected]]
 if.app-id = 'com.tinyspeck.slackmacgap'
-run = 'move-node-to-workspace 2'
+run = 'move-node-to-workspace S'
 
 [[on-window-detected]]
 if.app-id = 'us.zoom.xos'
-run = 'move-node-to-workspace 3'
+run = 'move-node-to-workspace Z'
 
 [[on-window-detected]]
 if.app-id = 'md.obsidian'
-run = 'move-node-to-workspace 3'
+run = 'move-node-to-workspace N'
 
 [[on-window-detected]]
 if.app-id = 'com.1password.1password'

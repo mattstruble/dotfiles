@@ -8,7 +8,6 @@ let
 in
 [
   _1password-cli
-  aerospace
   asciidoctor
   aspell
   aspellDicts.en

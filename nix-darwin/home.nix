@@ -485,6 +485,7 @@ in
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
         eval "$(pyenv virtualenv-init -)"
+        eval "$(${brew_path}/brew shellenv)"
       '';
 
       plugins = [

@@ -23,9 +23,10 @@ in
     darwinConfig = "${path}/nix-darwin";
   };
 
-  # services = {
-  #   nix-daemon.enable = true;
-  # };
+  services = {
+    yabai.enable = false;
+    skhd.enable = false;
+  };
 
   users = {
     users."${userName}" = {
@@ -161,8 +162,8 @@ in
 
     casks = [
       "1password"
+      "aerospace"
       "alfred"
-      "firefox"
       "flux-app"
       "font-iosevka-nerd-font"
       "ghostty"
@@ -173,6 +174,7 @@ in
       "only-switch"
       "scroll-reverser"
       "wacom-tablet"
+      "zen-browser"
     ];
 
     masApps = {
