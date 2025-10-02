@@ -95,6 +95,7 @@ in
       "ghostty".source = mkLink "${path}/ghostty/.config/ghostty";
       "harper-ls".source = mkLink "${path}/harper-ls/.config/harper-ls";
       "lazygit".source = mkLink "${path}/lazygit/.config/lazygit";
+      "sketchybar".source = mkLink "${path}/sketchybar/.config/sketchybar";
 
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support

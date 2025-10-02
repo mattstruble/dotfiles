@@ -156,6 +156,11 @@ in
       "ical-buddy"
       "markdown-toc"
       "mas"
+      {
+        name = "sketchybar";
+        start_service = true;
+        restart_service = "changed";
+      }
       "pyenv-virtualenv"
       "zsh-completions"
     ];
