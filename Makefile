@@ -10,6 +10,7 @@ NIX-PATH=/nix/var/nix/profiles/default/bin/nix
 NIX-FLAKE=~/.config/nix-darwin/flake.nix
 NIX-DARWIN=/run/current-system/sw/bin/darwin-rebuild
 XCODE=/Library/Developer/CommandLineTools
+SBAR_LUA=~/.local/share/sketchybar_lua
 
 ARCH=$(shell uname -p)
 
@@ -57,8 +58,12 @@ $(XCODE):
 	$(info "Installing XCODE...")
 	xcode-select --install
 
+$(SBAR_LUA):
+	$(info "Installing sbar lua...")
+	git clone https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua && cd /tmp/SbarLua/ && make install && rm -rf /tmp/SbarLua/
+
 .PHONY: install
-install: $(BREW) $(XCODE) $(NIX-DARWIN)
+install: $(BREW) $(XCODE) $(SBAR_LUA) #$(NIX-DARWIN)
 
 ### SETUP
 
