@@ -12,16 +12,34 @@ return {
         name = "bamboo",
         lazy = false,
         priority = 1000,
+        enabled = true,
         config = function()
             require("bamboo").setup({
                 transparent = true,
-                dim_inactive = false,
+                dim_inactive = true,
                 lualine = {
                     transparent = true,
                 },
             })
             require("bamboo").load()
         end,
+    },
+    {
+        "alexkotusenko/nightgem.nvim",
+        lazy = false,
+        priority = 1000,
+        enabled = false,
+        config = function()
+            require("nightgem").setup()
+            -- vim.cmd("colorscheme nightgem")
+        end,
+    },
+    {
+        "rose-pine/neovim",
+        lazy = false,
+        priority = 1000,
+        name = "rose-pine",
+        enabled = false,
     },
     {
         "LazyVim/LazyVim",
