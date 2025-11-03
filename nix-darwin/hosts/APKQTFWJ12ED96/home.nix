@@ -19,9 +19,11 @@ in
     };
     programs = {
       git = {
-        userName = "Matt Struble";
-        userEmail = "matt.struble@nike.com";
-        extraConfig = {
+        settings = {
+          user = {
+            name = "Matt Struble";
+            email = "matt.struble@nike.com";
+          };
           github.user = "mstru3_nike";
         };
       };

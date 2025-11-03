@@ -162,6 +162,7 @@ in
         restart_service = "changed";
       }
       "pyenv-virtualenv"
+      "uv"
       "zsh-completions"
     ];
 
@@ -173,13 +174,12 @@ in
       "font-iosevka-nerd-font"
       "ghostty"
       "love"
-      "librewolf"
       "menuwhere"
       "monitorcontrol"
       "only-switch"
       "scroll-reverser"
       "wacom-tablet"
-      "zen-browser"
+      "zen"
     ];
 
     masApps = {

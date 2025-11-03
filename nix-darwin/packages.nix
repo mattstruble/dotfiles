@@ -65,14 +65,14 @@ in
   libevent
   ldns
   libfido2
-  (pkgs.lowPrio lua)
+  (pkgs.lib.lowPrio lua)
   luarocks
   markdownlint-cli
   markdownlint-cli2
   mas
   mermaid-cli
   mypy
-  (pkgs.lowPrio neovim)
+  (pkgs.lib.lowPrio neovim)
   nix-diff
   nix-index
   nix-info
@@ -109,7 +109,7 @@ in
   pv
   pyenv
   pyright
-  (pkgs.lowPrio python3)
+  (pkgs.lib.lowPrio python3)
   reattach-to-user-namespace
   rename
   renameutils
@@ -142,7 +142,7 @@ in
   translate-shell
   tree
   tree-sitter
-  (pkgs.lowPrio ctags)
+  (pkgs.lib.lowPrio ctags)
   ueberzugpp
   uncrustify
   universal-ctags
