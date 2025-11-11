@@ -68,6 +68,7 @@
   "rust-tools.nvim": { "branch": "master", "commit": "676187908a1ce35ffcd727c654ed68d851299d3e" },
   "snacks.nvim": { "branch": "main", "commit": "3893cca2b290946d7fff8f0f98855060df06297d" },
   "symbol-usage": { "branch": "main", "commit": "e07c07dfe7504295a369281e95a24e1afa14b243" },
+  "tiny-glimmer": { "branch": "main", "commit": "73b17b8a41ac7a61bfdcbe1cd3743c29d28d376e" },
   "todo-comments.nvim": { "branch": "main", "commit": "411503d3bedeff88484de572f2509c248e499b38" },
   "tokyonight.nvim": { "branch": "main", "commit": "b13cfc1286d2aa8bda6ce137b79e857d5a3d5739" },
   "trim.nvim": { "branch": "master", "commit": "d0760a840ca2fe4958353dee567a90c2994e70a7" },
