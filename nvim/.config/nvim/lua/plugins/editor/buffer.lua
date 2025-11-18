@@ -1,6 +1,7 @@
 return {
     {
         "akinsho/bufferline.nvim",
+        enabled = false,
         keys = {
             { "gb", "<cmd>BufferLinePick<cr>", desc = "Pick Buffer in View" },
         },

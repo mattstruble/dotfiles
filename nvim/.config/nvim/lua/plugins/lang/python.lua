@@ -34,4 +34,9 @@ return {
             },
         },
     },
+    {
+        "stellarjmr/notebook_style.nvim",
+        ft = "python",
+        opts = {},
+    },
 }
