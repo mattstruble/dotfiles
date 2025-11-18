@@ -1,4 +1,4 @@
-vim.bo.shiftwidth = 4
+vim.bo.shiftwidth = 2
 vim.bo.expandtab = true
 vim.bo.cindent = false
 vim.wo[0][0].foldmethod = "indent"
