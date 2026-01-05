@@ -54,12 +54,14 @@
         {
           MacStruble = configure "MacStruble" "aarch64-darwin";
           APKQTFWJ12ED96 = configure "APKQTFWJ12ED96" "aarch64-darwin";
+	  lm-mstruble = configure "lm-mstruble.system" "aarch64-darwin";
         };
 
       # Expose the package set, including overlays, for convenience.
       darwinPackages = {
         "MacStruble" = self.darwinConfigurations."MacStruble".pkgs;
         "APKQTFWJ12ED96" = self.darwinConfigurations."APKQTFWJ12ED96".pkgs;
+	lm-mstruble = self.darwinConfigurations."lm-mstruble".pkgs;
       };
     };
 

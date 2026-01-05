@@ -63,7 +63,7 @@ $(SBAR_LUA):
 	git clone https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua && cd /tmp/SbarLua/ && make install && rm -rf /tmp/SbarLua/
 
 .PHONY: install
-install: $(BREW) $(XCODE) $(SBAR_LUA) #$(NIX-DARWIN)
+install: $(BREW) $(XCODE) $(SBAR_LUA) $(NIX-DARWIN)
 
 ### SETUP
 
