@@ -44,6 +44,13 @@ in
       VAGRANT_VMWARE_CLONE_DIRECTORY = "${home}/Machines/vagrant";
       FILTER_BRANCH_SQUELCH_WARNING = "1";
 
+      AWS_CA_BUNDLE = "${ca-bundle_crt}";
+      REQUESTS_CA_BUNDLE = "${ca-bundle_crt}";
+      NODE_EXTRA_CA_CERTS = "${ca-bundle_crt}";
+      SSL_CERT_FILE = "${ca-bundle_crt}";
+      CURL_CA_BUNDLE = "${ca-bundle_crt}";
+      PIP_CERT = "${ca-bundle_crt}";
+
       MANPATH = lib.concatStringsSep ":" [
         "${home}/.nix-profile/share/man"
         "/run/current-system/sw/share/man"
