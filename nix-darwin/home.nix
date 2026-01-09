@@ -3,6 +3,8 @@
 , config
 , hostname
 , inputs
+, ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs"
+, ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt"
 , ...
 }:
 
@@ -14,8 +16,8 @@ let
   onePassPath = "~/Library/Group\\ Containers/2BUA8C4S2C.com.1password/t/agent.sock";
   # onePassPath = "~/.1password/agent.sock";
 
-  ca-bundle_path = "${pkgs.cacert}/etc/ssl/certs";
-  ca-bundle_crt = "${ca-bundle_path}/ca-bundle.crt";
+  # ca-bundle_path = "${pkgs.cacert}/etc/ssl/certs";
+  # ca-bundle_crt = "${ca-bundle_path}/ca-bundle.crt";
   brew_path = "/opt/homebrew/bin";
   # if pkgs.stdenv.targetPlatform.isx86_64 then "/usr/local/Homebrew/bin" else "/opt/homebrew/bin";
 in
@@ -48,6 +50,7 @@ in
         "/usr/local/share/man"
         "/usr/share/man"
       ];
+
     };
 
     sessionPath = [
@@ -455,6 +458,8 @@ in
       initContent = ''
         autoload -Uz compinit && compinit
 
+        source .profile
+
         bindkey -v
         bindkey '^f' autosuggest-accept
         bindkey '^p' history-search-backward
@@ -473,6 +478,7 @@ in
         zstyle ':completion:*:*:docker-*:*' option-stacking yes
 
         [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+        [[ ! -f ~/.profile ]] || source ~/.profile
 
         if [ $(command -v fortune) ] && [ $UID != '0' ] && [[ $- == *i* ]] && [ $TERM != 'dumb' ]; then
             ### Cowsay At Login ###

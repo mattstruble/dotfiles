@@ -150,7 +150,17 @@ in
 
     brews = [
       "bibtexconv"
-      "borders"
+      {
+        name = "borders";
+        start_service = true;
+        restart_service = "changed";
+      }
+      {
+        name = "colima";
+        start_service = true;
+        restart_service = "changed";
+      }
+      "docker"
       "fennel"
       "fnlfmt"
       "ical-buddy"
@@ -178,22 +188,22 @@ in
       "monitorcontrol"
       "only-switch"
       "scroll-reverser"
-      "wacom-tablet"
+      #"wacom-tablet"
       "zen"
     ];
 
     masApps = {
-      "CopyClip" = 595191960;
-      "Dropover" = 1355679052;
-      "Endel" = 1346247457;
-      "Hidden Bar" = 1452453066;
-      "Hyperduck" = 6444667067;
-      "Grab2Text" = 6475956137;
-      "Pure Paste" = 1611378436;
-      "Slack" = 803453959;
-      "TickTick" = 966085870;
-      "Velja" = 1607635845;
-      "Unsplash Wallpapers" = 1284863847;
+      #"CopyClip" = 595191960;
+      #"Dropover" = 1355679052;
+      #"Endel" = 1346247457;
+      #"Hidden Bar" = 1452453066;
+      #"Hyperduck" = 6444667067;
+      #"Grab2Text" = 6475956137;
+      #"Pure Paste" = 1611378436;
+      #"Slack" = 803453959;
+      #"TickTick" = 966085870;
+      #"Velja" = 1607635845;
+      #"Unsplash Wallpapers" = 1284863847;
     };
   };
 

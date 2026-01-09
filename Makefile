@@ -11,6 +11,8 @@ NIX-FLAKE=~/.config/nix-darwin/flake.nix
 NIX-DARWIN=/run/current-system/sw/bin/darwin-rebuild
 XCODE=/Library/Developer/CommandLineTools
 SBAR_LUA=~/.local/share/sketchybar_lua
+TMUX_TPM=~/.config/tmux/plugins/tpm/tpm
+CATPPUCCIN_TMUX=~/.config/tmux/plugins/catppuccin/tmux
 
 ARCH=$(shell uname -p)
 
@@ -31,6 +33,8 @@ export DOTFILES_PATH=${PWD}
 DETERMINATE_VERSION="v0.31.0"
 ### Make targets
 
+CHECK-DARWIN-REBUILD = $(shell command -v darwin-rebuild >/dev/null 2>&1 && echo "installed" || echo "missing")
+
 .PHONY: all
 all: setup start
 
@@ -50,9 +54,9 @@ $(NIX-PATH):
 
 # https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
 $(NIX-DARWIN): $(BREW) $(NIX-PATH)
-	$(info "Installing nix-darwin")
-	# -sudo mv /etc/nix/nix.conf /etc/nix/nix.conf.before-nix-darwin
-	cd nix-darwin && sudo ${NIX-PATH} run nix-darwin -- switch --flake . --impure
+	@if [ "$(CHECK-DARWIN-REBUILD)" = "missing" ]; then \
+		cd nix-darwin && sudo ${NIX-PATH} run nix-darwin -- switch --flake . --impure; \
+	fi
 
 $(XCODE):
 	$(info "Installing XCODE...")
@@ -62,8 +66,16 @@ $(SBAR_LUA):
 	$(info "Installing sbar lua...")
 	git clone https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua && cd /tmp/SbarLua/ && make install && rm -rf /tmp/SbarLua/
 
+$(TMUX_TPM):
+	$(info "Installing tpm...")
+	git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
+
+$(CATPPUCCIN_TMUX):
+	$(info "Installing catppuccin tmux")
+	git clone -b v2.1.3 https://github.com/catppuccin/tmux.git ~/.config/tmux/plugins/catppuccin/tmux
+
 .PHONY: install
-install: $(BREW) $(XCODE) $(SBAR_LUA) $(NIX-DARWIN)
+install: $(BREW) $(XCODE) $(SBAR_LUA) $(TMUX_TPM) $(CATPPUCCIN_TMUX) $(NIX-DARWIN)
 
 ### SETUP
 
