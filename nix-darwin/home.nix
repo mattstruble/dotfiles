@@ -107,6 +107,7 @@ in
       "lazygit".source = mkLink "${path}/lazygit/.config/lazygit";
       "sketchybar".source = mkLink "${path}/sketchybar/.config/sketchybar";
       "yamlfmt".source = mkLink "${path}/yamlfmt/.config/yamlfmt";
+      "python_keyring".source = mkLink "${path}/keyring/.config/python_keyring";
 
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support
