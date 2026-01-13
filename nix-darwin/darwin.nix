@@ -17,8 +17,10 @@ let
 
 in
 {
+  imports = lib.optional (builtins.pathExists ./hosts/${hostname}/darwin.nix) ./hosts/${hostname}/darwin.nix;
   # security.pam.enableSudoTouchIdAuth = true;
   security.pam.services.sudo_local.touchIdAuth = true;
+
   environment = {
     darwinConfig = "${path}/nix-darwin";
   };
@@ -152,11 +154,6 @@ in
       "bibtexconv"
       {
         name = "borders";
-        start_service = true;
-        restart_service = "changed";
-      }
-      {
-        name = "colima";
         start_service = true;
         restart_service = "changed";
       }
