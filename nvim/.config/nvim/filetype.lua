@@ -21,5 +21,14 @@ vim.filetype.add({
         [".*/roles/.*/handlers/.*%.ya?ml"] = "yaml.ansible",
         [".*/tasks/.*%.ya?ml"] = "yaml.ansible",
         [".*/molecule/.*%.ya?ml"] = "yaml.ansible",
+
+        -- helm
+        [".*/manifests/.*.yaml"] = "helm",
+        [".*/manifests/.*.tpl"] = "helm",
+        [".*/templates/.*.yaml"] = "helm",
+        [".*/templates/.*.tpl"] = "helm",
+        [".*/helm/.*.yaml"] = "helm",
+        [".*/helm/.*.tpl"] = "helm",
+        [".*.yaml.gotmpl"] = "helm",
     }
 })
