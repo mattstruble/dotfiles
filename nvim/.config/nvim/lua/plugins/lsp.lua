@@ -25,11 +25,62 @@ return {
                 ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
                 ["<C-e>"] = { "hide" },
                 ["<C-y>"] = { "select_and_accept" },
-                ["<C-n>"] = { "select_next", "fallback" },
-                ["<C-p>"] = { "select_prev", "fallback" },
+                ["<C-n>"] = {
+                    function()
+                        -- Cycle to next Copilot suggestion if visible
+                        local ok, copilot = pcall(require, "copilot.suggestion")
+                        if ok and copilot.is_visible() then
+                            copilot.next()
+                            return true
+                        end
+                        -- Supermaven: no cycling support, pass through
+                        return false
+                    end,
+                    "select_next",
+                    "fallback",
+                },
+                ["<C-p>"] = {
+                    function()
+                        -- Cycle to prev Copilot suggestion if visible
+                        local ok, copilot = pcall(require, "copilot.suggestion")
+                        if ok and copilot.is_visible() then
+                            copilot.prev()
+                            return true
+                        end
+                        -- Supermaven: no cycling support, pass through
+                        return false
+                    end,
+                    "select_prev",
+                    "fallback",
+                },
                 ["<C-b>"] = { "scroll_documentation_up", "fallback" },
                 ["<C-f>"] = { "scroll_documentation_down", "fallback" },
                 ["<CR>"] = { "accept", "fallback" },
+
+                -- Super-Tab: AI completion → blink.cmp → normal Tab
+                ["<Tab>"] = {
+                    function()
+                        -- Check for Copilot suggestion
+                        local ok, copilot = pcall(require, "copilot.suggestion")
+                        if ok and copilot.is_visible() then
+                            copilot.accept()
+                            return true
+                        end
+
+                        -- Check for Supermaven suggestion
+                        local ok2, supermaven = pcall(require, "supermaven-nvim.completion_preview")
+                        if ok2 and supermaven.has_suggestion() then
+                            supermaven.on_accept_suggestion()
+                            return true
+                        end
+
+                        -- Not handled, continue to next command
+                        return false
+                    end,
+                    "select_next",
+                    "fallback",
+                },
+                ["<S-Tab>"] = { "select_prev", "fallback" },
             },
         },
         config = function(_, opts)

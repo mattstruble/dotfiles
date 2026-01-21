@@ -18,9 +18,9 @@ return {
                 hide_during_completion = true,
                 debounce = 75,
                 keymap = {
-                    accept = "<C-space>",
-                    next = "<C-n>",
-                    prev = "<C-p>",
+                    accept = false, -- Handled by blink.cmp Super-Tab
+                    next = false,   -- Handled by blink.cmp Super C-n
+                    prev = false,   -- Handled by blink.cmp Super C-p
                     dismiss = "<C-x>",
                 },
             },
@@ -32,6 +32,7 @@ return {
                 gitrebase = false,
                 opencode = false,
                 opencode_output = false,
+                snacks_input = false,
             },
         },
     },
@@ -46,7 +47,7 @@ return {
         config = function()
             require("supermaven-nvim").setup({
                 keymaps = {
-                    accept_suggestion = "<C-space>",
+                    accept_suggestion = false, -- Handled by blink.cmp Super-Tab
                     clear_suggestion = "<C-x>",
                     accept_word = "<C-l>",
                 },
@@ -56,6 +57,7 @@ return {
                     help = true,
                     gitrebase = true,
                     gitcommit = true,
+                    snacks_input = true,
                 },
                 disable_inline_completion = false,
                 disable_keymaps = false,
