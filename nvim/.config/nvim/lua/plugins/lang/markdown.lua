@@ -52,7 +52,7 @@ return {
     {
         "iamcco/markdown-preview.nvim",
         lazy = true,
-        enbaled = false,
+        enabled = false,
         cmd = {
             "MarkdownPreview",
             "MarkdownPreviewStop",
@@ -67,9 +67,9 @@ return {
         end,
         -- stylua: ignore
         keys = {
-            { "<leader>mp", "<cmd>MarkdownPreview<cr>", desc = "Markdown Preview"},
-            { "<leader>mps", "<cmd>MarkdownPreviewStop<cr>", desc = "Markdown Preview Stop"},
-            { "<leader>mpt", "<cmd>MarkdownPreviewToggle<cr>", desc = "Markdown Preview Toggle"},
+            { "<leader>mp",  "<cmd>MarkdownPreview<cr>",       desc = "Markdown Preview" },
+            { "<leader>mps", "<cmd>MarkdownPreviewStop<cr>",   desc = "Markdown Preview Stop" },
+            { "<leader>mpt", "<cmd>MarkdownPreviewToggle<cr>", desc = "Markdown Preview Toggle" },
         },
     },
     {
