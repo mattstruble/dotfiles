@@ -109,6 +109,7 @@ in
   pv
   pyenv
   pyright
+  pyrefly
   (pkgs.lib.lowPrio python3)
   reattach-to-user-namespace
   rename
