@@ -7,7 +7,7 @@ return {
         opts = {
             enabled = function()
                 return not vim.tbl_contains(
-                    { "markdown", "minifiles" },
+                    { "markdown", "minifiles", "opencode", "opencode_output" },
                     vim.bo.filetype
                 )
             end,
@@ -20,7 +20,36 @@ return {
             sources = {
                 default = { "lsp", "path", "snippets", "buffer" },
             },
+            keymap = {
+                preset = "none",
+                ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
+                ["<C-e>"] = { "hide" },
+                ["<C-y>"] = { "select_and_accept" },
+                ["<C-n>"] = { "select_next", "fallback" },
+                ["<C-p>"] = { "select_prev", "fallback" },
+                ["<C-b>"] = { "scroll_documentation_up", "fallback" },
+                ["<C-f>"] = { "scroll_documentation_down", "fallback" },
+                ["<CR>"] = { "accept", "fallback" },
+            },
         },
+        config = function(_, opts)
+            require("blink.cmp").setup(opts)
+
+            -- Hide Copilot suggestions when blink.cmp menu is open
+            vim.api.nvim_create_autocmd("User", {
+                pattern = "BlinkCmpMenuOpen",
+                callback = function()
+                    vim.b.copilot_suggestion_hidden = true
+                end,
+            })
+
+            vim.api.nvim_create_autocmd("User", {
+                pattern = "BlinkCmpMenuClose",
+                callback = function()
+                    vim.b.copilot_suggestion_hidden = false
+                end,
+            })
+        end,
     },
     {
         "neovim/nvim-lspconfig",
