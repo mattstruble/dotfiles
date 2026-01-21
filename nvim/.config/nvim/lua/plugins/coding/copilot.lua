@@ -18,7 +18,7 @@ return {
                 hide_during_completion = true,
                 debounce = 75,
                 keymap = {
-                    accept = "<Tab>",
+                    accept = "<C-space>",
                     next = "<C-n>",
                     prev = "<C-p>",
                     dismiss = "<C-x>",
@@ -26,13 +26,12 @@ return {
             },
             panel = { enabled = false },
             filetypes = {
-                markdown = true,
+                ["*"] = true,
                 help = false,
-                gitcommit = true,
+                gitcommit = false,
                 gitrebase = false,
                 opencode = false,
                 opencode_output = false,
-                ["."] = false,
             },
         },
     },
@@ -47,7 +46,7 @@ return {
         config = function()
             require("supermaven-nvim").setup({
                 keymaps = {
-                    accept_suggestion = "<Tab>",
+                    accept_suggestion = "<C-space>",
                     clear_suggestion = "<C-x>",
                     accept_word = "<C-l>",
                 },
@@ -56,6 +55,7 @@ return {
                     opencode_output = true,
                     help = true,
                     gitrebase = true,
+                    gitcommit = true,
                 },
                 disable_inline_completion = false,
                 disable_keymaps = false,
