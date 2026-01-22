@@ -11,7 +11,25 @@ return {
         cmd = "Copilot",
         event = "InsertEnter",
         cond = has_copilot_auth,
+        keys = {
+            {
+                "<leader>cp",
+                function()
+                    vim.cmd("Copilot toggle")
+                    local attached = require("copilot.client").buf_is_attached(0)
+                    vim.notify(
+                        attached and "Copilot enabled" or "Copilot disabled",
+                        vim.log.levels.INFO
+                    )
+                end,
+                desc = "Toggle Copilot",
+            },
+        },
         opts = {
+            logger = {
+                file_log_level = vim.log.levels.ERROR,
+                print_log_level = vim.log.levels.ERROR,
+            },
             suggestion = {
                 enabled = true,
                 auto_trigger = true,
@@ -44,8 +62,23 @@ return {
         cond = function()
             return not has_copilot_auth()
         end,
+        keys = {
+            {
+                "<leader>cp",
+                function()
+                    local api = require("supermaven-nvim.api")
+                    api.toggle()
+                    vim.notify(
+                        api.is_running() and "Supermaven enabled" or "Supermaven disabled",
+                        vim.log.levels.INFO
+                    )
+                end,
+                desc = "Toggle Supermaven",
+            },
+        },
         config = function()
             require("supermaven-nvim").setup({
+                log_level = "error",
                 keymaps = {
                     accept_suggestion = false, -- Handled by blink.cmp Super-Tab
                     clear_suggestion = "<C-x>",
