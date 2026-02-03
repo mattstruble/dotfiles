@@ -1,11 +1,12 @@
-{ pkgs
-, lib
-, config
-, hostname
-, inputs
-, ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs"
-, ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt"
-, ...
+{
+  pkgs,
+  lib,
+  config,
+  hostname,
+  inputs,
+  ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs",
+  ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt",
+  ...
 }:
 
 let
@@ -90,6 +91,7 @@ in
         ".subzsh".source = mkLink "${path}/zsh/subzsh";
 
         ".local/bin/vim_opener".source = mkLink "${path}/commands/.local/bin/vim_opener";
+        ".local/bin/um".source = mkLink "${path}/commands/.local/bin/um";
       };
   };
 

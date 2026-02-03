@@ -6,7 +6,7 @@ return {
         opts = {
             ensure_installed = {
                 "ruff",
-                "pyrefly"
+                "ty"
             },
         },
     },
@@ -15,7 +15,7 @@ return {
         opts = {
             ensure_installed = {
                 "ruff",
-                "pyrefly",
+                "ty",
             },
         },
     },

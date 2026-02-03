@@ -101,6 +101,7 @@ else
     export EDITOR='nvim'
 fi
 
+export PATH="$HOME/bin:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 export PATH="/usr/local/opt/curl/bin:$PATH"
 
@@ -132,3 +133,6 @@ export PATH="$PATH:/Users/MStru3/.local/bin"
 
 # Chariot completions
 source <(chariot completion zsh)
+
+# um completions
+eval "$(um --completion)"

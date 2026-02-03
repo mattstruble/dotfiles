@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+#
+# um - quick note-taking from the command line
+#
+# Usage:
+#   um              List all notes
+#   um <name>       View note (or create if doesn't exist)
+#   um -e <name>    Edit existing note
+#
+
+set -e
+
+NOTES_DIR="${UM_NOTES_DIR:-$HOME/.um/notes}"
+EDITOR="${EDITOR:-vim}"
+
+# Ensure notes directory exists
+mkdir -p "$NOTES_DIR"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+usage() {
+    echo "Usage: um [options] [name]"
+    echo ""
+    echo "Options:"
+    echo "  -e <name>    Edit an existing note"
+    echo "  -d <name>    Delete a note"
+    echo "  -h           Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  um           List all notes"
+    echo "  um git       View or create 'git' note"
+    echo "  um -e git    Edit 'git' note"
+}
+
+list_notes() {
+    local notes=("$NOTES_DIR"/*.md)
+    
+    if [[ ! -e "${notes[0]}" ]]; then
+        echo -e "${BLUE}No notes yet.${NC} Create one with: um <name>"
+        return
+    fi
+    
+    echo -e "${BOLD}Notes:${NC}"
+    echo ""
+    for note in "${notes[@]}"; do
+        local name=$(basename "$note" .md)
+        local modified=$(stat -f "%Sm" -t "%Y-%m-%d" "$note" 2>/dev/null || stat -c "%y" "$note" 2>/dev/null | cut -d' ' -f1)
+        local preview=$(head -n 1 "$note" | sed 's/^#* *//' | cut -c1-50)
+        printf "  ${GREEN}%-20s${NC} ${BLUE}%s${NC}  %s\n" "$name" "$modified" "$preview"
+    done
+    echo ""
+}
+
+view_or_create_note() {
+    local name="$1"
+    local note_path="$NOTES_DIR/$name.md"
+    
+    if [[ -f "$note_path" ]]; then
+        # Note exists, display it
+        cat "$note_path"
+    else
+        # Note doesn't exist, create it
+        echo -e "${GREEN}Creating new note:${NC} $name"
+        echo "# $name" > "$note_path"
+        echo "" >> "$note_path"
+        $EDITOR "$note_path"
+    fi
+}
+
+edit_note() {
+    local name="$1"
+    local note_path="$NOTES_DIR/$name.md"
+    
+    if [[ ! -f "$note_path" ]]; then
+        echo -e "${RED}Note '$name' does not exist.${NC}"
+        echo "Create it with: um $name"
+        exit 1
+    fi
+    
+    $EDITOR "$note_path"
+}
+
+delete_note() {
+    local name="$1"
+    local note_path="$NOTES_DIR/$name.md"
+    
+    if [[ ! -f "$note_path" ]]; then
+        echo -e "${RED}Note '$name' does not exist.${NC}"
+        exit 1
+    fi
+    
+    read -p "Delete note '$name'? [y/N] " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        rm "$note_path"
+        echo -e "${GREEN}Deleted:${NC} $name"
+    else
+        echo "Cancelled."
+    fi
+}
+
+_um_completion_script() {
+    cat <<'COMPLETION'
+_um() {
+    local notes_dir="${UM_NOTES_DIR:-$HOME/.um/notes}"
+    local -a notes opts
+
+    # Get list of notes
+    if [[ -d "$notes_dir" ]]; then
+        notes=("${(@f)$(find "$notes_dir" -maxdepth 1 -name '*.md' -exec basename {} .md \; 2>/dev/null)}")
+    fi
+
+    opts=(-e -d -h)
+
+    if (( CURRENT == 2 )); then
+        # First argument: offer options and note names
+        compadd -a opts
+        compadd -a notes
+    elif (( CURRENT == 3 )); then
+        # Second argument: if previous was -e or -d, offer note names
+        case "${words[2]}" in
+            -e|-d)
+                compadd -a notes
+                ;;
+        esac
+    fi
+}
+compdef _um um
+COMPLETION
+}
+
+# Parse arguments
+case "${1:-}" in
+    "")
+        list_notes
+        ;;
+    -h|--help)
+        usage
+        ;;
+    --completion)
+        _um_completion_script
+        ;;
+    -e)
+        if [[ -z "${2:-}" ]]; then
+            echo -e "${RED}Error:${NC} -e requires a note name"
+            exit 1
+        fi
+        edit_note "$2"
+        ;;
+    -d)
+        if [[ -z "${2:-}" ]]; then
+            echo -e "${RED}Error:${NC} -d requires a note name"
+            exit 1
+        fi
+        delete_note "$2"
+        ;;
+    -*)
+        echo -e "${RED}Unknown option:${NC} $1"
+        usage
+        exit 1
+        ;;
+    *)
+        view_or_create_note "$1"
+        ;;
+esac
