@@ -157,7 +157,13 @@ in
         start_service = true;
         restart_service = "changed";
       }
-      "docker"
+      {
+        name = "colima";
+        start_service = true;
+        restart_service = "changed";
+      }
+      "docker-compose"
+      "docker-buildx"
       "fennel"
       "fnlfmt"
       "ical-buddy"
