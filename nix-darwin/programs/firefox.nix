@@ -159,6 +159,7 @@ in
               (extension "random_user_agent" "{b43b974b-1d3a-4232-b226-eaa2ac6ebb69}")
               (extension "refined-github-" "{a4c4eda4-fb84-4a84-b4a1-f7c1cbf2a1ad}")
               (extension "spoof-geolocation" "{61173a74-ece7-4ef3-86a7-525538b78430}")
+              (extension "trackmenot" "trackmenot@mrl.nyu.edu")
             ];
 
           "3rdparty".Extensions = {
