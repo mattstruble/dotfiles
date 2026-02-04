@@ -12,18 +12,15 @@ in
   aspell
   aspellDicts.en
   ast-grep
-  ansible
-  ansible-lint
   awscli2
-  perl
   bibtex2html
-  black
   cacert
   cargo
   chafa
   checkmake
   codespell
   cowsay
+  (pkgs.lib.lowPrio ctags)
   curl
   darwin.cctools
   diffstat
@@ -36,12 +33,10 @@ in
   fnlfmt
   fortune
   fzf
-  fzf-zsh
-  ghostscript
   gimme-aws-creds
-  gitMinimal
-  git-extras
   git-credential-oauth
+  git-extras
+  gitMinimal
   gitlint
   gnugrep
   gnumake
@@ -50,81 +45,63 @@ in
   gnused
   go
   gradle
-  groovy
   imagemagick
   iperf
   jiq
   jq
-  jupyter
   just
   killall
   kubectl
   lazygit
-  less
-  libtiff
-  libevent
   ldns
+  less
+  libevent
   libfido2
+  libtiff
   (pkgs.lib.lowPrio lua)
   luarocks
   markdownlint-cli
   markdownlint-cli2
   mas
   mermaid-cli
-  mypy
   (pkgs.lib.lowPrio neovim)
   nix-diff
   nix-index
   nix-info
   nix-prefetch-scripts
+  nixfmt
   nixpkgs-fmt
   nixpkgs-lint
-  nixfmt-rfc-style
   nmap
-  nodejs
-  nodePackages.csslint
-  nodePackages.eslint
-  nodePackages.js-beautify
-  nodejs
   obsidian
   opam
-  openjdk
   opensc
   openssh
   openssl
-  openvpn
+  opentofu
   pandoc
-  pass-git-helper
   pdfgrep
   perl
   perlPackages.ImageExifTool
   pinentry_mac
   plantuml
-  poetry
-  postgresql
   pre-commit
   protobufc
   psrecord
   pstree
   pv
-  pyenv
-  pyright
-  pyrefly
   (pkgs.lib.lowPrio python3)
   reattach-to-user-namespace
   rename
   renameutils
   ripgrep
   rsync
-  ruby
   ruff
   rustfmt
-  shfmt
   shellcheck
   shellharden
+  shfmt
   sops
-  sqlite
-  sqlite-analyzer
   sqldiff
   sqruff
   squashfsTools
@@ -132,27 +109,23 @@ in
   stern
   stow
   tectonic
-  terraform
-  terraform-ls
-  terraform-lsp
-  terragrunt
   terminal-notifier
-  texlivePackages.lacheck
   tex-fmt
+  texlivePackages.lacheck
   tmux
+  tofu-ls
   translate-shell
   tree
   tree-sitter
-  (pkgs.lib.lowPrio ctags)
+  ty
   ueberzugpp
-  uncrustify
   universal-ctags
-  virtualenv
+  uv
   viu
   wget
   write-good
-  yamlfmt
   yaml-language-server
+  yamlfmt
   yamllint
   yarn
   yubikey-agent
