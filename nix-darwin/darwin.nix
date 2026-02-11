@@ -162,6 +162,7 @@ in
         start_service = true;
         restart_service = "changed";
       }
+      "docker"
       "docker-compose"
       "docker-buildx"
       "fennel"

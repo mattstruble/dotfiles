@@ -93,6 +93,30 @@ in
         ".local/bin/vim_opener".source = mkLink "${path}/commands/.local/bin/vim_opener";
         ".local/bin/um".source = mkLink "${path}/commands/.local/bin/um";
       };
+
+    activation.setupDockerCliPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      DOCKER_CONFIG="$HOME/.docker"
+      DOCKER_CLI_PLUGINS="$DOCKER_CONFIG/cli-plugins"
+      DOCKER_CONFIG_JSON="$DOCKER_CONFIG/config.json"
+      BREW_PLUGINS="/opt/homebrew/lib/docker/cli-plugins"
+
+      # Remove stale symlinks in ~/.docker/cli-plugins/ (e.g., leftover Docker Desktop links)
+      if [ -d "$DOCKER_CLI_PLUGINS" ]; then
+        find "$DOCKER_CLI_PLUGINS" -maxdepth 1 -type l ! -exec test -e {} \; -delete
+      fi
+
+      # Ensure ~/.docker/config.json includes cliPluginsExtraDirs for Homebrew plugins
+      if [ -f "$DOCKER_CONFIG_JSON" ]; then
+        EXISTING=$(${pkgs.jq}/bin/jq -r '.cliPluginsExtraDirs // [] | join(",")' "$DOCKER_CONFIG_JSON" 2>/dev/null || echo "")
+        if ! echo "$EXISTING" | grep -q "$BREW_PLUGINS"; then
+          ${pkgs.jq}/bin/jq --arg dir "$BREW_PLUGINS" '.cliPluginsExtraDirs = ((.cliPluginsExtraDirs // []) + [$dir] | unique)' \
+            "$DOCKER_CONFIG_JSON" > "$DOCKER_CONFIG_JSON.tmp" && mv "$DOCKER_CONFIG_JSON.tmp" "$DOCKER_CONFIG_JSON"
+        fi
+      else
+        mkdir -p "$DOCKER_CONFIG"
+        echo '{"cliPluginsExtraDirs": ["'"$BREW_PLUGINS"'"]}' | ${pkgs.jq}/bin/jq . > "$DOCKER_CONFIG_JSON"
+      fi
+    '';
   };
 
   xdg.configFile =
