@@ -124,15 +124,16 @@ in
     in
     {
       "aerospace".source = mkLink "${path}/aerospace/.config/aerospace";
-      "nvim".source = mkLink "${path}/nvim/.config/nvim";
-      "tmux".source = mkLink "${path}/tmux/.config/tmux";
-      "wezterm".source = mkLink "${path}/wezterm/.config/wezterm";
       "ghostty".source = mkLink "${path}/ghostty/.config/ghostty";
       "harper-ls".source = mkLink "${path}/harper-ls/.config/harper-ls";
       "lazygit".source = mkLink "${path}/lazygit/.config/lazygit";
-      "sketchybar".source = mkLink "${path}/sketchybar/.config/sketchybar";
-      "yamlfmt".source = mkLink "${path}/yamlfmt/.config/yamlfmt";
+      "nvim".source = mkLink "${path}/nvim/.config/nvim";
+      "opencode".source = mkLink "${path}/opencode/.config/opencode";
       "python_keyring".source = mkLink "${path}/keyring/.config/python_keyring";
+      "sketchybar".source = mkLink "${path}/sketchybar/.config/sketchybar";
+      "tmux".source = mkLink "${path}/tmux/.config/tmux";
+      "wezterm".source = mkLink "${path}/wezterm/.config/wezterm";
+      "yamlfmt".source = mkLink "${path}/yamlfmt/.config/yamlfmt";
 
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support
