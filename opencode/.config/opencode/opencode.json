@@ -3,9 +3,9 @@
   "permission": {
     "bash": "ask",
     "edit": "allow",
-    "read": "allow",
     "grep": "allow",
     "patch": "allow",
+    "read": "allow",
     "webfetch": "allow"
   },
   "provider": {
@@ -15,12 +15,16 @@
       }
     },
     "ollama": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama (local)",
-      "options": {
-        "baseURL": "http://localhost:11434/v1"
-      },
       "models": {
+        "llama3.1:8b": {
+          "name": "llama3.1:8b"
+        },
+        "mistral-nemo:12b": {
+          "name": "mistral-nemo:12b"
+        },
+        "qwen2.5-coder:14b": {
+          "name": "qwen2.5-coder:14b"
+        },
         "qwen2.5-coder:7b": {
           "name": "Qwen2.5-Coder 7B",
           "options": {
@@ -30,9 +34,6 @@
             "top_p": 0.9
           }
         },
-        "qwen2.5-coder:14b": {
-          "name": "qwen2.5-coder:14b"
-        },
         "qwen3:8b": {
           "name": "Qwen3 8B",
           "options": {
@@ -41,13 +42,12 @@
             "top_k": 20,
             "top_p": 0.9
           }
-        },
-        "mistral-nemo:12b": {
-          "name": "mistral-nemo:12b"
-        },
-        "llama3.1:8b": {
-          "name": "llama3.1:8b"
         }
+      },
+      "name": "Ollama (local)",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
       }
     }
   }
