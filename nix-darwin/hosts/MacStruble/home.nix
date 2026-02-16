@@ -1,5 +1,7 @@
 let
   userName = import ./username.nix;
+  ca-bundle_path = "/etc/ssl/certs";
+  ca-bundle_crt = "${ca-bundle_path}/ca-certificates.crt";
 in
 {
   "${userName}" = {
@@ -7,6 +9,10 @@ in
       ../../profiles/macos.nix
       ../../home.nix
     ];
+    _module.args = {
+      ca-bundle_path = ca-bundle_path;
+      ca-bundle_crt = ca-bundle_crt;
+    };
     programs = {
       git = {
         settings = {
