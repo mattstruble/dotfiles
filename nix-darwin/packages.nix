@@ -75,6 +75,7 @@ in
   nmap
   obsidian
   opam
+  opencode
   opensc
   openssh
   openssl
