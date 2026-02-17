@@ -175,6 +175,7 @@ in
         start_service = true;
         restart_service = "changed";
       }
+      "llama.cpp"
       "pyenv-virtualenv"
       "uv"
       "zsh-completions"
@@ -220,20 +221,20 @@ in
     };
   };
 
+  launchd.user.agents.llama-server = {
+    command = "/opt/homebrew/bin/llama-server --fim-qwen-7b-default";
+    serviceConfig = {
+      KeepAlive = true;
+      RunAtLoad = true;
+      StandardOutPath = "/tmp/llama-server.log";
+      StandardErrorPath = "/tmp/llama-server.log";
+    };
+  };
+
   system = {
 
     primaryUser = "${userName}";
     stateVersion = 4;
-
-    # TDOO: new version of nix-darwin axed this. update it
-    # activationScripts are executed every time you boot the system or run
-    # `nixos-rebuild` / `darwin-rebuild`.
-    # activationScripts.postUserActivation.text = ''
-    # activateSettings -u will reload the settings from the database and
-    # apply them to the current session, so we do not need to logout and
-    # login again to make the changes take effect.
-    # /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
-    # '';
 
     defaults = {
       ".GlobalPreferences" = {
