@@ -16,6 +16,11 @@ return {
                 "harper_ls",
             },
         },
+        init = function()
+            vim.lsp.config("harper_ls", {
+                filetypes = { "markdown", "text", "gitcommit" },
+            })
+        end,
     },
     {
         "mfussenegger/nvim-lint",
