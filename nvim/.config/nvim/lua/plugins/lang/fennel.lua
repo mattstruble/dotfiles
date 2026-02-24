@@ -1,5 +1,4 @@
 return {
-    { "Olical/conjure" },
     { "atweiden/vim-fennel" },
     {
         "mason-org/mason.nvim",
