@@ -12,6 +12,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     arkenfox-userjs.url = "github:petrkozorezov/arkenfox-userjs-nix";
+    ai-skills.url = "github:mattstruble/nix-ai-skills";
+
+    skills-infra = {
+      url = "github:tylertitsworth/skills";
+      flake = false;
+    };
+
+    skills-nix = {
+      url = "github:shakhzodkudratov/nixos-and-flakes-skill/c9a423b2af834633e6ef714de603fe73e6f0b195";
+      flake = false;
+    };
   };
 
   outputs =
@@ -54,14 +65,14 @@
         {
           MacStruble = configure "MacStruble" "aarch64-darwin";
           APKQTFWJ12ED96 = configure "APKQTFWJ12ED96" "aarch64-darwin";
-	  lm-mstruble = configure "lm-mstruble.system" "aarch64-darwin";
+          lm-mstruble = configure "lm-mstruble.system" "aarch64-darwin";
         };
 
       # Expose the package set, including overlays, for convenience.
       darwinPackages = {
         "MacStruble" = self.darwinConfigurations."MacStruble".pkgs;
         "APKQTFWJ12ED96" = self.darwinConfigurations."APKQTFWJ12ED96".pkgs;
-	lm-mstruble = self.darwinConfigurations."lm-mstruble".pkgs;
+        lm-mstruble = self.darwinConfigurations."lm-mstruble".pkgs;
       };
     };
 
