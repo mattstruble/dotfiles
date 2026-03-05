@@ -176,6 +176,7 @@ in
         restart_service = "changed";
       }
       "llama.cpp"
+      "ollama"
       "pyenv-virtualenv"
       "uv"
       "zsh-completions"
