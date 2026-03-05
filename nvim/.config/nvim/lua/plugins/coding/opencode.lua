@@ -67,4 +67,42 @@ return {
             },
         },
     },
+    {
+        "jellydn/99",
+        branch = "feature/blink-cmp",
+        dependencies = {
+            "Saghen/blink.compat",
+        },
+        config = function()
+            local _99 = require("99")
+            local cwd = vim.uv.cwd()
+
+            local basename = vim.fs.basename(cwd)
+
+            _99.setup({
+                logger = {
+                    level = _99.INFO,
+                    path = "/tmp/" .. basename .. ".99.debug",
+                    print_on_error = true,
+                },
+
+                completion = {
+                    source = "blink",
+                },
+
+                md_files = {
+                    "AGENT.md",
+                    "AGENTS.md",
+                },
+            })
+
+            vim.keymap.set("v", "<leader>9v", function()
+                _99.visual()
+            end, { desc = "99 visual fill." })
+
+            vim.keymap.set("v", "<leader>9s", function()
+                _99.stop_all_requests()
+            end, { desc = "99 kill all requests." })
+        end,
+    },
 }
