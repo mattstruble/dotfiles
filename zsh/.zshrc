@@ -136,3 +136,15 @@ source <(chariot completion zsh)
 
 # um completions
 eval "$(um --completion)"
+
+# LILA Dev Environment - PATH Configuration
+export PATH="$PATH:$(npm config get prefix)/bin"
+export PATH="/Applications/Cursor.app/Contents/Resources/app/bin:$PATH"
+export PATH="/opt/homebrew/bin:$PATH"
+export PATH="/usr/local/bin:$PATH"
+
+# LILA Dev Environment - Claude Code Bedrock Configuration
+export CLAUDE_CODE_USE_BEDROCK=1
+export AWS_REGION=us-east-1
+export CLAUDE_CODE_MAX_OUTPUT_TOKENS=4096
+export MAX_THINKING_TOKENS=1024
