@@ -19,6 +19,11 @@
       flake = false;
     };
 
+    skills-anthropic = {
+      url = "github:anthropics/skills";
+      flake = false;
+    };
+
     skills-nix = {
       url = "github:shakhzodkudratov/nixos-and-flakes-skill/c9a423b2af834633e6ef714de603fe73e6f0b195";
       flake = false;

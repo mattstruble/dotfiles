@@ -11,7 +11,9 @@ in
   asciidoctor
   aspell
   aspellDicts.en
-  ast-grep
+  (ast-grep.overrideAttrs (old: {
+    doCheck = false;
+  }))
   awscli2
   bibtex2html
   cacert
@@ -33,7 +35,6 @@ in
   fnlfmt
   fortune
   fzf
-  gimme-aws-creds
   git-credential-oauth
   git-extras
   gitMinimal
@@ -86,7 +87,7 @@ in
   perlPackages.ImageExifTool
   pinentry_mac
   plantuml
-  pre-commit
+  # pre-commit
   protobufc
   psrecord
   pstree

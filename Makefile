@@ -124,8 +124,7 @@ refresh: rebuild
 
 .PHONY: update_nix
 update_nix: $(NIX-DARWIN-PATH)
-	nix-channel --update
-	cd nix-darwin && sudo nix flake update --extra-experimental-features nix-command --extra-experimental-features flakes
+	cd nix-darwin && nix flake update --extra-experimental-features nix-command --extra-experimental-features flakes
 
 .PHONY: update
 update: update_nix rebuild
