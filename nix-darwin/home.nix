@@ -163,6 +163,7 @@ in
         inputs.skills-anthropic
         inputs.skills-infra
         inputs.skills-nix
+        inputs.skills-mine
       ];
     };
 

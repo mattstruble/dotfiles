@@ -94,6 +94,7 @@
         "nixpkgs": "nixpkgs",
         "skills-anthropic": "skills-anthropic",
         "skills-infra": "skills-infra",
+        "skills-mine": "skills-mine",
         "skills-nix": "skills-nix"
       }
     },
@@ -125,6 +126,22 @@
       },
       "original": {
         "owner": "tylertitsworth",
+        "repo": "skills",
+        "type": "github"
+      }
+    },
+    "skills-mine": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1773002940,
+        "narHash": "sha256-gAg/hPLpJ90vkqQ1jUPH3ZZ5IY83bmilTgpSl/XD1q0=",
+        "owner": "mattstruble",
+        "repo": "skills",
+        "rev": "1dcd565e32c9c3312a36935c849c0b20f0981d6e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mattstruble",
         "repo": "skills",
         "type": "github"
       }
