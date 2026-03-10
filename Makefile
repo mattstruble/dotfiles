@@ -55,7 +55,7 @@ $(NIX-PATH):
 # https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
 $(NIX-DARWIN): $(BREW) $(NIX-PATH)
 	@if [ "$(CHECK-DARWIN-REBUILD)" = "missing" ]; then \
-		cd nix-darwin && sudo ${NIX-PATH} run nix-darwin -- switch --flake . --impure; \
+		cd nix-darwin && sudo ${NIX-PATH} run nix-darwin -- switch --flake '.?submodules=1' --impure; \
 	fi
 
 $(XCODE):
@@ -113,7 +113,7 @@ setup: install
 
 .PHONY: nix_rebuild
 nix_rebuild:
-	cd nix-darwin && sudo darwin-rebuild switch --flake . --impure
+	cd nix-darwin && sudo darwin-rebuild switch --flake '.?submodules=1' --impure
 
 .PHONY: rebuild refresh
 rebuild: nix_rebuild
