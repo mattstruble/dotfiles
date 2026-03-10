@@ -1,16 +1,16 @@
-"""Smart-splits.nvim kitten for kitty neighboring window navigation.
+"""Smart-splits.nvim kitten for kitty split window creation.
 
-Called by smart-splits via `kitty @ kitten neighboring_window.py <direction>`
-when neovim is at the edge of its splits and needs to navigate to a kitty pane.
+Called by smart-splits via `kitty @ kitten split_window.py <direction>`
+for creating new splits from neovim.
 
-Source: https://github.com/mrjones2014/smart-splits.nvim/blob/master/kitty/neighboring_window.py
+Source: https://github.com/mrjones2014/smart-splits.nvim/blob/master/kitty/split_window.py
 """
 
-from kitty.key_encoding import KeyEvent, parse_shortcut
 from kittens.tui.handler import result_handler
+from kitty.key_encoding import KeyEvent, parse_shortcut
 
 
-def main():
+def main(args):
     pass
 
 
@@ -30,14 +30,28 @@ def encode_key_mapping(window, key_mapping):
     return window.encoded_key(event)
 
 
+def split_window(boss, direction):
+    if direction == "up" or direction == "down":
+        boss.launch("--cwd=current", "--location=hsplit")
+    else:
+        boss.launch("--cwd=current", "--location=vsplit")
+
+    if direction == "up" or direction == "left":
+        boss.active_tab.move_window(direction)
+
+
 @result_handler(no_ui=True)
 def handle_result(args, result, target_window_id, boss):
     window = boss.window_id_map.get(target_window_id)
 
+    if window is None:
+        return
+
+    direction = args[1]
     cmd = window.child.foreground_cmdline[0]
     if cmd == "tmux":
         keymap = args[2]
         encoded = encode_key_mapping(window, keymap)
         window.write_to_child(encoded)
     else:
-        boss.active_tab.neighboring_window(args[1])
+        split_window(boss, direction)
