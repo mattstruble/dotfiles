@@ -72,11 +72,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1773152816,
-        "narHash": "sha256-XCKTUlLfP2HVL/0DzKSASWhmqtTC8/iWT6yHHfHvT2Q=",
+        "lastModified": 1773166293,
+        "narHash": "sha256-o0chmob58malizt8yDsE/SyQ3+mRGgBYgCWXrRTrfsA=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b210bb1ccc0ff20d6c4143074b808f9178586af0",
+        "rev": "ed6c38bce3eee7a7e7b870d52a72eb8370890e50",
         "type": "github"
       },
       "original": {
@@ -94,8 +94,7 @@
         "nixpkgs": "nixpkgs",
         "skills-anthropic": "skills-anthropic",
         "skills-infra": "skills-infra",
-        "skills-mine": "skills-mine",
-        "skills-nix": "skills-nix"
+        "skills-mine": "skills-mine"
       }
     },
     "skills-anthropic": {
@@ -133,33 +132,16 @@
     "skills-mine": {
       "flake": false,
       "locked": {
-        "lastModified": 1773108691,
-        "narHash": "sha256-UF1tP+duZEXxDFP9osW6jLe3neEMGrZeqHQx3NvrUIA=",
+        "lastModified": 1773167626,
+        "narHash": "sha256-mhYUvkoqk+u1ZtrKuS40B6/qt8Z3nnjaH1kKtEQOC+A=",
         "owner": "mattstruble",
         "repo": "skills",
-        "rev": "330bfcd7eca3eff6528d80b0f2e31001cf22490f",
+        "rev": "c9c735c1a8b3139e39cbf4c8bc7bd6b545d1ef17",
         "type": "github"
       },
       "original": {
         "owner": "mattstruble",
         "repo": "skills",
-        "type": "github"
-      }
-    },
-    "skills-nix": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1769173394,
-        "narHash": "sha256-QcaBWcf6rIStWV91jZct34c2T4wOumDVfmYjNF0vH48=",
-        "owner": "shakhzodkudratov",
-        "repo": "nixos-and-flakes-skill",
-        "rev": "c9a423b2af834633e6ef714de603fe73e6f0b195",
-        "type": "github"
-      },
-      "original": {
-        "owner": "shakhzodkudratov",
-        "repo": "nixos-and-flakes-skill",
-        "rev": "c9a423b2af834633e6ef714de603fe73e6f0b195",
         "type": "github"
       }
     }
