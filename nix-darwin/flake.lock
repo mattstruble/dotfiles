@@ -1,17 +1,17 @@
 {
   "nodes": {
-    "ai-skills": {
+    "ai-agents": {
       "locked": {
-        "lastModified": 1772996080,
-        "narHash": "sha256-ADVAzB6T1vydlUK50alU02rxBb+bUiq9v5Z1dpreBN4=",
+        "lastModified": 1773166737,
+        "narHash": "sha256-yzyLfgfwfx6rN6+SViGzxJlIp/53ONT+P6yHjkarhP8=",
         "owner": "mattstruble",
-        "repo": "nix-ai-skills",
-        "rev": "cee86af9a91f6a4835b6cb383ebd65a78f7a4239",
+        "repo": "nix-ai-agents",
+        "rev": "a3b8cce54e456e3d61f9ba54065203b073ca9ebd",
         "type": "github"
       },
       "original": {
         "owner": "mattstruble",
-        "repo": "nix-ai-skills",
+        "repo": "nix-ai-agents",
         "type": "github"
       }
     },
@@ -87,7 +87,7 @@
     },
     "root": {
       "inputs": {
-        "ai-skills": "ai-skills",
+        "ai-agents": "ai-agents",
         "arkenfox-userjs": "arkenfox-userjs",
         "darwin": "darwin",
         "home-manager": "home-manager",

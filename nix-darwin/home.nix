@@ -129,7 +129,7 @@ in
       "harper-ls".source = mkLink "${path}/harper-ls/.config/harper-ls";
       "lazygit".source = mkLink "${path}/lazygit/.config/lazygit";
       "nvim".source = mkLink "${path}/nvim/.config/nvim";
-      "opencode".source = mkLink "${path}/opencode/.config/opencode";
+
       "python_keyring".source = mkLink "${path}/keyring/.config/python_keyring";
       "sketchybar".source = mkLink "${path}/sketchybar/.config/sketchybar";
       "tmux".source = mkLink "${path}/tmux/.config/tmux";
@@ -151,11 +151,11 @@ in
       '';
     };
 
-  imports = [ inputs.ai-skills.homeManagerModules.default ];
+  imports = [ inputs.ai-agents.homeManagerModules.default ];
 
   programs = {
 
-    ai-skills = {
+    ai-agents = {
       enable = true;
       agents = [
         "opencode"
@@ -166,6 +166,34 @@ in
         inputs.skills-nix
         inputs.skills-mine
       ];
+
+      mcpServers = {
+        context7 = {
+          type = "remote";
+          url = "https://mcp.context7.mcp";
+        };
+      };
+
+      opencode = {
+        agentsFile = config.lib.file.mkOutOfStoreSymlink "${path}/opencode/.config/opencode/AGENTS.md";
+        config = {
+          "$schema" = "https://opencode.ai/config.json";
+          permission = {
+            bash = {
+              "*" = "ask";
+              "ls *" = "allow";
+              "grep *" = "allow";
+              "rg *" = "allow";
+              "which *" = "allow";
+            };
+            edit = "allow";
+            grep = "allow";
+            patch = "allow";
+            read = "allow";
+            webfetch = "allow";
+          };
+        };
+      };
     };
 
     direnv = {

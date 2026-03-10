@@ -17,6 +17,11 @@ in
     };
 
     programs = {
+      # ai-agents.opencode.config = {
+      #   provider = {};
+      #   mcp = {};
+      # };
+
       git = {
         settings = {
           user = {

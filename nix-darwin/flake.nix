@@ -12,7 +12,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     arkenfox-userjs.url = "github:petrkozorezov/arkenfox-userjs-nix";
-    ai-skills.url = "github:mattstruble/nix-ai-skills";
+    ai-agents.url = "github:mattstruble/nix-ai-agents";
 
     skills-infra = {
       url = "github:tylertitsworth/skills";
