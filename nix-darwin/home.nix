@@ -168,7 +168,7 @@ in
       mcpServers = {
         context7 = {
           type = "remote";
-          url = "https://mcp.context7.mcp";
+          url = "https://mcp.context7.com/mcp";
         };
       };
 
