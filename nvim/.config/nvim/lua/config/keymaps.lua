@@ -18,10 +18,10 @@ keymap.set("n", "<leader>-", "<C-x>")
 -- keymap.set("n", "<leader>se", "<C-w>=") -- make split equal width
 -- keymap.set("n", "<leader>sx", ":close<CR>") -- close current split
 
-keymap.set("n", "<leader>to", ":tabnew<CR>") -- open new tab
+keymap.set("n", "<leader>to", ":tabnew<CR>")   -- open new tab
 keymap.set("n", "<leader>tx", ":tabclose<CR>") -- close curr tab
-keymap.set("n", "<leader>tn", ":tabn<CR>") -- go to next tab
-keymap.set("n", "<leader>tp", ":tabp<CR>") -- go to previous tab
+keymap.set("n", "<leader>tn", ":tabn<CR>")     -- go to next tab
+keymap.set("n", "<leader>tp", ":tabp<CR>")     -- go to previous tab
 
 -- much easier to me to undo and re-do all within the same letter
 vim.keymap.set("n", "U", "<C-r>")
@@ -108,3 +108,9 @@ vim.keymap.set(
     "<cmd>cprev<CR>zz",
     { desc = "Backward qfixlist" }
 )
+
+-- Native split navigation keymaps (replaces vim-tmux-navigator since we no longer use tmux)
+vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Navigate to left split" })
+vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Navigate to below split" })
+vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Navigate to above split" })
+vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Navigate to right split" })
