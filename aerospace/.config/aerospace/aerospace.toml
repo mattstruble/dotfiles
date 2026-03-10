@@ -232,7 +232,7 @@ run = 'layout floating'
 
 # Default to laptop mode workspaces, scripts will move to monitor mode when needed
 [[on-window-detected]]
-if.app-id = 'com.mitchellh.ghostty'
+if.app-id = 'net.kovidgoyal.kitty'
 run = 'move-node-to-workspace 1'
 
 
