@@ -30,3 +30,13 @@ right at once.
 
 Prefer minimal changes. Do not refactor beyond what is asked. If a task
 touches one function, do not rewrite the module.
+
+# Planning Discipline
+
+- Maintain one explicit plan/checklist.
+- Save active plans in `.opencode/drafts/*.plan.md`.
+- Update plans continuously as scope/order/assumptions change.
+
+# Context7-First Research
+
+Use Context7 docs before general web search.
