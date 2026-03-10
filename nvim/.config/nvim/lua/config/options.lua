@@ -21,7 +21,7 @@ vb.tabstop = 4
 vo.scrolloff = 8
 
 -- Vim options
-vo.cmdheight = 0 -- hide command bar
+vo.cmdheight = 0                                          -- hide command bar
 vim.schedule(function() vo.clipboard = "unnamedplus" end) -- use system clipboard
 vo.completeopt = { "menuone", "noselect" }
 vo.cursorline = true
@@ -43,7 +43,7 @@ vo.foldlevelstart = 99
 vo.foldcolumn = "1"
 vo.foldmethod = "expr"
 vo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-vo.modelines = 1 -- only use folding settings for this file
+vo.modelines = 1  -- only use folding settings for this file
 
 vo.laststatus = 3 -- global status line
 
@@ -53,7 +53,7 @@ vo.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 
 -- Session options
 vo.sessionoptions =
-    { "buffers", "curdir", "folds", "resize", "tabpages", "winpos", "winsize" }
+{ "buffers", "curdir", "folds", "resize", "tabpages", "winpos", "winsize" }
 --[[
   ShDa (viminfo for vim): session data history
   --------------------------------------------
@@ -88,6 +88,8 @@ vo.updatetime = 250
 vo.wildmode = "list:longest"
 vo.wildignore = { "*/.git/*", "*/.venv/*" }
 vo.termguicolors = true
+vo.title = true
+vo.titlestring = "nvim | %{fnamemodify(getcwd(), ':t')}"
 vo.background = "dark"
 vo.signcolumn = "yes"
 vo.isfname:append("@-@")
@@ -102,8 +104,8 @@ vim.schedule(function()
     vim.cmd("silent call mkdir(stdpath('data').'/sessions', 'p', '0700')")
 
     vo.backupdir = vim.fn.stdpath("data") .. "/backups" -- Use backup files
-    vo.directory = vim.fn.stdpath("data") .. "/swaps" -- Use Swap files
-    vo.undodir = vim.fn.stdpath("data") .. "/undos" -- Set the undo directory
+    vo.directory = vim.fn.stdpath("data") .. "/swaps"   -- Use Swap files
+    vo.undodir = vim.fn.stdpath("data") .. "/undos"     -- Set the undo directory
 end)
 
 vo.undofile = true
@@ -113,7 +115,7 @@ vo.pumheight = 5
 -- Window options
 vw.colorcolumn = "80,120"
 vw.numberwidth = 2 -- make line number column thinner
-vw.list = true -- show invisible characters
+vw.list = true     -- show invisible characters
 vw.wrap = false
 vw.number = true
 vw.relativenumber = true
