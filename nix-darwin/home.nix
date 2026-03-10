@@ -178,15 +178,77 @@ in
           "$schema" = "https://opencode.ai/config.json";
           permission = {
             bash = {
+              # Default: prompt for all commands
               "*" = "ask";
+
+              # --- File inspection ---
+              "cat *" = "allow";
+              "file *" = "allow";
+              "head *" = "allow";
               "ls *" = "allow";
+              "md5sum *" = "allow";
+              "sha256sum *" = "allow";
+              "stat *" = "allow";
+              "tail *" = "allow";
+              "wc *" = "allow";
+
+              # --- Search ---
+              "find *" = "allow";
               "grep *" = "allow";
               "rg *" = "allow";
               "which *" = "allow";
+
+              # --- Git: allow read-only, ask for state-changing ---
+              "git *" = "allow";
+              "git add *" = "ask";
+              "git checkout *" = "ask";
+              "git cherry-pick *" = "ask";
+              "git clean *" = "ask";
+              "git commit *" = "ask";
+              "git merge *" = "ask";
+              "git mv *" = "ask";
+              "git pull *" = "ask";
+              "git push *" = "ask";
+              "git rebase *" = "ask";
+              "git reset *" = "ask";
+              "git restore *" = "ask";
+              "git revert *" = "ask";
+              "git rm *" = "ask";
+              "git stash *" = "ask";
+              "git switch *" = "ask";
+              "git tag *" = "ask";
+
+              # --- Python read-only ---
+              "pip list *" = "allow";
+              "pip show *" = "allow";
+              "python --version" = "allow";
+              "python3 --version" = "allow";
+              "uv --version" = "allow";
+              "uv pip list *" = "allow";
+
+              # --- Nix read-only ---
+              "nix eval *" = "allow";
+              "nix flake metadata *" = "allow";
+              "nix flake show *" = "allow";
+              "nix-store --query *" = "allow";
+              "nix-store -q *" = "allow";
+
+              # --- Docker read-only ---
+              "docker images *" = "allow";
+              "docker info" = "allow";
+              "docker inspect *" = "allow";
+              "docker logs *" = "allow";
+              "docker ps *" = "allow";
+              "docker version" = "allow";
+
+              # --- Build tools (read-only) ---
+              "cargo check *" = "allow";
+              "go vet *" = "allow";
+              "make --dry-run *" = "allow";
+              "make -n *" = "allow";
             };
             edit = "allow";
             grep = "allow";
-            patch = "allow";
             read = "allow";
             webfetch = "allow";
           };
