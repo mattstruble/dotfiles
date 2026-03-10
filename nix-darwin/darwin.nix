@@ -1,9 +1,10 @@
-{ pkgs
-, lib
-, config
-, hostname
-, inputs
-, ...
+{
+  pkgs,
+  lib,
+  config,
+  hostname,
+  inputs,
+  ...
 }:
 
 let
@@ -188,7 +189,7 @@ in
       "alfred"
       "flux-app"
       "font-iosevka-nerd-font"
-      "ghostty"
+      "kitty"
       "love"
       "menuwhere"
       "monitorcontrol"

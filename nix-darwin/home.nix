@@ -1,11 +1,12 @@
-{ pkgs
-, lib
-, config
-, hostname
-, inputs
-, ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs"
-, ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt"
-, ...
+{
+  pkgs,
+  lib,
+  config,
+  hostname,
+  inputs,
+  ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs",
+  ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt",
+  ...
 }:
 
 let
@@ -124,7 +125,7 @@ in
     in
     {
       "aerospace".source = mkLink "${path}/aerospace/.config/aerospace";
-      "ghostty".source = mkLink "${path}/ghostty/.config/ghostty";
+      "kitty".source = mkLink "${path}/kitty/.config/kitty";
       "harper-ls".source = mkLink "${path}/harper-ls/.config/harper-ls";
       "lazygit".source = mkLink "${path}/lazygit/.config/lazygit";
       "nvim".source = mkLink "${path}/nvim/.config/nvim";
@@ -299,6 +300,7 @@ in
             "!${pkgs.git}/bin/git stash" + " && ${pkgs.git}/bin/git pull" + " && ${pkgs.git}/bin/git stash pop";
           su = "submodule update --init --recursive";
           undo = "reset --soft HEAD^";
+          kd = "difftool --no-symlinks --dir-diff";
           w = "status -sb";
           wdiff = "diff --color-words";
           l =
@@ -399,6 +401,21 @@ in
           ignoreSubmodules = "dirty";
           renames = "copies";
           mnemonicprefix = true;
+          tool = "kitty";
+          guitool = "kitty.gui";
+        };
+
+        difftool = {
+          prompt = false;
+          trustExitCode = true;
+        };
+
+        "difftool \"kitty\"" = {
+          cmd = "kitten diff $LOCAL $REMOTE";
+        };
+
+        "difftool \"kitty.gui\"" = {
+          cmd = "kitten diff $LOCAL $REMOTE";
         };
 
         advice = {

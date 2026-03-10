@@ -109,8 +109,5 @@ vim.keymap.set(
     { desc = "Backward qfixlist" }
 )
 
--- Native split navigation keymaps (replaces vim-tmux-navigator since we no longer use tmux)
-vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Navigate to left split" })
-vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Navigate to below split" })
-vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Navigate to above split" })
-vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Navigate to right split" })
+-- Split navigation is handled by smart-splits.nvim (see plugins/editor/smart-splits.lua)
+-- Provides seamless Ctrl+h/j/k/l navigation between neovim and kitty splits
