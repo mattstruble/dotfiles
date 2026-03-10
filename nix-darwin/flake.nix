@@ -24,11 +24,6 @@
       flake = false;
     };
 
-    skills-nix = {
-      url = "github:shakhzodkudratov/nixos-and-flakes-skill/c9a423b2af834633e6ef714de603fe73e6f0b195";
-      flake = false;
-    };
-
     skills-mine = {
       url = "github:mattstruble/skills";
       flake = false;

@@ -1,12 +1,11 @@
-{
-  pkgs,
-  lib,
-  config,
-  hostname,
-  inputs,
-  ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs",
-  ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt",
-  ...
+{ pkgs
+, lib
+, config
+, hostname
+, inputs
+, ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs"
+, ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt"
+, ...
 }:
 
 let
@@ -163,7 +162,6 @@ in
       skills = [
         inputs.skills-anthropic
         inputs.skills-infra
-        inputs.skills-nix
         inputs.skills-mine
       ];
 
