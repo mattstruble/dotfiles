@@ -1,11 +1,12 @@
-{ pkgs
-, lib
-, config
-, hostname
-, inputs
-, ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs"
-, ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt"
-, ...
+{
+  pkgs,
+  lib,
+  config,
+  hostname,
+  inputs,
+  ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs",
+  ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt",
+  ...
 }:
 
 let
@@ -51,6 +52,9 @@ in
       CURL_CA_BUNDLE = "${ca-bundle_crt}";
       PIP_CERT = "${ca-bundle_crt}";
 
+      PYENV_ROOT = "${home}/.pyenv";
+      PYENV_VIRTUALENV_DISABLE_PROMPT = "1";
+
       MANPATH = lib.concatStringsSep ":" [
         "${home}/.nix-profile/share/man"
         "/run/current-system/sw/share/man"
@@ -85,7 +89,6 @@ in
         ".p10k.zsh".source = mkLink "${path}/p10k/.p10k.zsh";
         ".vimrc".source = mkLink "${path}/vim/.vimrc";
 
-        ".zshrc".source = mkLink "${path}/zsh/.zshrc";
         ".zprofile".source = mkLink "${path}/zsh/.zprofile";
         ".subzsh".source = mkLink "${path}/zsh/subzsh";
 
@@ -564,6 +567,7 @@ in
 
       sessionVariables = {
         EDITOR = "nvim";
+        VISUAL = "nvim";
         ALTERNATE_EDITOR = "${pkgs.vim}/bin/vi";
         LC_CTYPE = "en_US.UTF-8";
         LEDGER_COLOR = "true";
@@ -608,32 +612,14 @@ in
         if type brew &>/dev/null; then
           FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
         fi
-      '';
 
-      initContent = ''
-        autoload -Uz compinit && compinit
-
-        source .profile
-
-        bindkey -v
-        bindkey '^f' autosuggest-accept
-        bindkey '^p' history-search-backward
-        bindkey '^n' history-search-forward
-        bindkey '^[w' kill-region
-
-        bindkey '^[[A' history-substring-search-up # or '\eOA'
-        bindkey '^[[B' history-substring-search-down # or '\eOB'
-        HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
-
-        zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
-        zstyle ':completion:*' menu no
-        zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
-        zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
-        zstyle ':completion:*:*:docker:*' option-stacking yes
-        zstyle ':completion:*:*:docker-*:*' option-stacking yes
-
-        [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-        [[ ! -f ~/.profile ]] || source ~/.profile
+        # pyenv (must run before .zshrc so OMZ pyenv plugin finds shims in PATH)
+        if [ -d "$PYENV_ROOT/bin" ]; then
+          export PATH="$PYENV_ROOT/bin:$PATH"
+        fi
+        if command -v pyenv >/dev/null 2>&1; then
+          eval "$(pyenv init --path)"
+        fi
 
         if [ $(command -v fortune) ] && [ $UID != '0' ] && [[ $- == *i* ]] && [ $TERM != 'dumb' ]; then
             ### Cowsay At Login ###
@@ -643,15 +629,40 @@ in
                 fortune -a fortunes wisdom
             fi
         fi
-
-        export PATH="$HOME/.pyenv:$PATH"
-        export PYENV_VIRTUALENV_DISABLE_PROMPT=1
-
-        eval "$(pyenv init --path)"
-        eval "$(pyenv init -)"
-        eval "$(pyenv virtualenv-init -)"
-        eval "$(${brew_path}/brew shellenv)"
       '';
+
+      initContent = lib.mkMerge [
+        (lib.mkBefore ''
+          # Enable Powerlevel10k instant prompt. Should stay close to the top of .zshrc.
+          if [[ -r "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
+            source "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh"
+          fi
+        '')
+        ''
+          autoload -Uz compinit && compinit
+
+          bindkey -v
+          bindkey '^f' autosuggest-accept
+          bindkey '^p' history-search-backward
+          bindkey '^n' history-search-forward
+          bindkey '^[w' kill-region
+
+          bindkey '^[[A' history-substring-search-up # or '\eOA'
+          bindkey '^[[B' history-substring-search-down # or '\eOB'
+          HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
+
+          zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+          zstyle ':completion:*' menu no
+          zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
+          zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
+          zstyle ':completion:*:*:docker:*' option-stacking yes
+          zstyle ':completion:*:*:docker-*:*' option-stacking yes
+
+          [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+          eval "$(${brew_path}/brew shellenv)"
+        ''
+      ];
 
       plugins = [
         {
@@ -678,12 +689,14 @@ in
           "ohmyzsh/ohmyzsh path:plugins/fzf"
           "ohmyzsh/ohmyzsh path:plugins/helm"
           "ohmyzsh/ohmyzsh path:plugins/kubectl"
+          "ohmyzsh/ohmyzsh path:plugins/kubectx"
           "ohmyzsh/ohmyzsh path:plugins/podman"
           "ohmyzsh/ohmyzsh path:plugins/poetry"
           "ohmyzsh/ohmyzsh path:plugins/pyenv"
           "ohmyzsh/ohmyzsh path:plugins/python"
           "ohmyzsh/ohmyzsh path:plugins/rust"
           "ohmyzsh/ohmyzsh path:plugins/safe-paste"
+          "ohmyzsh/ohmyzsh path:plugins/sudo"
           "ohmyzsh/ohmyzsh path:plugins/tmux"
           "ohmyzsh/ohmyzsh path:plugins/vagrant"
           "ohmyzsh/ohmyzsh path:plugins/vi-mode"
