@@ -34,7 +34,7 @@ touches one function, do not rewrite the module.
 # Planning Discipline
 
 - Maintain one explicit plan/checklist.
-- Save active plans in `.opencode/drafts/*.plan.md`.
+- Save active plans in `~/.opencode/drafts/*.plan.md`.
 - Update plans continuously as scope/order/assumptions change.
 
 # Context7-First Research
