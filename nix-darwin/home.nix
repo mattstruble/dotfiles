@@ -1,12 +1,11 @@
-{
-  pkgs,
-  lib,
-  config,
-  hostname,
-  inputs,
-  ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs",
-  ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt",
-  ...
+{ pkgs
+, lib
+, config
+, hostname
+, inputs
+, ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs"
+, ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt"
+, ...
 }:
 
 let
@@ -163,8 +162,27 @@ in
         "opencode"
       ];
       skills = [
-        inputs.skills-anthropic
-        inputs.skills-infra
+        {
+          source = inputs.skills-anthropic;
+          include = [
+            "skill-creator"
+            "mcp-builder"
+            "claude-api"
+          ];
+        }
+
+        {
+          source = inputs.skills-infra;
+          exclude = [
+            "aiconfigurator"
+            "axolotl"
+            "harbor"
+            "minio"
+            "mooncake"
+            "tailscale"
+            "verl"
+          ];
+        }
         inputs.skills-mine
       ];
 
