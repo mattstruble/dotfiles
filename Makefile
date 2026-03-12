@@ -66,6 +66,22 @@ $(SBAR_LUA):
 	$(info "Installing sbar lua...")
 	git clone https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua && cd /tmp/SbarLua/ && make install && rm -rf /tmp/SbarLua/
 
+.PHONY: update_sbarlua
+update_sbarlua:
+	@REMOTE=$$(git ls-remote https://github.com/FelixKratz/SbarLua.git HEAD | cut -f1); \
+	LOCAL=$$(cat $(SBAR_LUA)/.commit_hash 2>/dev/null || echo "none"); \
+	if [ "$$LOCAL" != "$$REMOTE" ]; then \
+		echo "Updating SbarLua ($$LOCAL -> $$REMOTE)..."; \
+		rm -rf /tmp/SbarLua; \
+		git clone https://github.com/FelixKratz/SbarLua.git /tmp/SbarLua && \
+		cd /tmp/SbarLua/ && make install && \
+		echo "$$REMOTE" > $(SBAR_LUA)/.commit_hash && \
+		rm -rf /tmp/SbarLua/ && \
+		brew services restart sketchybar; \
+	else \
+		echo "SbarLua is up to date."; \
+	fi
+
 $(TMUX_TPM):
 	$(info "Installing tpm...")
 	git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
@@ -127,7 +143,7 @@ update_nix: $(NIX-DARWIN-PATH)
 	cd nix-darwin && nix flake update --extra-experimental-features nix-command --extra-experimental-features flakes
 
 .PHONY: update
-update: update_nix rebuild
+update: update_nix update_sbarlua rebuild
 
 ### CLEAN
 
