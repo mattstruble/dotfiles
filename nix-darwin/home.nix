@@ -1,11 +1,12 @@
-{ pkgs
-, lib
-, config
-, hostname
-, inputs
-, ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs"
-, ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt"
-, ...
+{
+  pkgs,
+  lib,
+  config,
+  hostname,
+  inputs,
+  ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs",
+  ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt",
+  ...
 }:
 
 let
@@ -136,6 +137,9 @@ in
       "tmux".source = mkLink "${path}/tmux/.config/tmux";
       "wezterm".source = mkLink "${path}/wezterm/.config/wezterm";
       "yamlfmt".source = mkLink "${path}/yamlfmt/.config/yamlfmt";
+
+      "opencode/tui.json".source = mkLink "${path}/opencode/.config/opencode/tui.json";
+      "opencode/themes".source = mkLink "${path}/opencode/.config/opencode/themes";
 
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support
