@@ -18,7 +18,10 @@ let
 
 in
 {
-  imports = lib.optional (builtins.pathExists ./hosts/${hostname}/darwin.nix) ./hosts/${hostname}/darwin.nix;
+  imports = [
+    ./modules/llama-server.nix
+  ]
+  ++ lib.optional (builtins.pathExists ./hosts/${hostname}/darwin.nix) ./hosts/${hostname}/darwin.nix;
   # security.pam.enableSudoTouchIdAuth = true;
   security.pam.services.sudo_local.touchIdAuth = true;
 
@@ -176,7 +179,6 @@ in
         start_service = true;
         restart_service = "changed";
       }
-      "llama.cpp"
       "ollama"
       "pyenv-virtualenv"
       "uv"
@@ -220,16 +222,6 @@ in
       allowBroken = false;
       allowInsecure = false;
       allowUnsupportedSystem = false;
-    };
-  };
-
-  launchd.user.agents.llama-server = {
-    command = "/opt/homebrew/bin/llama-server --fim-qwen-7b-default";
-    serviceConfig = {
-      KeepAlive = true;
-      RunAtLoad = true;
-      StandardOutPath = "/tmp/llama-server.log";
-      StandardErrorPath = "/tmp/llama-server.log";
     };
   };
 
