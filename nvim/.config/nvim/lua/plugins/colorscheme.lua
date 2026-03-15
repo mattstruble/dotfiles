@@ -41,10 +41,4 @@ return {
         name = "rose-pine",
         enabled = false,
     },
-    {
-        "LazyVim/LazyVim",
-        opts = {
-            colorscheme = "bamboo",
-        },
-    },
 }

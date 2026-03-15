@@ -13,10 +13,11 @@ return {
             lazy = true,
         },
         {
-            "nvim-treesitter-textobjects",
+            "nvim-treesitter/nvim-treesitter-textobjects",
             lazy = true,
-            opts = {
-                textobjects = {
+            config = function()
+                require("nvim-treesitter.configs").setup({
+                    textobjects = {
                     select = {
                         enable = true,
                         lookahead = true,
@@ -100,7 +101,8 @@ return {
                         },
                     },
                 },
-            },
+            })
+            end,
         },
         {
             "nvim-treesitter/nvim-treesitter",

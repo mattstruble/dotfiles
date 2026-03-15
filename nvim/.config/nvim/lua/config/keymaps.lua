@@ -111,3 +111,57 @@ vim.keymap.set(
 
 -- Split navigation is handled by smart-splits.nvim (see plugins/editor/smart-splits.lua)
 -- Provides seamless Ctrl+h/j/k/l navigation between neovim and kitty splits
+
+-- ┌───────────────────────────────────────────┐
+-- │ Essential keymaps (from LazyVim defaults) │
+-- └───────────────────────────────────────────┘
+
+-- Lazy plugin manager
+keymap.set("n", "<leader>l", "<cmd>Lazy<cr>", { desc = "Lazy" })
+
+-- Quit
+keymap.set("n", "<leader>qq", "<cmd>qa<cr>", { desc = "Quit All" })
+
+-- New file
+keymap.set("n", "<leader>fn", "<cmd>enew<cr>", { desc = "New File" })
+
+-- Diagnostics
+keymap.set("n", "<leader>cd", vim.diagnostic.open_float, { desc = "Line Diagnostics" })
+
+local function diagnostic_goto(next, severity)
+    local count = next and 1 or -1
+    severity = severity and vim.diagnostic.severity[severity] or nil
+    return function() vim.diagnostic.jump({ count = count, severity = severity }) end
+end
+
+keymap.set("n", "]d", diagnostic_goto(true), { desc = "Next Diagnostic" })
+keymap.set("n", "[d", diagnostic_goto(false), { desc = "Prev Diagnostic" })
+keymap.set("n", "]e", diagnostic_goto(true, "ERROR"), { desc = "Next Error" })
+keymap.set("n", "[e", diagnostic_goto(false, "ERROR"), { desc = "Prev Error" })
+keymap.set("n", "]w", diagnostic_goto(true, "WARN"), { desc = "Next Warning" })
+keymap.set("n", "[w", diagnostic_goto(false, "WARN"), { desc = "Prev Warning" })
+
+-- Save file
+keymap.set({ "i", "x", "n", "s" }, "<C-s>", "<cmd>w<cr><esc>", { desc = "Save File" })
+
+-- Better indenting (stay in visual mode)
+keymap.set("x", "<", "<gv")
+keymap.set("x", ">", ">gv")
+
+-- Add comment below/above: provided by Comment.nvim once loaded (gco/gcO)
+
+-- Keywordprg
+keymap.set("n", "<leader>K", "<cmd>norm! K<cr>", { desc = "Keywordprg" })
+
+-- Add undo break-points
+keymap.set("i", ",", ",<c-g>u")
+keymap.set("i", ".", ".<c-g>u")
+keymap.set("i", ";", ";<c-g>u")
+
+-- Switch to other buffer
+keymap.set("n", "<leader>bb", "<cmd>e #<cr>", { desc = "Switch to Other Buffer" })
+
+-- Windows
+-- NOTE: <leader>- is not added here because it's already mapped to <C-x> (decrement)
+keymap.set("n", "<leader>|", "<C-W>v", { desc = "Split Window Right", remap = true })
+keymap.set("n", "<leader>wd", "<C-W>c", { desc = "Delete Window", remap = true })
