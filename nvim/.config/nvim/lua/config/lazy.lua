@@ -27,28 +27,10 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
     spec = {
-        {
-            "LazyVim/LazyVim",
-            opts = {
-                icons = {
-                    diagnostics = {
-                        Error = tools.ui.diagnostics.error_cod,
-                        Warn = tools.ui.diagnostics.warn_cod,
-                        Hint = tools.ui.diagnostics.hint_cod,
-                        Info = tools.ui.diagnostics.info_cod,
-                    },
-                },
-            },
-
-            import = "lazyvim.plugins",
-        },
-        { import = "lazyvim.plugins.extras.coding.blink" },
-        { import = "lazyvim.plugins.extras.coding.mini-snippets" },
-        { import = "lazyvim.plugins.extras.editor.fzf" },
-        { import = "lazyvim.plugins.extras.editor.mini-diff" },
-        { import = "lazyvim.plugins.extras.editor.mini-files" },
-        { import = "lazyvim.plugins.extras.util.mini-hipatterns" },
         { import = "plugins" },
+    },
+    install = {
+        colorscheme = { "bamboo" },
     },
     checker = {
         enabled = true,

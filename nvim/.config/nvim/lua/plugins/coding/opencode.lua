@@ -14,6 +14,6 @@ return {
         }
     end,
     keys = {
-        { { "n", "x" }, "<leader>o", function() require("opencode").select() end }
+        { "<leader>o", function() require("opencode").select() end, mode = { "n", "x" }, desc = "OpenCode select" }
     }
 }

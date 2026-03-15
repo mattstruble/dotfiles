@@ -1,6 +1,7 @@
 return {
     {
         "saghen/blink.cmp",
+        version = "1.*",
         dependencies = {
             "nvim-mini/mini.snippets",
         },
@@ -42,21 +43,6 @@ return {
             "mason-org/mason.nvim",
             "mason-org/mason-lspconfig.nvim",
             "saghen/blink.cmp",
-        },
-        opts = {
-            diagnostics = {
-                virtual_text = {
-                    severity = vim.diagnostic.severity.ERROR,
-                    spacing = 4,
-                    prefix = "",
-                },
-            },
-            setup = {
-                autostart = true,
-            },
-            inlay_hints = { enabled = false },
-            autoformat = true,
-            format_notify = false,
         },
     },
     { "mason-org/mason.nvim", opts = {} },
