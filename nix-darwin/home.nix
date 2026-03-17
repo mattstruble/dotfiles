@@ -1,11 +1,12 @@
-{ pkgs
-, lib
-, config
-, hostname
-, inputs
-, ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs"
-, ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt"
-, ...
+{
+  pkgs,
+  lib,
+  config,
+  hostname,
+  inputs,
+  ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs",
+  ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt",
+  ...
 }:
 
 let
@@ -681,9 +682,20 @@ in
           bindkey '^n' history-search-forward
           bindkey '^[w' kill-region
 
-          bindkey '^[[A' history-substring-search-up # or '\eOA'
-          bindkey '^[[B' history-substring-search-down # or '\eOB'
+          bindkey '^[[A' history-substring-search-up
+          bindkey '^[[B' history-substring-search-down
           HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
+
+          # zsh-vi-mode clobbers all bindings via deferred init.
+          # Re-apply bindings after it initializes.
+          function zvm_after_init() {
+            bindkey '^f' autosuggest-accept
+            bindkey '^p' history-search-backward
+            bindkey '^n' history-search-forward
+            bindkey '^[w' kill-region
+            bindkey '^[[A' history-substring-search-up
+            bindkey '^[[B' history-substring-search-down
+          }
 
           zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
           zstyle ':completion:*' menu no
@@ -712,28 +724,22 @@ in
           "getantidote/use-omz"
 
           "ohmyzsh/ohmyzsh path:plugins/1password"
-          "ohmyzsh/ohmyzsh path:plugins/ansible"
           "ohmyzsh/ohmyzsh path:plugins/aws"
-          "ohmyzsh/ohmyzsh path:plugins/bazel"
           "ohmyzsh/ohmyzsh path:plugins/brew"
           "ohmyzsh/ohmyzsh path:plugins/command-not-found"
           "ohmyzsh/ohmyzsh path:plugins/direnv"
-          # "ohmyzsh/ohmyzsh path:plugins/docker"
           "ohmyzsh/ohmyzsh path:plugins/git"
           "ohmyzsh/ohmyzsh path:plugins/fzf"
           "ohmyzsh/ohmyzsh path:plugins/helm"
           "ohmyzsh/ohmyzsh path:plugins/kubectl"
           "ohmyzsh/ohmyzsh path:plugins/kubectx"
           "ohmyzsh/ohmyzsh path:plugins/podman"
-          "ohmyzsh/ohmyzsh path:plugins/poetry"
           "ohmyzsh/ohmyzsh path:plugins/pyenv"
           "ohmyzsh/ohmyzsh path:plugins/python"
           "ohmyzsh/ohmyzsh path:plugins/rust"
           "ohmyzsh/ohmyzsh path:plugins/safe-paste"
           "ohmyzsh/ohmyzsh path:plugins/sudo"
           "ohmyzsh/ohmyzsh path:plugins/tmux"
-          "ohmyzsh/ohmyzsh path:plugins/vagrant"
-          "ohmyzsh/ohmyzsh path:plugins/vi-mode"
           "ohmyzsh/ohmyzsh path:plugins/virtualenv"
           "ohmyzsh/ohmyzsh path:plugins/z"
           "ohmyzsh/ohmyzsh path:plugins/zoxide"
