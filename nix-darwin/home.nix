@@ -175,6 +175,18 @@ in
         }
 
         {
+          source = inputs.skills-mattpocock;
+          include = [
+            "grill-me"
+            "improve-codebase-architecture"
+            "prd-to-issue"
+            "prd-to-plan"
+            "tdd"
+            "write-a-prd"
+          ];
+        }
+
+        {
           source = inputs.skills-infra;
           exclude = [
             "aiconfigurator"
