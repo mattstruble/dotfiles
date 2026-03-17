@@ -2,160 +2,179 @@
 -- TREESITTER
 --------------------------
 
+local ensure_installed = {
+    "bash",
+    "c",
+    "gitcommit",
+    "helm",
+    "html",
+    "javascript",
+    "jsdoc",
+    "json",
+    "lua",
+    "luadoc",
+    "luap",
+    "markdown",
+    "markdown_inline",
+    "python",
+    "query",
+    "regex",
+    "tsx",
+    "typescript",
+    "vim",
+    "vimdoc",
+    "yaml",
+}
+
 return {
     {
-        {
-            "https://gitlab.com/HiPhish/rainbow-delimiters.nvim.git",
-            lazy = true,
-        },
-        {
-            "nvim-treesitter/nvim-treesitter-context",
-            lazy = true,
-        },
-        {
-            "nvim-treesitter/nvim-treesitter-textobjects",
-            lazy = true,
-            config = function()
-                require("nvim-treesitter.configs").setup({
-                    textobjects = {
-                    select = {
-                        enable = true,
-                        lookahead = true,
-                        keymaps = {
-                            ["a="] = { query = "@assignment.outer", desc = "Select outer part of an assignment" },
-                            ["i="] = { query = "@assignment.inner", desc = "Select inner part of an assignment" },
-                            ["l="] = { query = "@assignment.lhs", desc = "Select left hand side of an assignment" },
-                            ["r="] = { query = "@assignment.rhs", desc = "Select right hand side of an assignment" },
-
-                            ["aa"] = { query = "@parameter.outer", desc = "Select outer part of a parameter/argument" },
-                            ["ia"] = { query = "@parameter.inner", desc = "Select inner part of a parameter/argument" },
-
-                            ["ai"] = { query = "@conditional.outer", desc = "Select outer part of a conditional" },
-                            ["ii"] = { query = "@conditional.inner", desc = "Select inner part of a conditional" },
-
-                            ["al"] = { query = "@loop.outer", desc = "Select outer part of a loop" },
-                            ["il"] = { query = "@loop.inner", desc = "Select inner part of a loop" },
-
-                            ["af"] = { query = "@call.outer", desc = "Select outer part of a function call" },
-                            ["if"] = { query = "@call.inner", desc = "Select inner part of a function call" },
-
-                            ["am"] = {
-                                query = "@function.outer",
-                                desc = "Select outer part of a method/function definition",
-                            },
-                            ["im"] = {
-                                query = "@function.inner",
-                                desc = "Select inner part of a method/function definition",
-                            },
-
-                            ["ac"] = { query = "@class.outer", desc = "Select outer part of a class" },
-                            ["ic"] = { query = "@class.inner", desc = "Select inner part of a class" },
-                        },
-                    },
-                    swap = {
-                        enable = true,
-                        swap_next = {
-                            ["<leader>na"] = "@parameter.inner", -- swap parameters/argument with next
-                            ["<leader>nm"] = "@function.outer",  -- swap function with next
-                        },
-                        swap_previous = {
-                            ["<leader>pa"] = "@parameter.inner", -- swap parameters/argument with prev
-                            ["<leader>pm"] = "@function.outer",  -- swap function with previous
-                        },
-                    },
-                    move = {
-                        enable = true,
-                        set_jumps = true, -- whether to set jumps in the jumplist
-                        goto_next_start = {
-                            ["]f"] = { query = "@call.outer", desc = "Next function call start" },
-                            ["]m"] = { query = "@function.outer", desc = "Next method/function def start" },
-                            ["]c"] = { query = "@class.outer", desc = "Next class start" },
-                            ["]i"] = { query = "@conditional.outer", desc = "Next conditional start" },
-                            ["]l"] = { query = "@loop.outer", desc = "Next loop start" },
-
-                            -- You can pass a query group to use query from `queries/<lang>/<query_group>.scm file in your runtime path.
-                            -- Below example nvim-treesitter's `locals.scm` and `folds.scm`. They also provide highlights.scm and indent.scm.
-                            ["]s"] = { query = "@scope", query_group = "locals", desc = "Next scope" },
-                            ["]z"] = { query = "@fold", query_group = "folds", desc = "Next fold" },
-                        },
-                        goto_next_end = {
-                            ["]F"] = { query = "@call.outer", desc = "Next function call end" },
-                            ["]M"] = { query = "@function.outer", desc = "Next method/function def end" },
-                            ["]C"] = { query = "@class.outer", desc = "Next class end" },
-                            ["]I"] = { query = "@conditional.outer", desc = "Next conditional end" },
-                            ["]L"] = { query = "@loop.outer", desc = "Next loop end" },
-                        },
-                        goto_previous_start = {
-                            ["[f"] = { query = "@call.outer", desc = "Prev function call start" },
-                            ["[m"] = { query = "@function.outer", desc = "Prev method/function def start" },
-                            ["[c"] = { query = "@class.outer", desc = "Prev class start" },
-                            ["[i"] = { query = "@conditional.outer", desc = "Prev conditional start" },
-                            ["[l"] = { query = "@loop.outer", desc = "Prev loop start" },
-                        },
-                        goto_previous_end = {
-                            ["[F"] = { query = "@call.outer", desc = "Prev function call end" },
-                            ["[M"] = { query = "@function.outer", desc = "Prev method/function def end" },
-                            ["[C"] = { query = "@class.outer", desc = "Prev class end" },
-                            ["[I"] = { query = "@conditional.outer", desc = "Prev conditional end" },
-                            ["[L"] = { query = "@loop.outer", desc = "Prev loop end" },
-                        },
-                    },
+        "https://gitlab.com/HiPhish/rainbow-delimiters.nvim.git",
+        lazy = true,
+    },
+    {
+        "nvim-treesitter/nvim-treesitter-context",
+        lazy = true,
+    },
+    {
+        "nvim-treesitter/nvim-treesitter-textobjects",
+        branch = "main",
+        lazy = true,
+        config = function()
+            require("nvim-treesitter-textobjects").setup({
+                select = {
+                    lookahead = true,
+                },
+                move = {
+                    set_jumps = true,
                 },
             })
-            end,
+
+            local select = function(query, query_group)
+                query_group = query_group or "textobjects"
+                return function()
+                    require("nvim-treesitter-textobjects.select").select_textobject(query, query_group)
+                end
+            end
+
+            local swap_next = function(query)
+                return function() require("nvim-treesitter-textobjects.swap").swap_next(query) end
+            end
+
+            local swap_prev = function(query)
+                return function() require("nvim-treesitter-textobjects.swap").swap_previous(query) end
+            end
+
+            local move = require("nvim-treesitter-textobjects.move")
+            local goto_next_start = function(query, query_group)
+                query_group = query_group or "textobjects"
+                return function() move.goto_next_start(query, query_group) end
+            end
+            local goto_next_end = function(query, query_group)
+                query_group = query_group or "textobjects"
+                return function() move.goto_next_end(query, query_group) end
+            end
+            local goto_prev_start = function(query, query_group)
+                query_group = query_group or "textobjects"
+                return function() move.goto_previous_start(query, query_group) end
+            end
+            local goto_prev_end = function(query, query_group)
+                query_group = query_group or "textobjects"
+                return function() move.goto_previous_end(query, query_group) end
+            end
+
+            local map = vim.keymap.set
+
+            -- Select keymaps
+            map({ "x", "o" }, "a=", select("@assignment.outer"), { desc = "Select outer part of an assignment" })
+            map({ "x", "o" }, "i=", select("@assignment.inner"), { desc = "Select inner part of an assignment" })
+            map({ "x", "o" }, "l=", select("@assignment.lhs"), { desc = "Select left hand side of an assignment" })
+            map({ "x", "o" }, "r=", select("@assignment.rhs"), { desc = "Select right hand side of an assignment" })
+
+            map({ "x", "o" }, "aa", select("@parameter.outer"), { desc = "Select outer part of a parameter/argument" })
+            map({ "x", "o" }, "ia", select("@parameter.inner"), { desc = "Select inner part of a parameter/argument" })
+
+            map({ "x", "o" }, "ai", select("@conditional.outer"), { desc = "Select outer part of a conditional" })
+            map({ "x", "o" }, "ii", select("@conditional.inner"), { desc = "Select inner part of a conditional" })
+
+            map({ "x", "o" }, "al", select("@loop.outer"), { desc = "Select outer part of a loop" })
+            map({ "x", "o" }, "il", select("@loop.inner"), { desc = "Select inner part of a loop" })
+
+            map({ "x", "o" }, "af", select("@call.outer"), { desc = "Select outer part of a function call" })
+            map({ "x", "o" }, "if", select("@call.inner"), { desc = "Select inner part of a function call" })
+
+            map({ "x", "o" }, "am", select("@function.outer"), { desc = "Select outer part of a method/function definition" })
+            map({ "x", "o" }, "im", select("@function.inner"), { desc = "Select inner part of a method/function definition" })
+
+            map({ "x", "o" }, "ac", select("@class.outer"), { desc = "Select outer part of a class" })
+            map({ "x", "o" }, "ic", select("@class.inner"), { desc = "Select inner part of a class" })
+
+            -- Swap keymaps
+            map("n", "<leader>na", swap_next("@parameter.inner"), { desc = "Swap parameter/argument with next" })
+            map("n", "<leader>nm", swap_next("@function.outer"), { desc = "Swap function with next" })
+            map("n", "<leader>pa", swap_prev("@parameter.inner"), { desc = "Swap parameter/argument with prev" })
+            map("n", "<leader>pm", swap_prev("@function.outer"), { desc = "Swap function with previous" })
+
+            -- Move keymaps
+            map({ "n", "x", "o" }, "]f", goto_next_start("@call.outer"), { desc = "Next function call start" })
+            map({ "n", "x", "o" }, "]m", goto_next_start("@function.outer"), { desc = "Next method/function def start" })
+            map({ "n", "x", "o" }, "]c", goto_next_start("@class.outer"), { desc = "Next class start" })
+            map({ "n", "x", "o" }, "]i", goto_next_start("@conditional.outer"), { desc = "Next conditional start" })
+            map({ "n", "x", "o" }, "]l", goto_next_start("@loop.outer"), { desc = "Next loop start" })
+            map({ "n", "x", "o" }, "]s", goto_next_start("@local.scope", "locals"), { desc = "Next scope" })
+            map({ "n", "x", "o" }, "]z", goto_next_start("@fold", "folds"), { desc = "Next fold" })
+
+            map({ "n", "x", "o" }, "]F", goto_next_end("@call.outer"), { desc = "Next function call end" })
+            map({ "n", "x", "o" }, "]M", goto_next_end("@function.outer"), { desc = "Next method/function def end" })
+            map({ "n", "x", "o" }, "]C", goto_next_end("@class.outer"), { desc = "Next class end" })
+            map({ "n", "x", "o" }, "]I", goto_next_end("@conditional.outer"), { desc = "Next conditional end" })
+            map({ "n", "x", "o" }, "]L", goto_next_end("@loop.outer"), { desc = "Next loop end" })
+
+            map({ "n", "x", "o" }, "[f", goto_prev_start("@call.outer"), { desc = "Prev function call start" })
+            map({ "n", "x", "o" }, "[m", goto_prev_start("@function.outer"), { desc = "Prev method/function def start" })
+            map({ "n", "x", "o" }, "[c", goto_prev_start("@class.outer"), { desc = "Prev class start" })
+            map({ "n", "x", "o" }, "[i", goto_prev_start("@conditional.outer"), { desc = "Prev conditional start" })
+            map({ "n", "x", "o" }, "[l", goto_prev_start("@loop.outer"), { desc = "Prev loop start" })
+
+            map({ "n", "x", "o" }, "[F", goto_prev_end("@call.outer"), { desc = "Prev function call end" })
+            map({ "n", "x", "o" }, "[M", goto_prev_end("@function.outer"), { desc = "Prev method/function def end" })
+            map({ "n", "x", "o" }, "[C", goto_prev_end("@class.outer"), { desc = "Prev class end" })
+            map({ "n", "x", "o" }, "[I", goto_prev_end("@conditional.outer"), { desc = "Prev conditional end" })
+            map({ "n", "x", "o" }, "[L", goto_prev_end("@loop.outer"), { desc = "Prev loop end" })
+        end,
+    },
+    {
+        "nvim-treesitter/nvim-treesitter",
+        dependencies = {
+            "nvim-treesitter/nvim-treesitter-context",
+            "nvim-treesitter/nvim-treesitter-textobjects",
+            "https://gitlab.com/HiPhish/rainbow-delimiters.nvim.git",
         },
-        {
-            "nvim-treesitter/nvim-treesitter",
-            dependencies = {
-                "nvim-treesitter/nvim-treesitter-context",
-                "nvim-treesitter/nvim-treesitter-textobjects",
-                "https://gitlab.com/HiPhish/rainbow-delimiters.nvim.git",
-            },
-            build = ":TSUpdate",
-            event = { "BufReadPre", "BufNewFile" },
-            opts = {
-                sync_install = false,
-                auto_install = true,
-                highlight = {
-                    enable = true,
-                    additional_vim_regex_highlighting = false,
-                },
-                autopairs = { enable = true },
-                indent = { enable = true },
-                autotag = { enable = true },
-                ensure_installed = {
-                    "bash",
-                    "c",
-                    "gitcommit",
-                    "helm",
-                    "html",
-                    "javascript",
-                    "jsdoc",
-                    "json",
-                    "lua",
-                    "luadoc",
-                    "luap",
-                    "markdown",
-                    "markdown_inline",
-                    "python",
-                    "query",
-                    "regex",
-                    "tsx",
-                    "typescript",
-                    "vim",
-                    "vimdoc",
-                    "yaml",
-                },
-                incremental_selection = {
-                    enable = true,
-                    keymaps = {
-                        init_selection = "<C-space>",
-                        node_incremental = "<C-space>",
-                        scope_incremental = false,
-                        node_decremental = "<bs>",
-                    },
-                },
-            },
-        },
+        build = ":TSUpdate",
+        event = { "BufReadPre", "BufNewFile" },
+        config = function()
+            -- Install desired parsers
+            require("nvim-treesitter.install").install(ensure_installed)
+
+            -- Auto-install parsers when entering a buffer with a new filetype
+            vim.api.nvim_create_autocmd("FileType", {
+                group = vim.api.nvim_create_augroup("treesitter_auto_install", { clear = true }),
+                callback = function()
+                    local ft = vim.bo.filetype
+                    if ft == "" then return end
+
+                    local lang = vim.treesitter.language.get_lang(ft)
+                    if not lang then return end
+
+                    local ok = pcall(vim.treesitter.language.inspect, lang)
+                    if ok then return end
+
+                    -- Parser not available, try to install it
+                    local parsers = require("nvim-treesitter.parsers")
+                    if parsers[lang] then
+                        require("nvim-treesitter.install").install({ lang })
+                    end
+                end,
+            })
+        end,
     },
 }
