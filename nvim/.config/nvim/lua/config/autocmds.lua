@@ -138,17 +138,44 @@ vim.api.nvim_create_autocmd("TextYankPost", {
     end,
 })
 
--- Set keymap for vim.lsp.buf.rename
+-- LSP keymaps (LazyVim parity via Snacks picker)
 A.nvim_create_autocmd("LspAttach", {
     group = my_au,
     callback = function(args)
         local bufnr = args.buf
-        vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, {
-            desc = "Refactor name",
-            noremap = true,
-            silent = true,
-            buffer = bufnr,
-        })
+        local function map(mode, lhs, rhs, desc)
+            vim.keymap.set(mode, lhs, rhs, {
+                desc = desc,
+                buffer = bufnr,
+                noremap = true,
+                silent = true,
+            })
+        end
+
+        -- Navigation (Snacks picker)
+        map("n", "gd", function() Snacks.picker.lsp_definitions() end, "Goto Definition")
+        map("n", "gD", function() Snacks.picker.lsp_declarations() end, "Goto Declaration")
+        map("n", "gr", function() Snacks.picker.lsp_references() end, "References")
+        map("n", "gI", function() Snacks.picker.lsp_implementations() end, "Goto Implementation")
+        map("n", "gy", function() Snacks.picker.lsp_type_definitions() end, "Goto T[y]pe Definition")
+
+        -- Signature help
+        map("n", "gK", function() vim.lsp.buf.signature_help() end, "Signature Help")
+        map("i", "<c-k>", function() vim.lsp.buf.signature_help() end, "Signature Help")
+
+        -- Code operations
+        map({ "n", "x" }, "<leader>ca", vim.lsp.buf.code_action, "Code Action")
+        map("n", "<leader>cr", vim.lsp.buf.rename, "Rename")
+        map("n", "<leader>cA", function()
+            vim.lsp.buf.code_action({ context = { only = { "source" }, diagnostics = {} } })
+        end, "Source Action")
+
+        -- LSP info
+        map("n", "<leader>cl", function() Snacks.picker.lsp_config() end, "LSP Info")
+
+        -- Reference word navigation (Snacks words)
+        map("n", "<c-n>", function() Snacks.words.jump(vim.v.count1, true) end, "Next Reference")
+        map("n", "<c-p>", function() Snacks.words.jump(-vim.v.count1, true) end, "Prev Reference")
     end,
 })
 
