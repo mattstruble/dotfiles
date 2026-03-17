@@ -122,10 +122,6 @@ return {
             function() Snacks.zen.zen() end,
             desc = "Zen mode",
         },
-        {
-            "<C-/>",
-            function() Snacks.terminal() end,
-            desc = "Terminal",
-        },
+
     },
 }
