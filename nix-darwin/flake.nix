@@ -24,6 +24,11 @@
       flake = false;
     };
 
+    skills-mattpocock = {
+      url = "github:mattpocock/skills";
+      flake = false;
+    };
+
     skills-mine = {
       url = "github:mattstruble/skills";
       flake = false;
