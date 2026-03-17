@@ -3,16 +3,8 @@ return {
     cmd = "FzfLua",
     keys = {
         -- find
-        { "<leader>ff", "<cmd>FzfLua files<cr>", desc = "Find Files" },
-        { "<leader>fg", "<cmd>FzfLua live_grep<cr>", desc = "Live Grep" },
         { "<leader>fb", "<cmd>FzfLua buffers sort_mru=true sort_lastused=true<cr>", desc = "Buffers" },
-        { "<leader>fr", "<cmd>FzfLua oldfiles<cr>", desc = "Recent Files" },
-        { "<leader>fc", function() require("fzf-lua").files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find Config File" },
         -- search
-        { "<leader>sg", "<cmd>FzfLua live_grep<cr>", desc = "Grep" },
-        { "<leader>sw", "<cmd>FzfLua grep_cword<cr>", desc = "Grep Word (cword)" },
-        { "<leader>sW", "<cmd>FzfLua grep_cWORD<cr>", desc = "Grep Word (cWORD)" },
-        { "<leader>sw", "<cmd>FzfLua grep_visual<cr>", mode = "v", desc = "Grep Selection" },
         { '<leader>s"', "<cmd>FzfLua registers<cr>", desc = "Registers" },
         { "<leader>sa", "<cmd>FzfLua autocmds<cr>", desc = "Auto Commands" },
         { "<leader>sc", "<cmd>FzfLua command_history<cr>", desc = "Command History" },
