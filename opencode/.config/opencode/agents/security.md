@@ -1,6 +1,7 @@
 ---
 description: Performs security audits, identifies vulnerabilities, researches CVEs via fetcher, and returns structured severity-classified findings
 mode: subagent
+temperature: 0.2
 tools:
   write: false
   edit: false
