@@ -1,12 +1,11 @@
-{
-  pkgs,
-  lib,
-  config,
-  hostname,
-  inputs,
-  ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs",
-  ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt",
-  ...
+{ pkgs
+, lib
+, config
+, hostname
+, inputs
+, ca-bundle_path ? "${pkgs.cacert}/etc/ssl/certs"
+, ca-bundle_crt ? "${ca-bundle_path}/ca-bundle.crt"
+, ...
 }:
 
 let
@@ -217,12 +216,19 @@ in
         config = {
           "$schema" = "https://opencode.ai/config.json";
           permission = {
+            external_directory = {
+              "/tmp/opencode-wt/**" = "allow";
+              "/private/tmp/opencode-wt/**" = "allow";
+              "~/.opencode/**" = "allow";
+            };
             bash = {
               # Default: prompt for all commands
               "*" = "ask";
 
               # --- File inspection ---
               "cat *" = "allow";
+              "cd /tmp/opencode-wt/*" = "allow";
+              "cd /private/tmp/opencode-wt/*" = "allow";
               "file *" = "allow";
               "head *" = "allow";
               "ls *" = "allow";
@@ -267,6 +273,17 @@ in
               "python3 --version" = "allow";
               "uv --version" = "allow";
               "uv pip list *" = "allow";
+              "uv pip show *" = "allow";
+              "uv tree *" = "allow";
+              "uv python list *" = "allow";
+              "uv version *" = "allow";
+              "uv run pytest *" = "allow";
+              "uv run coverage *" = "allow";
+              "uv run ruff *" = "allow";
+              "uv run mypy *" = "allow";
+              "uv run pyright *" = "allow";
+              "uv run bandit *" = "allow";
+              "uv run pre-commit *" = "allow";
 
               # --- Nix read-only ---
               "nix eval *" = "allow";
