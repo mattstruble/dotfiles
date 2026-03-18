@@ -165,6 +165,9 @@ in
       agents = [
         "opencode"
       ];
+      subagents = [
+        "${path}/opencode/.config/opencode/agents/"
+      ];
       skills = [
         {
           source = inputs.skills-anthropic;
