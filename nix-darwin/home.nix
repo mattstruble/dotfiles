@@ -241,6 +241,7 @@ in
 
               # --- Git: allow read-only, ask for state-changing ---
               "git *" = "allow";
+              "git worktree *" = "allow"; # explicit for documentation (redundant with "git *")
               "git add *" = "ask";
               "git checkout *" = "ask";
               "git cherry-pick *" = "ask";
