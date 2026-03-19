@@ -1,19 +1,8 @@
 return {
     {
-        "akinsho/bufferline.nvim",
-        enabled = false,
-        keys = {
-            { "gb", "<cmd>BufferLinePick<cr>", desc = "Pick Buffer in View" },
-        },
-    },
-    {
         "axkirillov/hbac.nvim",
         lazy = true,
         event = "BufAdd",
-        dependencies = {
-            -- these are optional, add them, if you want the telescope module
-            "nvim-tree/nvim-web-devicons",
-        },
         config = function() require("hbac").setup() end,
     },
     {
