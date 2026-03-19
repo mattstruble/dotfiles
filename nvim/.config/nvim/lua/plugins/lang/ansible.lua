@@ -1,21 +1,6 @@
+vim.lsp.enable("ansiblels")
+
 return {
-    {
-        "mason-org/mason.nvim",
-        opts = {
-            ensure_installed = {
-                "ansible-lint",
-                "ansible-language-server",
-            },
-        },
-    },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = {
-            ensure_installed = {
-                "ansiblels",
-            },
-        },
-    },
     {
         "mfussenegger/nvim-lint",
         opts = {

@@ -1,26 +1,6 @@
---------------------------
--- MARKDOWN PREVIEW
---------------------------
+vim.lsp.enable("marksman")
 
 return {
-    {
-        "mason-org/mason.nvim",
-        opts = {
-            ensure_installed = {
-                "markdownlint",
-                "marksman",
-                "markdownfmt",
-            },
-        },
-    },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = {
-            ensure_installed = {
-                "marksman",
-            },
-        },
-    },
     {
         "mfussenegger/nvim-lint",
         opts = {
@@ -33,7 +13,7 @@ return {
         "stevearc/conform.nvim",
         opts = {
             formatters_by_ft = {
-                markdown = { "markdownfmt" },
+                markdown = { "mdformat" },
             },
         },
     },
