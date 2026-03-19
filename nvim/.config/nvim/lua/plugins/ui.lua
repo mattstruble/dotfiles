@@ -89,35 +89,6 @@ return {
         },
     },
     {
-        "rcarriga/nvim-notify",
-        lazy = true,
-        event = "VeryLazy",
-        keys = {
-            {
-                "<leader>un",
-                function()
-                    require("notify").dismiss({
-                        silent = true,
-                        pending = true,
-                    })
-                end,
-                desc = "Delete all notifications",
-            },
-            {
-                "<leader>sn",
-                "<cmd>Telescope notify<cr>",
-                desc = "[S]earch [N]notifications",
-            },
-        },
-        opts = {
-            render = "compact",
-            timeout = 3000,
-            max_height = function() return math.floor(vim.o.lines * 0.75) end,
-            max_width = function() return math.floor(vim.o.columns * 0.75) end,
-        },
-    },
-
-    {
         "MunifTanjim/nui.nvim",
         lazy = true,
         event = "VeryLazy",
@@ -129,7 +100,6 @@ return {
         event = "VeryLazy",
         dependencies = {
             "MunifTanjim/nui.nvim",
-            "rcarriga/nvim-notify",
         },
         config = function()
             require("noice").setup({
@@ -150,6 +120,7 @@ return {
                     long_message_to_split = true,
                     lsp_doc_border = true,
                 },
+                notify = { enabled = false },
             })
         end,
     },
