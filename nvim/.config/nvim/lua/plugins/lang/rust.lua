@@ -1,22 +1,6 @@
+vim.lsp.enable("rust_analyzer")
+
 return {
-    {
-        "mason-org/mason.nvim",
-        opts = {
-            ensure_installed = {
-                "rust-analyzer",
-                "codelldb",
-                "rustfmt",
-            },
-        },
-    },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = {
-            ensure_installed = {
-                "rust_analyzer",
-            },
-        },
-    },
     {
         "nvim-treesitter/nvim-treesitter",
         opts = {
