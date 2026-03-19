@@ -8,6 +8,9 @@ let
 in
 [
   _1password-cli
+  actionlint
+  ansible-language-server
+  ansible-lint
   asciidoctor
   aspell
   aspellDicts.en
@@ -15,6 +18,7 @@ in
     doCheck = false;
   }))
   awscli2
+  bash-language-server
   bibtex2html
   cacert
   cargo
@@ -46,6 +50,8 @@ in
   gnused
   go
   gradle
+  harper
+  helm-ls
   imagemagick
   iperf
   jiq
@@ -63,15 +69,17 @@ in
   luarocks
   markdownlint-cli
   markdownlint-cli2
+  marksman
   mas
+  mdformat
   mermaid-cli
   (pkgs.lib.lowPrio neovim)
   nix-diff
   nix-index
   nix-info
   nix-prefetch-scripts
+  nixd
   nixfmt
-  nixpkgs-fmt
   nixpkgs-lint
   nmap
   obsidian
@@ -80,7 +88,6 @@ in
   opensc
   openssh
   openssl
-  opentofu
   pandoc
   pdfgrep
   perl
@@ -99,6 +106,7 @@ in
   ripgrep
   rsync
   ruff
+  rust-analyzer
   rustfmt
   shellcheck
   shellharden
@@ -110,12 +118,13 @@ in
   ssh-to-age
   stern
   stow
+  stylua
   tectonic
   terminal-notifier
   tex-fmt
+  texlab
   texlivePackages.lacheck
   tmux
-  tofu-ls
   translate-shell
   tree
   tree-sitter
