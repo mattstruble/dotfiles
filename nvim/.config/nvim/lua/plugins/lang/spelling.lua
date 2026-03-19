@@ -1,27 +1,6 @@
+vim.lsp.enable("harper_ls")
+
 return {
-    {
-        "mason-org/mason.nvim",
-        opts = {
-            ensure_installed = {
-                "codespell",
-                "write-good",
-                "harper-ls",
-            },
-        },
-    },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = {
-            ensure_installed = {
-                "harper_ls",
-            },
-        },
-        init = function()
-            vim.lsp.config("harper_ls", {
-                filetypes = { "markdown", "text", "gitcommit" },
-            })
-        end,
-    },
     {
         "mfussenegger/nvim-lint",
         opts = {

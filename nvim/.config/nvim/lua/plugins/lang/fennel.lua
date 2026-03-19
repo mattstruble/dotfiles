@@ -1,21 +1,7 @@
+vim.lsp.enable("fennel_ls")
+
 return {
     { "atweiden/vim-fennel" },
-    {
-        "mason-org/mason.nvim",
-        opts = {
-            ensure_installed = {
-                "fennel-ls",
-            },
-        },
-    },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = {
-            ensure_installed = {
-                "fennel-ls",
-            },
-        },
-    },
     {
         "mfussenegger/nvim-lint",
         opts = {

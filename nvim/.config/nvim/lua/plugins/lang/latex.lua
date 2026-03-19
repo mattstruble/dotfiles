@@ -1,20 +1,6 @@
+vim.lsp.enable("texlab")
+
 return {
-    {
-        "mason-org/mason.nvim",
-        opts = {
-            ensure_installed = {
-                "ltex-ls",
-            },
-        },
-    },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = {
-            ensure_installed = {
-                "ltex",
-            },
-        },
-    },
     {
         "mfussenegger/nvim-lint",
         opts = {
