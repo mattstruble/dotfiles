@@ -1,22 +1,5 @@
 return {
     {
-        "mason-org/mason.nvim",
-        opts = {
-            ensure_installed = {
-                "sqlfluff",
-                "sqlls",
-            },
-        },
-    },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = {
-            ensure_installed = {
-                "sqlls",
-            },
-        },
-    },
-    {
         "mfussenegger/nvim-lint",
         opts = {
             linters_by_ft = {

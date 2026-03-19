@@ -1,17 +1,6 @@
+vim.lsp.enable("bashls")
+
 return {
-    {
-        "mason-org/mason.nvim",
-        opts = {
-            "shfmt",
-            "bash-language-server",
-        },
-    },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = {
-            "bashls",
-        },
-    },
     {
         "mfussenegger/nvim-lint",
         opts = {

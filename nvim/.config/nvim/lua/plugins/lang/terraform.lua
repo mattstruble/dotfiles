@@ -1,21 +1,6 @@
+vim.lsp.enable({ "terraformls", "tflint" })
+
 return {
-    {
-        "mason-org/mason.nvim",
-        opts = {
-            ensure_installed = {
-                "tflint",
-            },
-        },
-    },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = {
-            ensure_installed = {
-                "tflint",
-                "terraformls",
-            },
-        },
-    },
     {
         "mfussenegger/nvim-lint",
         opts = {

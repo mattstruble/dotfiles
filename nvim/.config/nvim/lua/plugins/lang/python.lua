@@ -1,24 +1,6 @@
-local py = require("utils.python")
+vim.lsp.enable("ty")
 
 return {
-    {
-        "mason-org/mason.nvim",
-        opts = {
-            ensure_installed = {
-                "ruff",
-                "ty"
-            },
-        },
-    },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        opts = {
-            ensure_installed = {
-                "ruff",
-                "ty",
-            },
-        },
-    },
     {
         "mfussenegger/nvim-lint",
         opts = {
