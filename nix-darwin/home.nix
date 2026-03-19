@@ -244,6 +244,8 @@ in
               "file *" = "allow";
               "head *" = "allow";
               "ls *" = "allow";
+              "echo *" = "allow";
+              "sort *" = "allow";
               "md5sum *" = "allow";
               "sha256sum *" = "allow";
               "stat *" = "allow";
