@@ -19,6 +19,7 @@ vb.smartindent = true
 vb.softtabstop = 4
 vb.tabstop = 4
 vo.scrolloff = 8
+vo.jumpoptions = "view"
 
 -- Vim options
 vo.cmdheight = 0                                          -- hide command bar
@@ -26,6 +27,8 @@ vim.schedule(function() vo.clipboard = "unnamedplus" end) -- use system clipboar
 vo.completeopt = { "menuone", "noselect" }
 vo.cursorline = true
 vo.cursorlineopt = "screenline,number"
+vo.conceallevel = 2
+vo.spelllang = { "en" }
 vo.emoji = false
 vo.fillchars = {
     fold = " ",
@@ -76,6 +79,8 @@ vo.shada = [[!,'100,<0,f100,s100,h]]
 
 vo.shell = "/bin/zsh"
 vo.shiftround = true -- round indent
+vo.grepprg = "rg --vimgrep"
+vo.grepformat = "%f:%l:%c:%m"
 vo.ignorecase = true
 vo.smartcase = true
 vo.hlsearch = false
@@ -111,8 +116,10 @@ end)
 vo.undofile = true
 vo.undolevels = 1000
 vo.pumheight = 5
+vo.pumblend = 10
 
 -- Window options
+vo.winminwidth = 5
 vw.colorcolumn = "80,120"
 vw.numberwidth = 2 -- make line number column thinner
 vw.list = true     -- show invisible characters
@@ -120,3 +127,5 @@ vw.wrap = false
 vw.number = true
 vw.relativenumber = true
 vw.signcolumn = "yes"
+
+vo.shortmess:append({ W = true, I = true, c = true, C = true })
