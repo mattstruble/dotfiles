@@ -18,24 +18,13 @@ end
 
 return {
     {
-        "roobert/statusline-action-hints.nvim",
-        enabled = false,
-        opts = {
-            definition_identifier = "gd",
-            template = "%s ref:%s",
-        },
-    },
-    {
         "nvim-lualine/lualine.nvim",
         lazy = true,
         enabled = true,
         event = { "BufReadPre" },
         dependencies = {
-            "nvim-tree/nvim-web-devicons",
-            "bluz71/vim-nightfly-guicolors",
             "meuter/lualine-so-fancy.nvim",
             "folke/noice.nvim",
-            "roobert/statusline-action-hints.nvim",
         },
         after = "noice.nvim",
         opts = {
@@ -70,7 +59,6 @@ return {
                 },
                 lualine_x = { "lsp_status" },
                 lualine_y = {
-                    -- { require("statusline-action-hints").statusline },
                     { "fancy_diagnostics" },
                     { "fancy_searchcount" },
                     { "fancy_location" },
