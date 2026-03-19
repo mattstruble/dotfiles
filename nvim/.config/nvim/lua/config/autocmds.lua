@@ -235,3 +235,48 @@ A.nvim_create_autocmd("LspProgress", {
         io.stdout:flush()
     end,
 })
+
+local augroup = function(name)
+    return vim.api.nvim_create_augroup("user_" .. name, { clear = true })
+end
+
+-- Auto-reload files when they change externally (focus, terminal close/leave)
+vim.api.nvim_create_autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
+    group = augroup("checktime"),
+    callback = function()
+        if vim.bo.buftype ~= "nofile" then
+            vim.cmd("checktime")
+        end
+    end,
+})
+
+-- Resize splits proportionally when the terminal window is resized
+vim.api.nvim_create_autocmd("VimResized", {
+    group = augroup("resize_splits"),
+    callback = function()
+        local current_tab = vim.fn.tabpagenr()
+        vim.cmd("tabdo wincmd =")
+        vim.cmd("tabnext " .. current_tab)
+    end,
+})
+
+-- Auto-create parent directories when saving a new file
+vim.api.nvim_create_autocmd("BufWritePre", {
+    group = augroup("auto_create_dir"),
+    callback = function(event)
+        if event.match:match("^%w%w+:[\\/][\\/]") then
+            return
+        end
+        local file = vim.uv.fs_realpath(event.match) or event.match
+        vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
+    end,
+})
+
+-- Disable conceallevel for JSON files (global is 2, but JSON looks wrong with it)
+vim.api.nvim_create_autocmd("FileType", {
+    group = augroup("json_conceal"),
+    pattern = { "json", "jsonc", "json5" },
+    callback = function()
+        vim.opt_local.conceallevel = 0
+    end,
+})
