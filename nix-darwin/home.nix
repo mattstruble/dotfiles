@@ -215,6 +215,18 @@ in
         agentsFile = config.lib.file.mkOutOfStoreSymlink "${path}/opencode/.config/opencode/AGENTS.md";
         config = {
           "$schema" = "https://opencode.ai/config.json";
+          agent = {
+            orchestrator = {
+              tools = {
+                "github*" = true;
+              };
+            };
+            fetcher = {
+              tools = {
+                "context7*" = false;
+              };
+            };
+          };
           permission = {
             external_directory = {
               "/tmp/opencode-wt/**" = "allow";
