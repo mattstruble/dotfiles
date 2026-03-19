@@ -103,6 +103,19 @@ return {
             desc = "Git Browse",
         },
         {
+            "<leader>gY",
+            function()
+                Snacks.gitbrowse({
+                    open = function(url)
+                        vim.fn.setreg("+", url)
+                        vim.notify("Git URL copied: " .. url, vim.log.levels.INFO)
+                    end,
+                })
+            end,
+            desc = "Git Browse (copy URL)",
+            mode = { "n", "v" },
+        },
+        {
             "<leader>gf",
             function() Snacks.lazygit.log_file() end,
             desc = "Lazygit Current File History",
