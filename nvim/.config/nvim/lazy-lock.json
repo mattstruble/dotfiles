@@ -1,7 +1,6 @@
 {
   "bamboo": { "branch": "master", "commit": "1309bc88bffcf1bedc3e84e7fa9004de93da774a" },
   "blink.cmp": { "branch": "main", "commit": "451168851e8e2466bc97ee3e026c3dcb9141ce07" },
-  "bufignore.nvim": { "branch": "main", "commit": "b040fbd7c7d0b3554ed4bfd430bd63179f302643" },
   "cloak.nvim": { "branch": "main", "commit": "648aca6d33ec011dc3166e7af3b38820d01a71e4" },
   "conform.nvim": { "branch": "master", "commit": "086a40dc7ed8242c03be9f47fbcee68699cc2395" },
   "direnv.nvim": { "branch": "main", "commit": "0d2edd378dbdf2c653869772d761ad914219ba9d" },
@@ -45,7 +44,6 @@
   "opencode.nvim": { "branch": "main", "commit": "5067c80ee1f37b5f8a54244e184df44944175a84" },
   "papyrus": { "branch": "main", "commit": "c6536589403b0597819548aea7d8cbc9f2f13647" },
   "persisted.nvim": { "branch": "main", "commit": "14cc1db0052ea26f2d2d2f1b861845dae58b7ead" },
-  "plenary.nvim": { "branch": "master", "commit": "b9fd5226c2f76c951fc8ed5923d85e4de065e509" },
   "rainbow-delimiters.nvim": { "branch": "master", "commit": "607a438d8c647a355749973fd295e33505afafde" },
   "smart-splits.nvim": { "branch": "master", "commit": "82d01bb71bc051955654b3af68355f783d872fe0" },
   "snacks.nvim": { "branch": "main", "commit": "a049339328e2599ad6e85a69fa034ac501e921b2" },
