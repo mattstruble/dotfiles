@@ -104,6 +104,7 @@ with pkgs;
   ruff
   rust-analyzer
   rustfmt
+  rustup
   shellcheck
   shellharden
   shfmt
