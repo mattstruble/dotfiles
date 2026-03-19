@@ -40,18 +40,7 @@ return {
     {
         "neovim/nvim-lspconfig",
         dependencies = {
-            "mason-org/mason.nvim",
-            "mason-org/mason-lspconfig.nvim",
             "saghen/blink.cmp",
-        },
-    },
-    { "mason-org/mason.nvim", opts = {} },
-    {
-        "mason-org/mason-lspconfig.nvim",
-        dependencies = { "mason-org/mason.nvim" },
-        opts = {
-            automatic_enable = true,
-            automatic_installation = true,
         },
     },
     {
