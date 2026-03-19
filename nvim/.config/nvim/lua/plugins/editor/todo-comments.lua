@@ -2,7 +2,6 @@ return {
     "folke/todo-comments.nvim",
     cmd = { "TodoTrouble", "TodoFzfLua" },
     event = { "BufReadPost", "BufNewFile" },
-    dependencies = { "nvim-lua/plenary.nvim" },
     opts = {},
     -- stylua: ignore
     keys = {

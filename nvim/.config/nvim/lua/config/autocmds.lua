@@ -25,6 +25,21 @@ A.nvim_create_autocmd("BufReadPost", {
     end,
 })
 
+-- Unlist buffers from ignored directories (replaces bufignore.nvim)
+A.nvim_create_autocmd("BufAdd", {
+    group = my_au,
+    callback = function(ev)
+        local path = A.nvim_buf_get_name(ev.buf)
+        if path == "" then return end
+        for _, pattern in ipairs({ "%.git/", "%.venv/", "%.direnv/" }) do
+            if path:match(pattern) then
+                vim.bo[ev.buf].buflisted = false
+                return
+            end
+        end
+    end,
+})
+
 -- Close some filetypes with <q>
 -- https://github.com/aorith/dotfiles/blob/f9069ac4ac165af7429bff0327ef38fee7d723dd/topics/neovim/nvim/lua/aorith/core/autocmds.lua
 A.nvim_create_autocmd("FileType", {
