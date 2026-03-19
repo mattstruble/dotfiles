@@ -101,18 +101,17 @@ vo.isfname:append("@-@")
 vo.backspace = "indent,eol,start"
 vo.iskeyword:append("-")
 
--- Create folders for backups, undos, swaps, sessions, etc
+-- Create folders for backups, undos, sessions, etc
 vim.schedule(function()
     vim.cmd("silent call mkdir(stdpath('data').'/backups', 'p', '0700')")
     vim.cmd("silent call mkdir(stdpath('data').'/undos', 'p', '0700')")
-    vim.cmd("silent call mkdir(stdpath('data').'/swaps', 'p', '0700')")
     vim.cmd("silent call mkdir(stdpath('data').'/sessions', 'p', '0700')")
 
     vo.backupdir = vim.fn.stdpath("data") .. "/backups" -- Use backup files
-    vo.directory = vim.fn.stdpath("data") .. "/swaps"   -- Use Swap files
     vo.undodir = vim.fn.stdpath("data") .. "/undos"     -- Set the undo directory
 end)
 
+vo.swapfile = false
 vo.undofile = true
 vo.undolevels = 1000
 vo.pumheight = 5
