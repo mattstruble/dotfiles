@@ -262,3 +262,23 @@ vim.api.nvim_create_autocmd("FileType", {
         vim.opt_local.conceallevel = 0
     end,
 })
+
+-- Autosave on focus loss / buffer leave (without triggering formatters)
+A.nvim_create_autocmd({ "BufLeave", "FocusLost" }, {
+    group = augroup("autosave"),
+    callback = function(event)
+        local buf = event.buf
+        if
+            not vim.bo[buf].modified
+            or vim.bo[buf].buftype ~= ""
+            or vim.bo[buf].readonly
+            or vim.fn.bufname(buf) == ""
+        then
+            return
+        end
+        vim.api.nvim_buf_call(buf, function()
+            vim.cmd("noautocmd silent! write")
+        end)
+    end,
+    desc = "Autosave modified buffers on BufLeave/FocusLost without formatting.",
+})
