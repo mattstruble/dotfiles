@@ -1,7 +1,6 @@
 vim.lsp.enable("fennel_ls")
 
 return {
-    { "atweiden/vim-fennel" },
     {
         "mfussenegger/nvim-lint",
         opts = {

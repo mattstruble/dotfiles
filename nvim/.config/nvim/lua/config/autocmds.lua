@@ -1,13 +1,6 @@
 local A = vim.api
 local my_au = A.nvim_create_augroup("mestruble", { clear = true })
 
--- Highlight on yank
--- https://github.com/aorith/dotfiles/blob/f9069ac4ac165af7429bff0327ef38fee7d723dd/topics/neovim/nvim/lua/aorith/core/autocmds.lua
-A.nvim_create_autocmd("TextYankPost", {
-    group = my_au,
-    callback = function() vim.highlight.on_yank() end,
-})
-
 -- Go to the last line before closing the file
 -- https://github.com/aorith/dotfiles/blob/f9069ac4ac165af7429bff0327ef38fee7d723dd/topics/neovim/nvim/lua/aorith/core/autocmds.lua
 A.nvim_create_autocmd("BufReadPost", {
