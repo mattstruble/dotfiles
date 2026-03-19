@@ -31,7 +31,7 @@ return {
             },
 
             undo = {
-                enabled = false,
+                enabled = true,
                 default_animation = {
                     name = "fade",
                     settings = {
@@ -44,7 +44,7 @@ return {
             },
 
             redo = {
-                enabled = false,
+                enabled = true,
                 default_animation = {
                     name = "fade",
                     settings = {
