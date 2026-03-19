@@ -2,6 +2,10 @@ vim.g.mapleader = " "
 
 local keymap = vim.keymap
 
+-- Smart j/k: move by visual line when no count, by real line when count given
+keymap.set({ "n", "x" }, "j", "v:count == 0 ? 'gj' : 'j'", { desc = "Down", expr = true, silent = true })
+keymap.set({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { desc = "Up", expr = true, silent = true })
+
 -- general keymaps
 
 keymap.set("i", "jk", "<ESC>")
@@ -18,10 +22,14 @@ keymap.set("n", "<leader>-", "<C-x>")
 -- keymap.set("n", "<leader>se", "<C-w>=") -- make split equal width
 -- keymap.set("n", "<leader>sx", ":close<CR>") -- close current split
 
-keymap.set("n", "<leader>to", ":tabnew<CR>")   -- open new tab
-keymap.set("n", "<leader>tx", ":tabclose<CR>") -- close curr tab
-keymap.set("n", "<leader>tn", ":tabn<CR>")     -- go to next tab
-keymap.set("n", "<leader>tp", ":tabp<CR>")     -- go to previous tab
+-- Tab management
+keymap.set("n", "<leader><tab><tab>", "<cmd>tabnew<cr>", { desc = "New Tab" })
+keymap.set("n", "<leader><tab>d", "<cmd>tabclose<cr>", { desc = "Close Tab" })
+keymap.set("n", "<leader><tab>]", "<cmd>tabnext<cr>", { desc = "Next Tab" })
+keymap.set("n", "<leader><tab>[", "<cmd>tabprevious<cr>", { desc = "Previous Tab" })
+keymap.set("n", "<leader><tab>l", "<cmd>tablast<cr>", { desc = "Last Tab" })
+keymap.set("n", "<leader><tab>o", "<cmd>tabonly<cr>", { desc = "Close Other Tabs" })
+keymap.set("n", "<leader><tab>f", "<cmd>tabfirst<cr>", { desc = "First Tab" })
 
 -- much easier to me to undo and re-do all within the same letter
 vim.keymap.set("n", "U", "<C-r>")
@@ -57,8 +65,6 @@ keymap.set("n", "n", "nzzzv")
 keymap.set("n", "N", "Nzzzv")
 keymap.set("n", "{", "{zz")
 keymap.set("n", "}", "}zz")
-keymap.set("n", "n", "nzz")
-keymap.set("n", "N", "Nzz")
 keymap.set("n", "G", "Gzz")
 keymap.set("n", "i", "zzi")
 keymap.set("n", "I", "zzI")
@@ -163,5 +169,3 @@ keymap.set("n", "<leader>bb", "<cmd>e #<cr>", { desc = "Switch to Other Buffer" 
 
 -- Windows
 -- NOTE: <leader>- is not added here because it's already mapped to <C-x> (decrement)
-keymap.set("n", "<leader>|", "<C-W>v", { desc = "Split Window Right", remap = true })
-keymap.set("n", "<leader>wd", "<C-W>c", { desc = "Delete Window", remap = true })
