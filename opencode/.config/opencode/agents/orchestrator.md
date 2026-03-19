@@ -59,9 +59,21 @@ Once you have sufficient clarity:
    - **Constraints**: What must NOT change, backward compatibility requirements, API contracts
    - **Expected behavior**: What the code should do when complete, including edge cases
    - **Success criteria**: How the coder (and reviewers) can verify correctness -- tests to run, commands to execute, behavior to observe
-   - **Dependencies from prior waves** (if Wave 2+): What changed in prior waves that this task builds on, and where to find it
+    - **Dependencies from prior waves** (if Wave 2+): What changed in prior waves that this task builds on, and where to find it
 
-5. **Present the task plan to the user.** Before spawning any coders, show the user:
+5. **Plan final commit messages.** For each task, draft a conventional commit
+   subject line (`type(scope): subject`). The subject should be sufficient on
+   its own. Add a body **only** when the subject cannot convey critical context
+   -- e.g., a non-obvious trade-off, a breaking change, or multiple unrelated
+   concerns bundled into one task. When a body is needed, keep it to 1-3 lines.
+
+   Coders will make intermediate commits for their review cycles; the
+   orchestrator rewrites messages during the combine phase (Step 3).
+
+   Include the planned commit messages in the task plan presented to the user
+   (step 6).
+
+6. **Present the task plan to the user.** Before spawning any coders, show the user:
    - The full wave structure (each coder operates in an isolated git worktree for parallel safety)
    - Coder count per wave with rationale
    - Each task's description (not the full prompt, just a summary)
@@ -103,12 +115,14 @@ For each task in the current wave:
    You MUST direct ALL file operations (read, write, edit, glob, grep, bash) to this path.
    Do NOT modify files in the main repository directory.
    When spawning PR reviewers, include this worktree path in their prompt.
-   After each successful review cycle (all reviewers LGTM), commit your changes in this
-   worktree using the git-commit skill.
-   ")
+    After each successful review cycle (all reviewers LGTM), commit your changes in this
+    worktree using the git-commit skill. Your commits are intermediate -- the orchestrator
+    rewrites commit messages during the combine phase. Commit freely for your review cycle;
+    do not spend effort on commit message polish.
+    ")
    ```
 
-If the wave has multiple independent tasks, create all worktrees first, then spawn all coders in parallel.
+**Concurrency limit: at most 2 coders running at a time.** If a wave has more than 2 tasks, treat the task list as a queue. Create all worktrees for the wave upfront, then spawn the first 2 coders concurrently. As each coder completes, immediately spawn the next task from the queue (if any remain). This keeps 2 slots occupied at all times until the queue drains, minimizing total wall-clock time for the wave.
 
 For web/code research during Phase 1, spawn fetcher:
 ```
@@ -135,36 +149,65 @@ Each coder reports:
    ```
 2. Report the failure to the user and ask how to proceed: re-run the task, skip it, or abort the entire orchestration.
 
-### Step 3: Merge Wave
+### Step 3: Combine Wave
 
-After all coders in the wave have completed (or failed and been handled), merge each successful coder's branch into the working branch sequentially:
+After all coders in the wave have completed (or failed and been handled), combine each successful task into the working branch using cherry-pick with pre-planned commit messages. This produces a clean linear history with no merge commits.
 
-For each successfully completed coder branch in the wave:
+**Create a backup branch** before combining:
 ```
-git merge --ff-only opencode/wave-<N>/task-<M>
+git branch backup-pre-combine-wave-<N> HEAD
 ```
 
-This fast-forwards the working branch to include the coder's commits. Since each coder branched from the same base, the first merge will fast-forward cleanly. Subsequent merges may fail if their histories have diverged.
+For each successfully completed task branch in the wave:
+1. **Cherry-pick all task commits** without committing:
+   ```
+   git cherry-pick --no-commit <base-commit>..<task-branch-head>
+   ```
+   Where `<base-commit>` is the commit the task branch was created from (the HEAD at worktree creation time).
 
-**On merge failure (fast-forward not possible):**
-1. The two branches have diverged. This means the coder's branch has commits that are not a direct descendant of the current HEAD (because a prior task's merge advanced HEAD).
-2. Spawn a coder with a conflict-resolution task in a **new worktree**:
+2. **Commit with the pre-planned message:**
+   ```
+   git commit -m "<planned subject line>"
+   ```
+   Or if a body was planned:
+   ```
+   git commit -m "<planned subject line>
+
+   <planned body>"
+   ```
+
+3. **Verify the working tree is clean** before moving to the next task:
+   ```
+   git status --porcelain
+   ```
+
+**On cherry-pick conflict:**
+1. The two tasks modified overlapping lines. This should be rare since tasks are decomposed to touch independent files.
+2. Inspect the conflict: `git diff` to see conflict markers.
+3. Spawn a coder with a conflict-resolution task in a **new worktree**:
    ```
    git worktree add /tmp/opencode-wt/<session-id>/wave-<N>-conflict-<M>/ -b opencode/wave-<N>/conflict-<M>
    ```
-3. The conflict-resolution coder's prompt should contain:
+4. The conflict-resolution coder's prompt should contain:
    - The two branches involved (current HEAD and the task branch)
    - Instructions to merge the task branch into the current HEAD and resolve any conflicts
    - Context about what each task in the wave was doing (from their completion reports)
    - The worktree path for all file operations
-4. If the conflict-resolution coder succeeds, merge its branch and clean up.
-5. If the conflict-resolution coder fails, report to the user and ask how to proceed.
+5. If the conflict-resolution coder succeeds, merge its branch and clean up.
+6. If resolution is trivial (e.g., adjacent line edits), resolve inline and continue.
+7. If the conflict-resolution coder fails, report to the user and ask how to proceed.
 
-**After all branches in the wave are merged,** clean up worktrees and branches:
-```
-git worktree remove /tmp/opencode-wt/<session-id>/wave-<N>-task-<M>/
-git branch -d opencode/wave-<N>/task-<M>
-```
+**After all tasks in the wave are combined:**
+1. **Verify tree content** with `git diff backup-pre-combine-wave-<N>..HEAD --stat` as a sanity check.
+2. **Clean up the backup branch:**
+   ```
+   git branch -D backup-pre-combine-wave-<N>
+   ```
+3. **Clean up worktrees and task branches:**
+   ```
+   git worktree remove /tmp/opencode-wt/<session-id>/wave-<N>-task-<M>/
+   git branch -d opencode/wave-<N>/task-<M>
+   ```
 
 ### Step 4: Advance to Next Wave
 
@@ -187,7 +230,7 @@ When all waves are complete:
    - How many review iterations each task went through
    - Any notable decisions made by coders during implementation
    - Any security findings that were resolved
-   - **Merge results**: how many commits were merged per wave, whether any conflicts occurred and how they were resolved
+    - **Combine results**: how many commits were combined per wave, whether any conflicts occurred and how they were resolved
    - **Final commit summary**: the commit log from the session (use `git log --oneline` from the recorded base to HEAD)
 3. **Wait for user approval.**
    - If approved: done.
@@ -200,6 +243,6 @@ When all waves are complete:
 - **NEVER spawn coders without user approval of the task plan.** The user must see and approve the decomposition before execution begins.
 - **NEVER pass incomplete context to coders.** A coder should be able to execute its task using ONLY the information in its prompt plus what it can read from the filesystem. It should never need to ask "what did the orchestrator mean by X?"
 - **ALWAYS check for a clean working tree** before creating worktrees. Refuse to proceed if `git status --porcelain` returns any output.
-- **ALWAYS clean up worktrees and temporary branches** after successful wave merges. Do not leave stale worktrees in `/tmp/opencode-wt/`.
+- **ALWAYS clean up worktrees and temporary branches** after successful wave combines. Do not leave stale worktrees in `/tmp/opencode-wt/`.
 - **ALWAYS use TodoWrite** to track progress across waves. Update it as waves complete.
-- **ALWAYS spawn Wave N+1 only after Wave N is fully complete** (all coders returned, all reviews passed, all branches merged).
+- **ALWAYS spawn Wave N+1 only after Wave N is fully complete** (all coders returned, all reviews passed, all branches combined).

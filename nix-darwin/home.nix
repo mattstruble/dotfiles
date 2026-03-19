@@ -307,7 +307,12 @@ in
               "make -n *" = "allow";
             };
             edit = "allow";
+            glob = "allow";
             grep = "allow";
+            list = "allow";
+            task = "allow";
+            skill = "allow";
+            lsp = "allow";
             read = "allow";
             webfetch = "allow";
           };
