@@ -17,7 +17,7 @@ with pkgs;
   bash-language-server
   bibtex2html
   cacert
-  cargo
+  (pkgs.lib.lowPrio cargo)
   chafa
   checkmake
   codespell
@@ -65,7 +65,7 @@ with pkgs;
   luarocks
   markdownlint-cli
   markdownlint-cli2
-  marksman
+  markdown-oxide
   mas
   mdformat
   mermaid-cli
@@ -102,8 +102,7 @@ with pkgs;
   ripgrep
   rsync
   ruff
-  rust-analyzer
-  rustfmt
+  (pkgs.lib.lowPrio rustfmt)
   rustup
   shellcheck
   shellharden
