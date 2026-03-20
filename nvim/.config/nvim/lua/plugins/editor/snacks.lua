@@ -20,6 +20,7 @@ return {
             ui_select = true,
         },
         input = { enabled = true },
+        image = { enabled = true },
         indent = { enabled = true },
         words = { enabled = true },
         lazygit = { enabled = true },

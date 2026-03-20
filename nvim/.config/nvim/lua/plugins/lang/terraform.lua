@@ -14,12 +14,8 @@ return {
         "stevearc/conform.nvim",
         opts = {
             formatters_by_ft = {
-                terraform = {
-                    "terraform_fmt",
-                    "trim_newlines",
-                    "trim_whitespace",
-                },
-                hcl = { "terraform_fmt", "trim_newlines", "trim_whitespace" },
+                terraform = { "terraform_fmt", "tofu_fmt", stop_after_first = true },
+                hcl = { "terraform_fmt", "tofu_fmt", stop_after_first = true },
             },
         },
     },
