@@ -10,6 +10,8 @@ SessionDir = vim.fn.stdpath("data") .. "/sessions"
 -- Global Options
 vg.mapleader = " "
 vg.loaded_perl_provider = 0 -- Do not load Perl
+vg.loaded_python3_provider = 0
+vg.loaded_ruby_provider = 0
 
 -- Buffer Options
 vb.autoindent = true

@@ -117,9 +117,11 @@ with pkgs;
   stylua
   tectonic
   terminal-notifier
+  terraform-ls
   tex-fmt
   texlab
   texlivePackages.lacheck
+  tflint
   tmux
   translate-shell
   tree
