@@ -17,12 +17,12 @@ return {
     },
     keys = {
         {
-            "<leader>nf",
+            "<leader>cgf",
             ":lua require('neogen').generate()<cr>",
             desc = "Generate function docs",
         },
         {
-            "<leader>nc",
+            "<leader>cgc",
             ":lua require('neogen').generate({type = 'class'})<cr>",
             desc = "Generate class docs",
         },

@@ -5,6 +5,14 @@ return {
     event = { "BufWritePre" },
     keys = {
         {
+            "<leader>cf",
+            function()
+                require("conform").format()
+            end,
+            mode = { "n", "x" },
+            desc = "Format",
+        },
+        {
             "<leader>cF",
             function()
                 require("conform").format({ formatters = { "injected" }, timeout_ms = 3000 })

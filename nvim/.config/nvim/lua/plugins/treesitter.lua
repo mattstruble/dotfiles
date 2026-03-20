@@ -109,10 +109,10 @@ return {
             map({ "x", "o" }, "ic", select("@class.inner"), { desc = "Select inner part of a class" })
 
             -- Swap keymaps
-            map("n", "<leader>na", swap_next("@parameter.inner"), { desc = "Swap parameter/argument with next" })
-            map("n", "<leader>nm", swap_next("@function.outer"), { desc = "Swap function with next" })
-            map("n", "<leader>pa", swap_prev("@parameter.inner"), { desc = "Swap parameter/argument with prev" })
-            map("n", "<leader>pm", swap_prev("@function.outer"), { desc = "Swap function with previous" })
+            map("n", "g>a", swap_next("@parameter.inner"), { desc = "Swap parameter/argument with next" })
+            map("n", "g>m", swap_next("@function.outer"), { desc = "Swap function with next" })
+            map("n", "g<a", swap_prev("@parameter.inner"), { desc = "Swap parameter/argument with prev" })
+            map("n", "g<m", swap_prev("@function.outer"), { desc = "Swap function with previous" })
 
             -- Move keymaps
             map({ "n", "x", "o" }, "]f", goto_next_start("@call.outer"), { desc = "Next function call start" })
