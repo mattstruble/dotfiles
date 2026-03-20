@@ -10,12 +10,12 @@ keymap.set({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { desc = "Up", expr =
 
 keymap.set("i", "jk", "<ESC>")
 
-keymap.set("n", "<leader>nh", ":nohl<CR>")
+keymap.set("n", "<leader>uh", ":nohl<CR>", { desc = "Clear Search Highlighting" })
 
 keymap.set("n", "x", '"_x')
 
-keymap.set("n", "<leader>+", "<C-a>")
-keymap.set("n", "<leader>-", "<C-x>")
+keymap.set("n", "<leader>+", "<C-a>", { desc = "Increment" })
+keymap.set("n", "<leader>-", "<C-x>", { desc = "Decrement" })
 
 -- keymap.set("n", "<leader>sv", "<C-w>v") -- split vertically
 -- keymap.set("n", "<leader>sh", "<C-w>s") -- split horizontally
@@ -50,7 +50,7 @@ vim.keymap.set("v", "y", "ygv<esc>")
 ---
 -- The Primeagen
 ---
-keymap.set("n", "<leader>f", require("conform").format)
+-- Format is handled by <leader>cf in plugins/coding/conform.lua
 
 -- Allow highlighting and moving blocks of code in visual mode
 keymap.set("v", "J", ":m '>+1<CR>gv=gv")
@@ -77,16 +77,16 @@ keymap.set("n", "S", "zzS")
 keymap.set("n", "c", "zzc")
 keymap.set("n", "C", "zzC")
 
-keymap.set("x", "<leader>p", [["_dP]])
+keymap.set("x", "<leader>p", [["_dP]], { desc = "Paste Without Overwrite" })
 
 keymap.set("n", "Q", "<nop>")
 
 -- Copy to clipboard
-keymap.set({ "n", "v" }, "<leader>y", [["+y]])
-keymap.set("n", "<leader>Y", [["+Y]])
+keymap.set({ "n", "v" }, "<leader>y", [["+y]], { desc = "Yank to Clipboard" })
+keymap.set("n", "<leader>Y", [["+Y]], { desc = "Yank Line to Clipboard" })
 
 -- Delete without overwriting buffer
-keymap.set({ "n", "v" }, "<leader>d", [["_d]])
+keymap.set({ "n", "v" }, "<leader>d", [["_d]], { desc = "Delete to Void Register" })
 
 -- Only search within the visual area when in visual mode
 vim.keymap.set("x", "/", "<Esc>/\\%V") -- search wiithin visual selection
