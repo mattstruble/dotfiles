@@ -25,10 +25,9 @@ let
       (toString cfg.gpuLayers)
       "--cache-reuse"
       (toString cfg.cacheReuse)
-      "-dt"
-      cfg.defragThreshold
+      "-fa"
+      "auto"
     ]
-    ++ lib.optional cfg.flashAttn "-fa"
     ++ cfg.extraArgs
   );
 in
@@ -76,22 +75,10 @@ in
       description = "Number of model layers to offload to Metal GPU (-ngl). 99 offloads all layers.";
     };
 
-    flashAttn = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Enable Flash Attention (-fa). Reduces memory usage for large contexts.";
-    };
-
     cacheReuse = lib.mkOption {
       type = lib.types.int;
       default = 256;
       description = "Minimum KV cache chunk size in tokens to reuse via context shifting (--cache-reuse).";
-    };
-
-    defragThreshold = lib.mkOption {
-      type = lib.types.str;
-      default = "0.1";
-      description = "KV cache defragmentation threshold (-dt). 0.1 triggers defrag when 10% fragmented.";
     };
 
     extraArgs = lib.mkOption {

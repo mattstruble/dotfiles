@@ -14,22 +14,12 @@
     arkenfox-userjs.url = "github:petrkozorezov/arkenfox-userjs-nix";
     ai-agents.url = "github:mattstruble/nix-ai-agents";
 
-    skills-infra = {
-      url = "github:tylertitsworth/skills";
-      flake = false;
-    };
-
-    skills-anthropic = {
-      url = "github:anthropics/skills";
-      flake = false;
-    };
-
     skills-mattpocock = {
       url = "github:mattpocock/skills";
       flake = false;
     };
 
-    skills-mine = {
+    skills-mattstruble = {
       url = "github:mattstruble/skills";
       flake = false;
     };

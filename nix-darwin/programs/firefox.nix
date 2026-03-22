@@ -1,4 +1,4 @@
-# Configure firefox addons and settings
+# Configure Firefox addons and settings
 # https://discourse.nixos.org/t/declare-firefox-extensions-and-settings/36265
 # https://github.com/Kreyren/nixos-config/blob/bd4765eb802a0371de7291980ce999ccff59d619/nixos/users/kreyren/home/modules/web-browsers/firefox/firefox.nix#L116-L148
 { self
