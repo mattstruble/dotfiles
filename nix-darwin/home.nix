@@ -170,39 +170,17 @@ in
       ];
       skills = [
         {
-          source = inputs.skills-anthropic;
-          include = [
-            "skill-creator"
-            "mcp-builder"
-            "claude-api"
-          ];
-        }
-
-        {
           source = inputs.skills-mattpocock;
           include = [
             "grill-me"
             "improve-codebase-architecture"
             "prd-to-issue"
             "prd-to-plan"
-            "tdd"
             "write-a-prd"
           ];
         }
 
-        {
-          source = inputs.skills-infra;
-          exclude = [
-            "aiconfigurator"
-            "axolotl"
-            "harbor"
-            "minio"
-            "mooncake"
-            "tailscale"
-            "verl"
-          ];
-        }
-        inputs.skills-mine
+        inputs.skills-mattstruble
       ];
 
       mcpServers = {
