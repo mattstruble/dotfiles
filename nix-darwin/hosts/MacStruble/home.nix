@@ -50,11 +50,17 @@ in
               coder = {
                 model = "anthropic/claude-sonnet-4-5-20250929";
               };
-              pr-reviewer = {
+              correctness-reviewer = {
                 model = "ollama/qwen2.5-coder:14b";
               };
-              security = {
-                model = "anthropic/claude-sonnet-4-5-20250929";
+              failure-path-reviewer = {
+                model = "ollama/qwen2.5-coder:14b";
+              };
+              readability-reviewer = {
+                model = "ollama/qwen2.5-coder:14b";
+              };
+              security-reviewer = {
+                model = "ollama/qwen2.5-coder:14b";
               };
               fetcher = {
                 model = "ollama/qwen2.5:7b";

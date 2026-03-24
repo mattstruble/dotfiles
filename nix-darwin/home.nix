@@ -182,6 +182,7 @@ in
         {
           source = inputs.skills-superpowers;
           exclude = [
+            "requesting-code-review"
             "test-driven-development"
             "using-superpowers"
             "writing-skills"
