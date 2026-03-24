@@ -110,7 +110,6 @@ with pkgs;
   sops
   sqldiff
   sqruff
-  squashfsTools
   ssh-to-age
   stern
   stow
