@@ -131,7 +131,7 @@ task(subagent_type="fetcher", description="[3-5 word label]", prompt="<search qu
 
 ### Step 2: Wait for Coders
 
-Wait for ALL coders in the wave to return their completion reports. Each coder goes through its own review loop (coder -> pr-reviewer -> security -> fix -> re-review), commits reviewed code within its worktree, and only returns when all reviewers are satisfied and changes are committed.
+Wait for ALL coders in the wave to return their completion reports. Each coder goes through its own review loop (coder -> [correctness/failure-path/readability/security reviewers] -> fix -> re-review), commits reviewed code within its worktree, and only returns when all reviewers are satisfied and changes are committed.
 
 Each coder reports:
 - Files modified/created
