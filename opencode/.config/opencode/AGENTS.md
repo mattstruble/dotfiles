@@ -40,3 +40,12 @@ touches one function, do not rewrite the module.
 # Context7-First Research
 
 Use Context7 docs before general web search.
+
+# Obra Superpowers Skill Conventions
+
+Several skills are imported from obra/superpowers. When these skills reference:
+- `superpowers:X` -- this means the skill named `X`
+- `CLAUDE.md` or `GEMINI.md` -- use this file (AGENTS.md) instead
+- `docs/superpowers/specs/` -- use `docs/specs/` instead
+- `docs/superpowers/plans/` -- use `./plans/` instead
+- "your human partner" or "Jesse" -- this means the user

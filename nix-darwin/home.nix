@@ -173,10 +173,18 @@ in
           source = inputs.skills-mattpocock;
           include = [
             "grill-me"
-            "improve-codebase-architecture"
             "prd-to-issue"
             "prd-to-plan"
             "write-a-prd"
+          ];
+        }
+
+        {
+          source = inputs.skills-superpowers;
+          exclude = [
+            "test-driven-development"
+            "using-superpowers"
+            "writing-skills"
           ];
         }
 

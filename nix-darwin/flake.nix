@@ -24,6 +24,11 @@
       flake = false;
     };
 
+    skills-superpowers = {
+      url = "github:obra/superpowers";
+      flake = false;
+    };
+
   };
 
   outputs =
