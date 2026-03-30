@@ -173,9 +173,6 @@ in
           source = inputs.skills-mattpocock;
           include = [
             "grill-me"
-            "prd-to-issue"
-            "prd-to-plan"
-            "write-a-prd"
           ];
         }
 
