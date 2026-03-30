@@ -1,0 +1,16 @@
+vim.pack.add({ "https://github.com/mrjones2014/smart-splits.nvim" })
+require("smart-splits").setup({ at_edge = "stop" })
+
+local map = vim.keymap.set
+map("n", "<C-h>", function() require("smart-splits").move_cursor_left() end, { desc = "Move to left split" })
+map("n", "<C-j>", function() require("smart-splits").move_cursor_down() end, { desc = "Move to below split" })
+map("n", "<C-k>", function() require("smart-splits").move_cursor_up() end, { desc = "Move to above split" })
+map("n", "<C-l>", function() require("smart-splits").move_cursor_right() end, { desc = "Move to right split" })
+map("n", "<C-A-h>", function() require("smart-splits").resize_left() end, { desc = "Resize split left" })
+map("n", "<C-A-j>", function() require("smart-splits").resize_down() end, { desc = "Resize split down" })
+map("n", "<C-A-k>", function() require("smart-splits").resize_up() end, { desc = "Resize split up" })
+map("n", "<C-A-l>", function() require("smart-splits").resize_right() end, { desc = "Resize split right" })
+map("n", "<leader><leader>h", function() require("smart-splits").swap_buf_left() end, { desc = "Swap buffer left" })
+map("n", "<leader><leader>j", function() require("smart-splits").swap_buf_down() end, { desc = "Swap buffer down" })
+map("n", "<leader><leader>k", function() require("smart-splits").swap_buf_up() end, { desc = "Swap buffer up" })
+map("n", "<leader><leader>l", function() require("smart-splits").swap_buf_right() end, { desc = "Swap buffer right" })
