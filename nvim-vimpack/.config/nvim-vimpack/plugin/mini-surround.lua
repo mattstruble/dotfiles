@@ -1,4 +1,4 @@
 vim.schedule(function()
-    vim.pack.add({ "https://github.com/echasnovski/mini.surround" })
+    vim.pack.add({ "https://github.com/nvim-mini/mini.surround" })
     require("mini.surround").setup({})
 end)

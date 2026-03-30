@@ -1,8 +1,9 @@
 local loaded = false
 local function ensure_loaded()
     if loaded then return end
-    vim.pack.add({ "https://github.com/NickvanDyke/opencode.nvim" })
+    -- Set global BEFORE loading (replaces lazy.nvim `init` pattern)
     vim.g.opencode_opts = { provider = { enabled = "tmux" } }
+    vim.pack.add({ "https://github.com/NickvanDyke/opencode.nvim" })
     loaded = true
 end
 

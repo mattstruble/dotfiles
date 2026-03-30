@@ -37,7 +37,7 @@ local function ensure_loaded()
     end
 
     local files_set_cwd = function()
-        local entry = MiniFiles.get_fs_entry()
+        local entry = require("mini.files").get_fs_entry()
         if entry == nil then return end
         local cur_directory = vim.fs.dirname(entry.path)
         if cur_directory ~= nil then vim.fn.chdir(cur_directory) end
