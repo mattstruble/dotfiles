@@ -131,6 +131,7 @@ in
       "harper-ls".source = mkLink "${path}/harper-ls/.config/harper-ls";
       "lazygit".source = mkLink "${path}/lazygit/.config/lazygit";
       "nvim".source = mkLink "${path}/nvim/.config/nvim";
+      "nvim-vimpack".source = mkLink "${path}/nvim-vimpack/.config/nvim-vimpack";
 
       "python_keyring".source = mkLink "${path}/keyring/.config/python_keyring";
       "sketchybar".source = mkLink "${path}/sketchybar/.config/sketchybar";
