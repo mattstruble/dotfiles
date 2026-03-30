@@ -1,0 +1,1 @@
+-- No LSP for git; linters (actionlint, gitlint) are in centralized lint.lua
