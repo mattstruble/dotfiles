@@ -8,7 +8,7 @@ end
 local map = vim.keymap.set
 map("n", "<leader>ff", function() ensure_loaded(); require("fff").find_files() end, { desc = "Find Files" })
 map("n", "<leader>fg", function() ensure_loaded(); require("fff").live_grep() end, { desc = "Live Grep" })
-map("n", "<leader>fr", function() ensure_loaded(); require("fff").find_files() end, { desc = "Recent Files" })
+map("n", "<leader>fr", function() ensure_loaded(); require("fff").find_files() end, { desc = "Find Files (recent)" })
 map("n", "<leader>fc", function()
     ensure_loaded()
     require("fff").find_files_in_dir(vim.fn.stdpath("config"))

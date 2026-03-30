@@ -1,5 +1,4 @@
 vim.pack.add({
-    "https://github.com/nvim-mini/mini.snippets",
     { src = "https://github.com/saghen/blink.cmp", version = vim.version.range("1.x") },
     "https://github.com/neovim/nvim-lspconfig",
 })
