@@ -13,6 +13,7 @@ require("conform").setup({
     },
     formatters_by_ft = {
         lua = { "stylua" },
+        python = { "ruff_format" },
         fennel = { "fnlfmt" },
         gd = { "gdformat" },
         tex = { "tex-fmt" },
