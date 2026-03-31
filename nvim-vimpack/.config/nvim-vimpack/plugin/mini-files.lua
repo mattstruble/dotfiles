@@ -66,8 +66,6 @@ local function ensure_loaded()
             end
         end,
     })
-
-    loaded = true
     end)
     if not ok then
         vim.notify("mini.files: " .. tostring(err), vim.log.levels.ERROR)
