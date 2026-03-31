@@ -50,7 +50,7 @@ vim.keymap.set("v", "y", "ygv<esc>")
 ---
 -- The Primeagen
 ---
--- Format is handled by <leader>cf in plugins/coding/conform.lua
+-- Format is handled by <leader>cf in plugin/conform.lua
 
 -- Allow highlighting and moving blocks of code in visual mode
 keymap.set("v", "J", ":m '>+1<CR>gv=gv")
@@ -115,15 +115,17 @@ vim.keymap.set(
     { desc = "Backward qfixlist" }
 )
 
--- Split navigation is handled by smart-splits.nvim (see plugins/editor/smart-splits.lua)
+-- Split navigation is handled by smart-splits.nvim (see plugin/smart-splits.lua)
 -- Provides seamless Ctrl+h/j/k/l navigation between neovim and kitty splits
 
 -- ┌───────────────────────────────────────────┐
 -- │ Essential keymaps (from LazyVim defaults) │
 -- └───────────────────────────────────────────┘
 
--- Lazy plugin manager
-keymap.set("n", "<leader>l", "<cmd>Lazy<cr>", { desc = "Lazy" })
+-- Undo Tree keymap is in plugin/undo.lua
+
+-- Plugin manager
+keymap.set("n", "<leader>l", function() vim.pack.update() end, { desc = "Update Plugins" })
 
 -- Quit
 keymap.set("n", "<leader>qq", "<cmd>qa<cr>", { desc = "Quit All" })

@@ -26,7 +26,7 @@
       "src": "https://github.com/jinh0/eyeliner.nvim"
     },
     "fff.nvim": {
-      "rev": "e83b137be5d9a2947f59e1b68e0b8c4ab3eac2f3",
+      "rev": "371d54a478c22997b8593fbe633fb8711bbbf95b",
       "src": "https://github.com/dmtrKovalenko/fff.nvim"
     },
     "flash.nvim": {
@@ -126,7 +126,7 @@
       "src": "https://github.com/mfussenegger/nvim-lint"
     },
     "nvim-lspconfig": {
-      "rev": "16812abf0e8d8175155f26143a8504e8253e92b0",
+      "rev": "5492a24edd68f78d8a778edcb8905d0a28993abc",
       "src": "https://github.com/neovim/nvim-lspconfig"
     },
     "nvim-puppeteer": {
@@ -154,6 +154,10 @@
       "rev": "8e1c0a389f20bf7f5b0dd0e00306c1247bda2595",
       "src": "https://github.com/windwp/nvim-ts-autotag"
     },
+    "persisted.nvim": {
+      "rev": "14cc1db0052ea26f2d2d2f1b861845dae58b7ead",
+      "src": "https://github.com/olimorris/persisted.nvim"
+    },
     "rainbow-delimiters.nvim": {
       "rev": "50080ed0f44dbc18ae13b81278a01b951a06127a",
       "src": "https://gitlab.com/HiPhish/rainbow-delimiters.nvim"
@@ -165,6 +169,10 @@
     "snacks.nvim": {
       "rev": "ad9ede6a9cddf16cedbd31b8932d6dcdee9b716e",
       "src": "https://github.com/folke/snacks.nvim"
+    },
+    "symbol-usage.nvim": {
+      "rev": "e07c07dfe7504295a369281e95a24e1afa14b243",
+      "src": "https://github.com/Wansmer/symbol-usage.nvim"
     },
     "tiny-glimmer.nvim": {
       "rev": "932e6c2cc4a43ce578f007db1f8f61ad6798f938",
