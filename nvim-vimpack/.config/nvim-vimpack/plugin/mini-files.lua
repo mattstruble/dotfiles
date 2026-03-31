@@ -35,7 +35,7 @@ local function ensure_loaded()
         end
         local desc = "Open in " .. direction .. " split"
         if close_on_file then desc = desc .. " and close" end
-        vim.keymap.set("n", lhs, rhs, { buffer = buf_id, desc = desc })
+        vim.keymap.set("n", lhs, rhs, { buf = buf_id, desc = desc })
     end
 
     local files_set_cwd = function()
@@ -49,8 +49,8 @@ local function ensure_loaded()
         pattern = "MiniFilesBufferCreate",
         callback = function(args)
             local buf_id = args.data.buf_id
-            vim.keymap.set("n", "g.", toggle_dotfiles, { buffer = buf_id, desc = "Toggle hidden files" })
-            vim.keymap.set("n", "gc", files_set_cwd, { buffer = buf_id, desc = "Set cwd" })
+            vim.keymap.set("n", "g.", toggle_dotfiles, { buf = buf_id, desc = "Toggle hidden files" })
+            vim.keymap.set("n", "gc", files_set_cwd, { buf = buf_id, desc = "Set cwd" })
             map_split(buf_id, "<C-w>s", "horizontal", false)
             map_split(buf_id, "<C-w>v", "vertical", false)
             map_split(buf_id, "<C-w>S", "horizontal", true)

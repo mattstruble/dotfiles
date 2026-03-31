@@ -96,7 +96,6 @@ vo.timeoutlen = 300
 vo.updatetime = 250
 vo.wildmode = "list:longest"
 vo.wildignore = { "*/.git/*", "*/.venv/*" }
-vo.termguicolors = true
 vo.title = true
 vo.titlestring = "nvim | %{fnamemodify(getcwd(), ':t')}"
 vo.background = "dark"

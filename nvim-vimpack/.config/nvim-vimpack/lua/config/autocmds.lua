@@ -58,7 +58,7 @@ A.nvim_create_autocmd("FileType", {
             "n",
             "q",
             "<cmd>close<cr>",
-            { buffer = event.buf, silent = true }
+            { buf = event.buf, silent = true }
         )
     end,
 })
