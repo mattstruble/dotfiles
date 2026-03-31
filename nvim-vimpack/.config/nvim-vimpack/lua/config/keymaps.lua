@@ -124,6 +124,9 @@ vim.keymap.set(
 
 -- Undo Tree keymap is in plugin/undo.lua
 
+-- Plugin manager
+keymap.set("n", "<leader>l", function() vim.pack.update() end, { desc = "Update Plugins" })
+
 -- Quit
 keymap.set("n", "<leader>qq", "<cmd>qa<cr>", { desc = "Quit All" })
 
