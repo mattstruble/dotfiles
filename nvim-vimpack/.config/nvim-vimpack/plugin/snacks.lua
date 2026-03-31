@@ -51,7 +51,6 @@ require("snacks").setup({
                 limit = 8,
                 padding = 1,
             },
-            { section = "startup" },
         },
     },
 })
