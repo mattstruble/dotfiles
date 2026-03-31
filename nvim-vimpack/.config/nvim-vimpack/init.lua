@@ -33,7 +33,10 @@ vim.api.nvim_create_autocmd("PackChanged", {
             if not ev.data.active then
                 vim.cmd.packadd("fff.nvim")
             end
-            require("fff.download").download_or_build_binary()
+            local ok, err = pcall(require("fff.download").download_or_build_binary)
+            if not ok then
+                vim.notify("fff.nvim build failed: " .. tostring(err), vim.log.levels.ERROR)
+            end
         end
     end,
 })

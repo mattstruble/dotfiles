@@ -1,11 +1,16 @@
 local loaded = false
 local function ensure_loaded()
     if loaded then return end
-    vim.pack.add({ "https://github.com/folke/trouble.nvim" })
-    require("trouble").setup({
-        modes = { lsp = { win = { position = "right" } } },
-    })
     loaded = true
+    local ok, err = pcall(function()
+        vim.pack.add({ "https://github.com/folke/trouble.nvim" })
+        require("trouble").setup({
+            modes = { lsp = { win = { position = "right" } } },
+        })
+    end)
+    if not ok then
+        vim.notify("trouble: " .. tostring(err), vim.log.levels.ERROR)
+    end
 end
 
 local map = vim.keymap.set

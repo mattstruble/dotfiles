@@ -1,13 +1,18 @@
 local loaded = false
 local function ensure_loaded()
     if loaded then return end
-    vim.pack.add({ "https://github.com/ibhagwan/fzf-lua" })
-    require("fzf-lua").setup({
-        defaults = { hidden = true },
-        oldfiles = { cwd_only = true, stat_file = true, include_current_session = true },
-        previewers = { builtin = { syntax_limit_b = 1024 * 100 } },
-    })
-    loaded = true
+    loaded = true  -- set before work to prevent retry storms on failure
+    local ok, err = pcall(function()
+        vim.pack.add({ "https://github.com/ibhagwan/fzf-lua" })
+        require("fzf-lua").setup({
+            defaults = { hidden = true },
+            oldfiles = { cwd_only = true, stat_file = true, include_current_session = true },
+            previewers = { builtin = { syntax_limit_b = 1024 * 100 } },
+        })
+    end)
+    if not ok then
+        vim.notify("fzf-lua: " .. tostring(err), vim.log.levels.ERROR)
+    end
 end
 
 local map = vim.keymap.set

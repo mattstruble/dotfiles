@@ -50,7 +50,7 @@ vim.keymap.set("v", "y", "ygv<esc>")
 ---
 -- The Primeagen
 ---
--- Format is handled by <leader>cf in plugins/coding/conform.lua
+-- Format is handled by <leader>cf in plugin/conform.lua
 
 -- Allow highlighting and moving blocks of code in visual mode
 keymap.set("v", "J", ":m '>+1<CR>gv=gv")
@@ -122,7 +122,6 @@ vim.keymap.set(
 -- │ Essential keymaps (from LazyVim defaults) │
 -- └───────────────────────────────────────────┘
 
--- Lazy plugin manager
 -- Undo Tree (built-in in Neovim 0.12)
 keymap.set("n", "<leader>uu", vim.cmd.UndotreeToggle, { desc = "Undo Tree" })
 

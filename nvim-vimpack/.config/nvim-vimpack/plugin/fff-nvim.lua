@@ -1,8 +1,11 @@
 local loaded = false
 local function ensure_loaded()
     if loaded then return end
-    vim.pack.add({ "https://github.com/dmtrKovalenko/fff.nvim" })
     loaded = true
+    local ok, err = pcall(vim.pack.add, { "https://github.com/dmtrKovalenko/fff.nvim" })
+    if not ok then
+        vim.notify("fff.nvim: " .. tostring(err), vim.log.levels.ERROR)
+    end
 end
 
 local map = vim.keymap.set

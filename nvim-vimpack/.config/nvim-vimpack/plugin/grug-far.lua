@@ -1,9 +1,14 @@
 local loaded = false
 local function ensure_loaded()
     if loaded then return end
-    vim.pack.add({ "https://github.com/MagicDuck/grug-far.nvim" })
-    require("grug-far").setup({ headerMaxWidth = 80 })
     loaded = true
+    local ok, err = pcall(function()
+        vim.pack.add({ "https://github.com/MagicDuck/grug-far.nvim" })
+        require("grug-far").setup({ headerMaxWidth = 80 })
+    end)
+    if not ok then
+        vim.notify("grug-far: " .. tostring(err), vim.log.levels.ERROR)
+    end
 end
 
 vim.keymap.set({ "n", "x" }, "<leader>sr", function()
