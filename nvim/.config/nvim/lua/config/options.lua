@@ -25,6 +25,8 @@ vo.jumpoptions = "view"
 
 -- Vim options
 vo.cmdheight = 0                                          -- hide command bar
+vo.winborder = "rounded"                                  -- 0.12: default border for floating windows
+vo.pumborder = "rounded"                                  -- 0.12: border for popup completion menu
 vim.schedule(function() vo.clipboard = "unnamedplus" end) -- use system clipboard
 vo.completeopt = { "menuone", "noselect" }
 vo.cursorline = true
@@ -94,7 +96,6 @@ vo.timeoutlen = 300
 vo.updatetime = 250
 vo.wildmode = "list:longest"
 vo.wildignore = { "*/.git/*", "*/.venv/*" }
-vo.termguicolors = true
 vo.title = true
 vo.titlestring = "nvim | %{fnamemodify(getcwd(), ':t')}"
 vo.background = "dark"

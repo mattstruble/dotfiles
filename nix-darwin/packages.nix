@@ -62,6 +62,7 @@ with pkgs;
   libfido2
   libtiff
   (pkgs.lib.lowPrio lua)
+  lua-language-server
   luarocks
   markdownlint-cli
   markdownlint-cli2

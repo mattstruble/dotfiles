@@ -1,3 +1,4 @@
+---@type vim.lsp.Config
 return {
     on_attach = function(client)
         -- Disable hover in favor of ty

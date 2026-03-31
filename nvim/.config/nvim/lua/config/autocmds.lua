@@ -58,7 +58,7 @@ A.nvim_create_autocmd("FileType", {
             "n",
             "q",
             "<cmd>close<cr>",
-            { buffer = event.buf, silent = true }
+            { buf = event.buf, silent = true }
         )
     end,
 })
@@ -154,7 +154,7 @@ A.nvim_create_autocmd("LspAttach", {
         local function map(mode, lhs, rhs, desc)
             vim.keymap.set(mode, lhs, rhs, {
                 desc = desc,
-                buffer = bufnr,
+                buf = bufnr,
                 noremap = true,
                 silent = true,
             })
@@ -184,6 +184,9 @@ A.nvim_create_autocmd("LspAttach", {
         -- Reference word navigation (Snacks words)
         map("n", "<c-n>", function() Snacks.words.jump(vim.v.count1, true) end, "Next Reference")
         map("n", "<c-p>", function() Snacks.words.jump(-vim.v.count1, true) end, "Prev Reference")
+
+        -- Enable code lens (virtual line display, 0.12 native)
+        vim.lsp.codelens.enable(true, { bufnr = bufnr })
     end,
 })
 
