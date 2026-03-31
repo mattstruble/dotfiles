@@ -4,9 +4,9 @@ vim.api.nvim_create_autocmd("FileType", {
     pattern = "tex",
     once = true,
     callback = function()
+        vim.g.papyrus_latex_engine = "pdflatex"  -- must be set before pack.add
+        vim.g.papyrus_viewer = "zathura"          -- must be set before pack.add
         vim.pack.add({ "https://github.com/abeleinin/papyrus" })
-        vim.g.papyrus_latex_engine = "pdflatex"
-        vim.g.papyrus_viewer = "zathura"
 
         local map = vim.keymap.set
         map("n", "<leader>pc", ":PapyrusCompile<cr>", { desc = "Papyrus Compile" })

@@ -1,14 +1,19 @@
 local loaded = false
 local function ensure_loaded()
     if loaded then return end
-    vim.pack.add({ "https://github.com/danymat/neogen" })
-    require("neogen").setup({
-        snippet_engine = "mini",
-        languages = {
-            python = { template = { annotation_convention = "reST" } },
-        },
-    })
     loaded = true
+    local ok, err = pcall(function()
+        vim.pack.add({ "https://github.com/danymat/neogen" })
+        require("neogen").setup({
+            snippet_engine = "mini",
+            languages = {
+                python = { template = { annotation_convention = "reST" } },
+            },
+        })
+    end)
+    if not ok then
+        vim.notify("neogen: " .. tostring(err), vim.log.levels.ERROR)
+    end
 end
 
 vim.keymap.set("n", "<leader>cgf", function()

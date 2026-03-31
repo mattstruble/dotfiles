@@ -1,6 +1,8 @@
 local loaded = false
 local function ensure_loaded()
     if loaded then return end
+    loaded = true
+    local ok, err = pcall(function()
     vim.pack.add({ "https://github.com/nvim-mini/mini.files" })
 
     require("mini.files").setup({
@@ -59,11 +61,17 @@ local function ensure_loaded()
     vim.api.nvim_create_autocmd("User", {
         pattern = "MiniFilesActionRename",
         callback = function(event)
-            Snacks.rename.on_rename_file(event.data.from, event.data.to)
+            if Snacks and Snacks.rename then
+                Snacks.rename.on_rename_file(event.data.from, event.data.to)
+            end
         end,
     })
 
     loaded = true
+    end)
+    if not ok then
+        vim.notify("mini.files: " .. tostring(err), vim.log.levels.ERROR)
+    end
 end
 
 vim.keymap.set("n", "<leader>fm", function()

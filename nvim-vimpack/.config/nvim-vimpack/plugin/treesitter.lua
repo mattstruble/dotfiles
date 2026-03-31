@@ -13,8 +13,11 @@ vim.pack.add({
     "https://github.com/windwp/nvim-ts-autotag",
 })
 
--- Install desired parsers
-require("nvim-treesitter.install").install(ensure_installed)
+-- Install desired parsers (guarded -- vim.pack.add may not have plugins on first run)
+local ok_install, ts_install = pcall(require, "nvim-treesitter.install")
+if ok_install then
+    ts_install.install(ensure_installed)
+end
 
 -- Auto-install parsers when entering a buffer with a new filetype
 vim.api.nvim_create_autocmd("FileType", {
@@ -26,18 +29,21 @@ vim.api.nvim_create_autocmd("FileType", {
         if not lang then return end
         local ok = pcall(vim.treesitter.language.inspect, lang)
         if ok then return end
-        local parsers = require("nvim-treesitter.parsers")
-        if parsers[lang] then
-            require("nvim-treesitter.install").install({ lang })
+        local ok_parsers, parsers = pcall(require, "nvim-treesitter.parsers")
+        if ok_parsers and parsers[lang] then
+            pcall(require("nvim-treesitter.install").install, { lang })
         end
     end,
 })
 
--- Textobjects setup
-require("nvim-treesitter-textobjects").setup({
-    select = { lookahead = true },
-    move = { set_jumps = true },
-})
+-- Textobjects setup (guarded -- plugin may not be present on first install)
+local ok_tso = pcall(require, "nvim-treesitter-textobjects")
+if ok_tso then
+    require("nvim-treesitter-textobjects").setup({
+        select = { lookahead = true },
+        move = { set_jumps = true },
+    })
+end
 
 local ts_select = function(query, query_group)
     query_group = query_group or "textobjects"
