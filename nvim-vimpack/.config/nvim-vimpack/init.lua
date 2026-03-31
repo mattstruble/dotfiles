@@ -10,7 +10,6 @@ for _, name in ipairs({
     "matchparen",
     "netrwPlugin",
     "tarPlugin",
-    "tohtml",
     "tutor",
     "zipPlugin",
 }) do
