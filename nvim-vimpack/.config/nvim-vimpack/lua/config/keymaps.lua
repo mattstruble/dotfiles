@@ -122,8 +122,7 @@ vim.keymap.set(
 -- │ Essential keymaps (from LazyVim defaults) │
 -- └───────────────────────────────────────────┘
 
--- Undo Tree (built-in in Neovim 0.12)
-keymap.set("n", "<leader>uu", vim.cmd.UndotreeToggle, { desc = "Undo Tree" })
+-- Undo Tree keymap is in plugin/undo.lua
 
 -- Quit
 keymap.set("n", "<leader>qq", "<cmd>qa<cr>", { desc = "Quit All" })
