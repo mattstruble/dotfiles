@@ -46,13 +46,15 @@ require("config.autocmds")
 require("config.diagnostics")
 require("config.keymaps")
 
--- Enable built-in extui (replaces noice.nvim; nightly-only, not in stable 0.12)
-pcall(function()
-    require("vim._extui").enable({
-        enable = true,
-        msg = { target = "cmd", timeout = 4000 },
-    })
-end)
+-- Built-in extui: nightly-only, not in stable 0.12.
+-- noice.nvim handles cmdline/message UI for now (see plugin/noice.lua).
+-- When extui lands in stable, noice can be dropped and this uncommented:
+-- pcall(function()
+--     require("vim._extui").enable({
+--         enable = true,
+--         msg = { target = "cmd", timeout = 4000 },
+--     })
+-- end)
 
 -- Legacy vim support
 vim.cmd([[
