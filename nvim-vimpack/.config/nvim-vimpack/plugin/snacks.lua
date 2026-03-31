@@ -22,7 +22,7 @@ require("snacks").setup({
     terminal = {},
     zen = { enabled = true },
     dashboard = {
-        enabled = true,
+        enabled = false,
         formats = {
             key = function(item)
                 return {
