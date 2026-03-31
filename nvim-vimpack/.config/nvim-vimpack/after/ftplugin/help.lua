@@ -1,3 +1,3 @@
-vim.o.list = false
-vim.o.colorcolumn = ""
-vim.o.concealcursor = "nc"
+vim.wo[0][0].list = false
+vim.wo[0][0].colorcolumn = ""
+vim.wo[0][0].concealcursor = "nc"
