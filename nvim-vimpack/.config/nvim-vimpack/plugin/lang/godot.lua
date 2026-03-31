@@ -1,1 +1,1 @@
--- No LSP for GDScript; linters/formatters are in centralized lint.lua / conform.lua
+vim.lsp.enable("gdscript")
