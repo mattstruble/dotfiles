@@ -60,23 +60,24 @@ local swap_prev = function(query)
     return function() require("nvim-treesitter-textobjects.swap").swap_previous(query) end
 end
 
-local ts_move = require("nvim-treesitter-textobjects.move")
-local goto_next_start = function(query, query_group)
+-- Move keymaps require submodule -- gate on textobjects being available
+local ok_move, ts_move = pcall(require, "nvim-treesitter-textobjects.move")
+local goto_next_start = ok_move and function(query, query_group)
     query_group = query_group or "textobjects"
     return function() ts_move.goto_next_start(query, query_group) end
-end
-local goto_next_end = function(query, query_group)
+end or function() return function() end end
+local goto_next_end = ok_move and function(query, query_group)
     query_group = query_group or "textobjects"
     return function() ts_move.goto_next_end(query, query_group) end
-end
-local goto_prev_start = function(query, query_group)
+end or function() return function() end end
+local goto_prev_start = ok_move and function(query, query_group)
     query_group = query_group or "textobjects"
     return function() ts_move.goto_previous_start(query, query_group) end
-end
-local goto_prev_end = function(query, query_group)
+end or function() return function() end end
+local goto_prev_end = ok_move and function(query, query_group)
     query_group = query_group or "textobjects"
     return function() ts_move.goto_previous_end(query, query_group) end
-end
+end or function() return function() end end
 
 local map = vim.keymap.set
 
@@ -135,7 +136,7 @@ map({ "n", "x", "o" }, "[I", goto_prev_end("@conditional.outer"), { desc = "Prev
 map({ "n", "x", "o" }, "[L", goto_prev_end("@loop.outer"), { desc = "Prev loop end" })
 
 -- Autotag
-require("nvim-ts-autotag").setup({})
+pcall(function() require("nvim-ts-autotag").setup({}) end)
 
 -- Deferred: ts-comments (not needed at startup)
 vim.schedule(function()

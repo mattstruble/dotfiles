@@ -115,7 +115,7 @@ vim.keymap.set(
     { desc = "Backward qfixlist" }
 )
 
--- Split navigation is handled by smart-splits.nvim (see plugins/editor/smart-splits.lua)
+-- Split navigation is handled by smart-splits.nvim (see plugin/smart-splits.lua)
 -- Provides seamless Ctrl+h/j/k/l navigation between neovim and kitty splits
 
 -- ┌───────────────────────────────────────────┐
