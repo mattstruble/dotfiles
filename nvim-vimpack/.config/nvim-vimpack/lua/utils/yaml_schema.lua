@@ -9,8 +9,7 @@ M.get_client = function()
   M.bufnr = vim.api.nvim_get_current_buf()
   M.uri = vim.uri_from_bufnr(M.bufnr)
   if vim.bo.filetype ~= "yaml" then return end
-  if not M.client then M.client = vim.lsp.get_clients({ name = "yamlls", bufnr = M.bufnr })[1] end
-  return M.client
+  return vim.lsp.get_clients({ name = "yamlls", bufnr = M.bufnr })[1]
 end
 
 M._load_all_schemas = function()
@@ -67,8 +66,7 @@ M._open_ui_select = function(schemas)
 end
 
 M.select = function()
-  M.get_client()
-  if not M.client then return end
+  if not M.get_client() then return end
   M._load_all_schemas()
 end
 
@@ -85,8 +83,8 @@ M._save_current_schema = function(schema)
 end
 
 M.get_current_schema_async = function()
-  local client = M._get_client()
-  if not M.client or not M.uri then return "" end
+  local client = M.get_client()
+  if not client or not M.uri then return "" end
   client.request("yaml/get/jsonSchema", { M.uri }, function(err, e)
     local current_schema
     if err then return end
