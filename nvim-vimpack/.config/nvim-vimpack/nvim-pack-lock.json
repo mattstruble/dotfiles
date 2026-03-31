@@ -25,6 +25,10 @@
       "rev": "8f197eb30cecdf4c2cc9988a5eecc6bc34c0c7d6",
       "src": "https://github.com/jinh0/eyeliner.nvim"
     },
+    "fff.nvim": {
+      "rev": "e83b137be5d9a2947f59e1b68e0b8c4ab3eac2f3",
+      "src": "https://github.com/dmtrKovalenko/fff.nvim"
+    },
     "flash.nvim": {
       "rev": "fcea7ff883235d9024dc41e638f164a450c14ca2",
       "src": "https://github.com/folke/flash.nvim"
@@ -33,9 +37,17 @@
       "rev": "6cd7280adead7f586db6fccbd15d2cac7e2188b9",
       "src": "https://github.com/rafamadriz/friendly-snippets"
     },
+    "fzf-lua": {
+      "rev": "c9e7b7bfbd01f949164988ee1684035468e1995c",
+      "src": "https://github.com/ibhagwan/fzf-lua"
+    },
     "garbage-day.nvim": {
       "rev": "2fcc56556281de8ee871a5f3beb9db7ab747ef32",
       "src": "https://github.com/zeioth/garbage-day.nvim"
+    },
+    "grug-far.nvim": {
+      "rev": "dc4684e163971bb1f5bfb93fbd4bb3e892bf9b15",
+      "src": "https://github.com/MagicDuck/grug-far.nvim"
     },
     "hardtime.nvim": {
       "rev": "b4e431934af1fe224a3a801f632c008278cb7628",
@@ -73,6 +85,10 @@
       "rev": "ff3cd5e76e812fa18bde0f8126d6f3bb62008c79",
       "src": "https://github.com/nvim-mini/mini.diff"
     },
+    "mini.files": {
+      "rev": "b4796e09eb103f9f2d1e00aa2dab3753b879b17b",
+      "src": "https://github.com/nvim-mini/mini.files"
+    },
     "mini.hipatterns": {
       "rev": "2c5dce6dc7443de814d16f7470549811ee86e664",
       "src": "https://github.com/nvim-mini/mini.hipatterns"
@@ -92,6 +108,10 @@
     "mini.surround": {
       "rev": "d205d1741d1fcc1f3117b4e839bf00f74ad72fa2",
       "src": "https://github.com/nvim-mini/mini.surround"
+    },
+    "notebook_style.nvim": {
+      "rev": "06e76d45654d77a44a2a6ae45b2b9ddb8e40d312",
+      "src": "https://github.com/stellarjmr/notebook_style.nvim"
     },
     "nvim-lint": {
       "rev": "4b03656c09c1561f89b6aa0665c15d292ba9499d",

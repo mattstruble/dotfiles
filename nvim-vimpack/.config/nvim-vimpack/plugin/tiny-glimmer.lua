@@ -19,22 +19,8 @@ vim.schedule(function()
                 paste_mapping = "p",
                 Paste_mapping = "P",
             },
-            undo = {
-                enabled = true,
-                default_animation = {
-                    name = "fade",
-                    settings = { from_color = "DiffDelete", max_duration = 500, min_duration = 500 },
-                },
-                undo_mapping = "u",
-            },
-            redo = {
-                enabled = true,
-                default_animation = {
-                    name = "fade",
-                    settings = { from_color = "DiffAdd", max_duration = 500, min_duration = 500 },
-                },
-                redo_mapping = "<c-r>",
-            },
+            undo = { enabled = false },
+            redo = { enabled = false },
         },
     })
 end)
