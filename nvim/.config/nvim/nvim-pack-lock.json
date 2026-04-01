@@ -198,6 +198,10 @@
       "rev": "de32ff4b04dadcf21286b7ed6337427e5c53b738",
       "src": "https://github.com/shahshlok/vim-coach.nvim"
     },
+    "vim-markdown-toc": {
+      "rev": "66026b323379c9a712c6169cd43153216acef090",
+      "src": "https://github.com/mzlogin/vim-markdown-toc"
+    },
     "virtcolumn.nvim": {
       "rev": "4d385b4aa42aa3af6fa2cb8527462fa4badbd163",
       "src": "https://github.com/xiyaowong/virtcolumn.nvim"
