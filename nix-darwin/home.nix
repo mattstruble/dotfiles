@@ -156,7 +156,10 @@ in
       '';
     };
 
-  imports = [ inputs.ai-agents.homeManagerModules.default ];
+  imports = [
+    inputs.ai-agents.homeManagerModules.default
+    inputs.agent-sandbox.homeManagerModules.default
+  ];
 
   programs = {
 
@@ -318,6 +321,11 @@ in
           };
         };
       };
+    };
+
+    agent-sandbox = {
+      enable = true;
+      package = inputs.agent-sandbox.packages.${pkgs.system}.default;
     };
 
     direnv = {
@@ -654,6 +662,8 @@ in
         git = "${pkgs.git}/bin/git";
         good = "${pkgs.git}/bin/git bisect good";
         bad = "${pkgs.git}/bin/git bisect bad";
+
+        as = "agent-sandbox --follow-symlinks";
       };
 
       profileExtra = ''

@@ -13,6 +13,7 @@
     };
     arkenfox-userjs.url = "github:petrkozorezov/arkenfox-userjs-nix";
     ai-agents.url = "github:mattstruble/nix-ai-agents";
+    agent-sandbox.url = "github:mattstruble/agent-sandbox";
 
     skills-mattpocock = {
       url = "github:mattpocock/skills";

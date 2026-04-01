@@ -1,5 +1,24 @@
 {
   "nodes": {
+    "agent-sandbox": {
+      "inputs": {
+        "flake-parts": "flake-parts",
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1775050750,
+        "narHash": "sha256-bU7FV36soLjEP1ZzQARVt6zCzVQGermQAdAKrRseYbk=",
+        "owner": "mattstruble",
+        "repo": "agent-sandbox",
+        "rev": "4e682f29402f1bfa70b7d93443b4e4a3923fb576",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mattstruble",
+        "repo": "agent-sandbox",
+        "type": "github"
+      }
+    },
     "ai-agents": {
       "locked": {
         "lastModified": 1773843298,
@@ -50,6 +69,24 @@
         "type": "github"
       }
     },
+    "flake-parts": {
+      "inputs": {
+        "nixpkgs-lib": "nixpkgs-lib"
+      },
+      "locked": {
+        "lastModified": 1772408722,
+        "narHash": "sha256-rHuJtdcOjK7rAHpHphUb1iCvgkU3GpfvicLMwwnfMT0=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "f20dc5d9b8027381c474144ecabc9034d6a839a3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -72,6 +109,37 @@
     },
     "nixpkgs": {
       "locked": {
+        "lastModified": 1774709303,
+        "narHash": "sha256-D3Q07BbIA2KnTcSXIqqu9P586uWxN74zNoCH3h2ESHg=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "8110df5ad7abf5d4c0f6fb0f8f978390e77f9685",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-lib": {
+      "locked": {
+        "lastModified": 1772328832,
+        "narHash": "sha256-e+/T/pmEkLP6BHhYjx6GmwP5ivonQQn0bJdH9YrRB+Q=",
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "rev": "c185c7a5e5dd8f9add5b2f8ebeff00888b070742",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
         "lastModified": 1775005781,
         "narHash": "sha256-HIihgifyfrmBlC2c9B7+bqP1fF5eHPNCNhgBd1coFcs=",
         "owner": "NixOS",
@@ -87,11 +155,12 @@
     },
     "root": {
       "inputs": {
+        "agent-sandbox": "agent-sandbox",
         "ai-agents": "ai-agents",
         "arkenfox-userjs": "arkenfox-userjs",
         "darwin": "darwin",
         "home-manager": "home-manager",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": "nixpkgs_2",
         "skills-mattpocock": "skills-mattpocock",
         "skills-mattstruble": "skills-mattstruble",
         "skills-superpowers": "skills-superpowers"
