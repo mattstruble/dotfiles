@@ -1,3 +1,4 @@
 [submodule "nix-darwin/hosts/lm-mstruble.system"]
 	path = nix-darwin/hosts/lm-mstruble.system
 	url = https://github.com/fl97inc/mstruble-nix-config.git
+	branch = main
