@@ -521,7 +521,7 @@ in
         push = {
           default = "tracking";
           autoSetupRemote = true;
-          recurseSubmodules = "on-demand";
+          recurseSubmodules = "no";
         };
 
         # "merge \"merge-changelog\"" = {
