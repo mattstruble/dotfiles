@@ -1,6 +1,5 @@
 ---@type vim.lsp.Config
 return {
-    filetypes = { "markdown", "text", "gitcommit" },
     settings = {
         ["harper-ls"] = {
             userDictPath = "~/.config/harper-ls/dict.txt",
