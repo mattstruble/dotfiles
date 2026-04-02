@@ -87,7 +87,6 @@ in
 
         ".direnvrc".source = mkLink "${path}/direnv/.direnvrc";
         ".p10k.zsh".source = mkLink "${path}/p10k/.p10k.zsh";
-        ".vimrc".source = mkLink "${path}/vim/.vimrc";
 
         ".zprofile".source = mkLink "${path}/zsh/.zprofile";
         ".subzsh".source = mkLink "${path}/zsh/subzsh";
@@ -167,6 +166,7 @@ in
       enable = true;
       agents = [
         "opencode"
+        "claude"
       ];
       subagents = [
         "${path}/opencode/.config/opencode/agents/"

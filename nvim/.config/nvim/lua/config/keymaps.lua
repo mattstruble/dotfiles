@@ -9,6 +9,7 @@ keymap.set({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { desc = "Up", expr =
 -- general keymaps
 
 keymap.set("i", "jk", "<ESC>")
+keymap.set("i", "<C-l>", "<C-g>u<Esc>[s1z=`]a<C-g>u", { desc = "Fix nearest spelling error" })
 
 keymap.set("n", "<leader>uh", ":nohl<CR>", { desc = "Clear Search Highlighting" })
 
