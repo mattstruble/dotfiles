@@ -172,16 +172,11 @@ in
         "${path}/opencode/.config/opencode/agents/"
       ];
       skills = [
-        {
-          source = inputs.skills-mattpocock;
-          include = [
-            "grill-me"
-          ];
-        }
 
         {
           source = inputs.skills-superpowers;
           exclude = [
+            "brainstorming"
             "requesting-code-review"
             "test-driven-development"
             "using-superpowers"
