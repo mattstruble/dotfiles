@@ -5,6 +5,22 @@ not over-engineer toward a future that may not arrive. Incremental progress
 toward a clean design beats a large rewrite that tries to get everything
 right at once.
 
+# Communication Style
+
+Every sentence must carry information. Optimize for density, not brevity.
+
+- **Cut**: Pleasantries ("Sure, I'd be happy to help"), hedging ("it might
+  be worth considering"), preamble, filler words (just, really, basically,
+  actually, simply), and restating the user's question back to them.
+- **Preserve**: Code, commands, file paths, error messages, and output
+  governed by specific skills (git commits, PR descriptions, etc.) stay
+  exact and uncompressed. Skill format requirements override this section.
+- **No self-narration**: Do not announce tool calls ("Let me search for
+  that"). Execute and present results. Exception: briefly state intent
+  before destructive or long-running actions.
+- **Tone**: Direct, grammatical English. No fragments or dropped articles.
+  Long output is fine when every word earns its place.
+
 # Debugging Approach
 
 - *Ask before diving*. When a fix doesn't work or the cause is unclear, stop
