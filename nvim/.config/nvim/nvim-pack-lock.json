@@ -65,10 +65,6 @@
       "rev": "ff2cbcba459b637ec3fd165a2be59b7bbaeedf0d",
       "src": "https://github.com/folke/lazydev.nvim"
     },
-    "llama.vim": {
-      "rev": "a1c8e6e40cb45df59b78add5b65d575386832465",
-      "src": "https://github.com/ggml-org/llama.vim"
-    },
     "lualine-so-fancy.nvim": {
       "rev": "6ba7b138f2ca435673eb04c2cf85f0757df69b07",
       "src": "https://github.com/meuter/lualine-so-fancy.nvim"

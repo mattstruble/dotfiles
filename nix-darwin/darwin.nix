@@ -18,10 +18,9 @@ let
 
 in
 {
-  imports = [
-    ./modules/llama-server.nix
-  ]
-  ++ lib.optional (builtins.pathExists ./hosts/${hostname}/darwin.nix) ./hosts/${hostname}/darwin.nix;
+  imports =
+    [ ]
+    ++ lib.optional (builtins.pathExists ./hosts/${hostname}/darwin.nix) ./hosts/${hostname}/darwin.nix;
   # security.pam.enableSudoTouchIdAuth = true;
   security.pam.services.sudo_local.touchIdAuth = true;
 
@@ -179,7 +178,6 @@ in
         start_service = true;
         restart_service = "changed";
       }
-      "ollama"
       "pyenv-virtualenv"
       "uv"
       "zsh-completions"
