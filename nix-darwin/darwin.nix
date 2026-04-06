@@ -190,7 +190,6 @@ in
       "flux-app"
       "font-iosevka-nerd-font"
       "kitty"
-      "love"
       "menuwhere"
       "monitorcontrol"
       "only-switch"
