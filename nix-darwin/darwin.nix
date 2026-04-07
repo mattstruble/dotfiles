@@ -10,10 +10,6 @@
 let
   userName = import ./hosts/${hostname}/username.nix;
   home = "/Users/${userName}";
-  tmpdir = "/tmp";
-  xdg_configHome = "${home}/.config";
-  xdg_dataHome = "${home}/local/share";
-  xdg_cacheHome = "${home}/.cache";
   path = "${home}/dotfiles";
 
 in
@@ -33,109 +29,31 @@ in
     skhd.enable = false;
   };
 
+  determinateNix = {
+    enable = true;
+    nixosVmBasedLinuxBuilder.enable = true;
+
+    registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
+
+    determinateNixd = {
+      garbageCollector.strategy = "automatic";
+    };
+
+    customSettings = {
+      trusted-users = [
+        userName
+        "@admin"
+        "@wheel"
+      ];
+    };
+  };
+
   users = {
     users."${userName}" = {
       name = "${userName}";
       home = "${home}";
       shell = pkgs.zsh;
     };
-  };
-
-  nix = {
-    enable = false;
-    package = pkgs.nix;
-    # useDaemon = true;
-
-    gc = {
-      #automatic = true;
-      #options = "--delete-older-than 30d";
-    };
-
-    optimise = {
-      #user = "${userName}";
-      #automatic = true;
-    };
-
-    settings = {
-      allow-dirty = true;
-
-      allowed-users = [ "*" ];
-
-      build-users-group = "nixbld";
-      builders-use-substitutes = true;
-
-      eval-cache = true;
-
-      experimental-features = [
-        "nix-command"
-        "flakes"
-      ];
-
-      extra-nix-path = "nixpkgs=flake:nixpkgs";
-
-      # filter-syscalls = true;
-      flake-registry = "https://github.com/NixOS/flake-registry/raw/master/flake-registry.json";
-      http-connections = 25;
-      http2 = true;
-      impersonate-linux-26 = false;
-
-      keep-going = true;
-
-      max-jobs = "auto";
-
-      substitute = true;
-      substituters = [
-        "https://cache.nixos.org/"
-      ];
-
-      trusted-substituters = [
-        "https://cache.flakehub.com"
-      ];
-
-      trusted-public-keys = [
-        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-        "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM= cache.flakehub.com-4:Asi8qIv291s0aYLyH6IOnr5Kf6+OF14WVjkE6t3xMio= cache.flakehub.com-5:zB96CRlL7tiPtzA9/WKyPkp3A2vqxqgdgyTVNGShPDU= cache.flakehub.com-6:W4EGFwAGgBj3he7c5fNh9NkOXw0PUVaxygCVKeuvaqU= cache.flakehub.com-7:mvxJ2DZVHn/kRxlIaxYNMuDG1OvMckZu32um1TadOR8= cache.flakehub.com-8:moO+OVS0mnTjBTcOUh2kYLQEd59ExzyoW1QgQ8XAARQ= cache.flakehub.com-9:wChaSeTI6TeCuV/Sg2513ZIM9i0qJaYsF+lZCXg0J6o= cache.flakehub.com-10:2GqeNlIp6AKp4EF2MVbE1kBOp9iBSyo0UPR9KoR0o1Y="
-      ];
-
-      trusted-users = [
-        "${userName}"
-        "@admin"
-        "@wheel"
-      ];
-
-      # upgrade-nix-store-path-url = "https://install.determinate.systems/nix-upgrade/stable/universal";
-      use-case-hack = false;
-      use-registries = true;
-      use-sqlite-wal = true;
-
-    };
-
-    # This entry lets us to define a system registry entry so that
-    # `nixpkgs#foo` will use the nixpkgs that nix-darwin was last built with,
-    # rather than whatever is the current unstable version.
-    #
-    # See https://yusef.napora.org/blog/pinning-nixpkgs-flake
-    registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
-
-    nixPath = lib.mkForce (
-      lib.mapAttrsToList (key: value: "${key}=${value.to.path}") config.nix.registry
-      ++ [
-        {
-          ssh-config-file = "${home}/.ssh/config";
-          ssh-auth-sock = "${xdg_configHome}/gnupg/S.gpg-agent.ssh";
-          darwin-config = "${home}/src/nix/darwin.nix";
-          hm-config = "${home}/src/nix/home.nix";
-        }
-      ]
-    );
-
-    distributedBuilds = false;
-
-    extraOptions = ''
-      gc-keep-derivations = true
-      gc-keep-outputs = true
-      # secret-key-files = ${xdg_configHome}/gnupg/nix-signing-key.sec
-    '';
   };
 
   fonts.packages = with pkgs; [ iosevka ];

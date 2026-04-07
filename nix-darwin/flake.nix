@@ -30,6 +30,8 @@
       flake = false;
     };
 
+    determinate.url = "github:DeterminateSystems/determinate";
+
   };
 
   outputs =
@@ -56,6 +58,7 @@
               modules = [
                 ./darwin.nix
                 home-manager.darwinModules.home-manager
+                determinate.darwinModules.default
                 {
                   home-manager = {
                     useGlobalPkgs = true;
