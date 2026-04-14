@@ -158,6 +158,9 @@ in
   imports = [
     inputs.ai-agents.homeManagerModules.default
     inputs.agent-sandbox.homeManagerModules.default
+    ./modules/ebook-mcp.nix
+    ./modules/pdf-fast.nix
+    ./modules/pdf-visual.nix
   ];
 
   programs = {

@@ -127,6 +127,22 @@
         "url": "https://install.determinate.systems/determinate-nixd/tag/v3.17.3/x86_64-linux"
       }
     },
+    "ebook-mcp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1757257651,
+        "narHash": "sha256-rfbqKkj2oHg2vIsPafPEI2g2/w6B3cfKKL4tm+9jL40=",
+        "owner": "onebirdrocks",
+        "repo": "ebook-mcp",
+        "rev": "d44056ec3f1ddead9c1500f94486d1e03efcf9b8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "onebirdrocks",
+        "repo": "ebook-mcp",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -215,11 +231,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1775556024,
-        "narHash": "sha256-j1u/859OVS54rGlsvFqJdwKPEnFYCI+4pyfTiSfv1Xc=",
+        "lastModified": 1776136611,
+        "narHash": "sha256-b2pu3Pb28W0bJzQVP3OJHZC5+dgOOeqjlli2WVakKEU=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "4bdfeff1d9b7473e6e58f73f5809576e8a69e406",
+        "rev": "8a423e444b17dde406097328604a64fc7429e34e",
         "type": "github"
       },
       "original": {
@@ -342,11 +358,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1775572156,
-        "narHash": "sha256-MuohnvGkISHh6tbj8Z+/M0NGgXISzkNqQEGbOxdktSM=",
+        "lastModified": 1776169187,
+        "narHash": "sha256-GjsDkrhMcCujMS8rgjA0xePhliQ+SdL4137rbMhurZg=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "22c3790e0c06d91708493855678783ecf6d91205",
+        "rev": "2fb25e352bf508466632c30da61fd209946ce0dc",
         "type": "github"
       },
       "original": {
@@ -362,6 +378,7 @@
         "arkenfox-userjs": "arkenfox-userjs",
         "darwin": "darwin",
         "determinate": "determinate",
+        "ebook-mcp": "ebook-mcp",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs_4",
         "skills-mattpocock": "skills-mattpocock",
@@ -388,11 +405,11 @@
     "skills-mattstruble": {
       "flake": false,
       "locked": {
-        "lastModified": 1775492621,
-        "narHash": "sha256-PR5+9I/3zOeKQVOehuMvLVdSQ99l4APtJh5f5ymgxyo=",
+        "lastModified": 1775851483,
+        "narHash": "sha256-OPMhSbrJAb2i7SJkoz++rh0ZemVOIMRfRwQuYCmktbE=",
         "owner": "mattstruble",
         "repo": "skills",
-        "rev": "b4193a61608f94c50c8cf4503057b676a522364f",
+        "rev": "f1c89471dcd00eb9d5b023ac1a26504e27e8ef71",
         "type": "github"
       },
       "original": {

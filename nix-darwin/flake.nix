@@ -30,6 +30,11 @@
       flake = false;
     };
 
+    ebook-mcp = {
+      url = "github:onebirdrocks/ebook-mcp";
+      flake = false;
+    };
+
     determinate.url = "github:DeterminateSystems/determinate";
 
   };
