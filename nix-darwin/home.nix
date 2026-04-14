@@ -131,7 +131,10 @@ in
       "lazygit".source = mkLink "${path}/lazygit/.config/lazygit";
       "nvim".source = mkLink "${path}/nvim/.config/nvim";
 
-      "python_keyring".source = mkLink "${path}/keyring/.config/python_keyring";
+      "python_keyring/keyringrc.cfg".text = ''
+        [backend]
+        default-keyring=keyring.backends.macOS.Keyring
+      '';
       "sketchybar".source = mkLink "${path}/sketchybar/.config/sketchybar";
       "tmux".source = mkLink "${path}/tmux/.config/tmux";
       "wezterm".source = mkLink "${path}/wezterm/.config/wezterm";
