@@ -88,7 +88,6 @@ in
         ".direnvrc".source = mkLink "${path}/direnv/.direnvrc";
         ".p10k.zsh".source = mkLink "${path}/p10k/.p10k.zsh";
 
-        ".zprofile".source = mkLink "${path}/zsh/.zprofile";
         ".subzsh".source = mkLink "${path}/zsh/subzsh";
 
         ".local/bin/vim_opener".source = mkLink "${path}/commands/.local/bin/vim_opener";
