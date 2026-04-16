@@ -350,6 +350,8 @@ in
       enable = true;
       viAlias = true;
       vimAlias = true;
+      withRuby = false;
+      withPython3 = false;
     };
 
     home-manager = {
@@ -424,6 +426,7 @@ in
       ];
 
       signing = {
+        format = "ssh";
         key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEM+saqSDNRJt5qpi6lltteSsdY7wNVz5Is2ywVFcyzv";
         signByDefault = true;
       };

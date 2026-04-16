@@ -2,7 +2,7 @@
   description = "Darwin configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -37,6 +37,28 @@
 
     determinate.url = "github:DeterminateSystems/determinate";
 
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = false;
+    };
+    homebrew-1password = {
+      url = "github:1Password/homebrew-tap";
+      flake = false;
+    };
+    homebrew-felixkratz = {
+      url = "github:FelixKratz/homebrew-formulae";
+      flake = false;
+    };
+    homebrew-nikitabobko = {
+      url = "github:nikitabobko/homebrew-tap";
+      flake = false;
+    };
+
   };
 
   outputs =
@@ -64,6 +86,7 @@
                 ./darwin.nix
                 home-manager.darwinModules.home-manager
                 determinate.darwinModules.default
+                nix-homebrew.darwinModules.nix-homebrew
                 {
                   home-manager = {
                     useGlobalPkgs = true;
