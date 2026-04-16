@@ -132,7 +132,7 @@ nix_rebuild:
 	cd nix-darwin && sudo darwin-rebuild switch --flake '.?submodules=1' --impure
 
 .PHONY: rebuild refresh
-rebuild: nix_rebuild
+rebuild: nix_rebuild fix-compinit
 
 refresh: rebuild
 
@@ -222,4 +222,4 @@ restart: restart_yabai restart_skhd restart_tmux
 
 .PHONY: fix-compinit
 fix-compinit:
-	compaudit | xargs chmod g-w
+	zsh -c 'autoload -Uz compaudit && compaudit | xargs chmod g-w' 2>/dev/null || true
