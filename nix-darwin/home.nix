@@ -429,11 +429,17 @@ in
         format = "ssh";
         key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEM+saqSDNRJt5qpi6lltteSsdY7wNVz5Is2ywVFcyzv";
         signByDefault = true;
+        signer = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
+      };
+
+      lfs = {
+        enable = true;
+        skipSmudge = true;
       };
 
       settings = {
 
-        aliases = {
+        alias = {
           amend = "commit --amend -C HEAD";
           authors =
             "!\"${pkgs.git}/bin/git log --pretty=format:%aN"
@@ -443,7 +449,6 @@ in
           b = "branch --color -v";
           ca = "commit --amend";
           changes = "diff --name-status -r";
-          clone = "clone --bare --recursive";
           co = "checkout";
           cp = "cherry-pick";
           dc = "diff --cached";
@@ -472,8 +477,8 @@ in
             + " --abbrev-commit --date=relative --show-notes=*";
           # List and remove untracked remote repositories
           # https://stackoverflow.com/a/17029936
-          untracked = "git fetch --prune && git branch -r | awk '{print \$1}' | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk '{print \$1}'";
-          remove-untracked = "git fetch --prune && git branch -r | awk '{print \$1}' | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk '{print \$1}' | xargs git branch -d";
+          untracked = "!${pkgs.git}/bin/git fetch --prune && ${pkgs.git}/bin/git branch -r | awk '{print \$1}' | egrep -v -f /dev/fd/0 <(${pkgs.git}/bin/git branch -vv | grep origin) | awk '{print \$1}'";
+          remove-untracked = "!${pkgs.git}/bin/git fetch --prune && ${pkgs.git}/bin/git branch -r | awk '{print \$1}' | egrep -v -f /dev/fd/0 <(${pkgs.git}/bin/git branch -vv | grep origin) | awk '{print \$1}' | xargs ${pkgs.git}/bin/git branch -d";
         };
 
         core = {
@@ -487,27 +492,15 @@ in
         };
 
         branch.autosetupmerge = true;
-        commit = {
-          gpgsign = true;
-          status = false;
-        };
-        gpg.format = "ssh";
-        # "gpg \"ssh\"".program = "${lib.getExe' pkgs._1password-gui "op-ssh-sign"}";
-        "gpg \"ssh\"".program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
-
+        commit.status = false;
         credential.helper = "store";
-        ghi.token = "!${pkgs.pass}/bin/pass show api.github.com | head -1";
-        hub.protocol = "${pkgs.openssh}/bin/ssh";
         mergetool.keepBackup = true;
         pull.rebase = true;
         rebase.autosquash = true;
         rerere.enabled = true;
         init.defaultBranch = "main";
-        tag.gpgsign = true;
-        lfs.enable = true;
 
         "merge \"ours\"".driver = true;
-        "magithub \"ci\"".enabled = false;
 
         http = {
           sslCAinfo = ca-bundle_crt;
@@ -553,12 +546,6 @@ in
           alwayscommit = false;
         };
 
-        "filter \"media\"" = {
-          required = true;
-          clean = "${pkgs.git}/bin/git media clean %f";
-          smudge = "${pkgs.git}/bin/git media smudge %f";
-        };
-
         submodule = {
           recurse = true;
         };
@@ -590,11 +577,6 @@ in
           objectNameWarning = "false";
         };
 
-        "filter \"lfs\"" = {
-          clean = "${pkgs.git-lfs}/bin/git-lfs clean -- %f";
-          smudge = "${pkgs.git-lfs}/bin/git-lfs smudge --skip -- %f";
-          required = true;
-        };
       };
 
     };
