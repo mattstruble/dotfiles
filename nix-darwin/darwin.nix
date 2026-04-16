@@ -58,26 +58,18 @@ in
 
   fonts.packages = with pkgs; [ iosevka ];
 
-  nix-homebrew = {
-    enable = true;
-    user = userName;
-    autoMigrate = true;
-    mutableTaps = true;
-    taps = {
-      "homebrew/homebrew-core" = inputs.homebrew-core;
-      "homebrew/homebrew-cask" = inputs.homebrew-cask;
-      "1password/homebrew-tap" = inputs.homebrew-1password;
-      "FelixKratz/homebrew-formulae" = inputs.homebrew-felixkratz;
-      "nikitabobko/homebrew-tap" = inputs.homebrew-nikitabobko;
-    };
-  };
-
   homebrew = {
     enable = true;
     onActivation = {
-      autoUpdate = false;
+      autoUpdate = true;
       upgrade = true;
     };
+
+    taps = [
+      "1password/tap"
+      "FelixKratz/formulae"
+      "nikitabobko/tap"
+    ];
 
     brews = [
       "bibtexconv"
