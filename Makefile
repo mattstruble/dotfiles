@@ -14,6 +14,10 @@ SBAR_LUA=~/.local/share/sketchybar_lua
 TMUX_TPM=~/.config/tmux/plugins/tpm/tpm
 CATPPUCCIN_TMUX=~/.config/tmux/plugins/catppuccin/tmux
 
+HAS_SUBMODULES = $(shell s=$$(git submodule status 2>/dev/null); \
+    [ -n "$$s" ] && ! echo "$$s" | grep -q '^-' && echo 1)
+FLAKE_QUERY = $(if $(HAS_SUBMODULES),'.?submodules=1','.')
+
 ARCH=$(shell uname -p)
 
 ifeq ($(ARCH),arm)
@@ -55,7 +59,7 @@ $(NIX-PATH):
 # https://github.com/LnL7/nix-darwin?tab=readme-ov-file#step-2-installing-nix-darwin
 $(NIX-DARWIN): $(BREW) $(NIX-PATH)
 	@if [ "$(CHECK-DARWIN-REBUILD)" = "missing" ]; then \
-		cd nix-darwin && sudo ${NIX-PATH} run nix-darwin -- switch --flake '.?submodules=1' --impure; \
+		cd nix-darwin && sudo ${NIX-PATH} run nix-darwin -- switch --flake $(FLAKE_QUERY) --impure; \
 	fi
 
 $(XCODE):
@@ -129,7 +133,7 @@ setup: install
 
 .PHONY: nix_rebuild
 nix_rebuild:
-	cd nix-darwin && sudo darwin-rebuild switch --flake '.?submodules=1' --impure
+	cd nix-darwin && sudo darwin-rebuild switch --flake $(FLAKE_QUERY) --impure
 
 .PHONY: rebuild refresh
 rebuild: nix_rebuild fix-compinit
