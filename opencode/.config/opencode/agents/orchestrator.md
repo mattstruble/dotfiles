@@ -218,7 +218,66 @@ If more waves remain:
 2. Update the next wave's task prompts with relevant details from completed waves (file paths created, interfaces defined, patterns established).
 3. Return to Step 1 for the next wave.
 
-If all waves are complete, proceed to Phase 4.
+If all waves are complete, proceed to Phase 3.5.
+
+## Phase 3.5: Validation
+
+After all waves are complete, verify that the cumulative output aligns with the original design before presenting results. This catches cross-wave drift that per-task reviews miss -- small deviations per-task that compound, or creative departures by coders that passed individual review but diverge from the plan when viewed together.
+
+### Step 1: Review Cumulative Changes
+
+1. **Get the full diff summary:**
+   ```
+   git log --oneline <base-commit>..HEAD
+   git diff --stat <base-commit>..HEAD
+   ```
+   Where `<base-commit>` is the commit recorded during Pre-flight Check (Phase 3, Step 0).
+
+2. **Scan for unexpected scope.** Compare the `--stat` output against the file list from Phase 2's task plan. Flag:
+   - Files modified that were not in any task's file list
+   - Files expected to be modified that are absent from the diff
+   - Disproportionately large diffs in files expected to have small changes
+
+3. **Read selectively.** For any flagged files or areas of concern, read the relevant sections. Cross-reference with coder completion reports to understand why deviations occurred.
+
+### Step 2: Alignment Check
+
+Compare the cumulative implementation against the task plan from Phase 2 and the spec from Phase 1. For each task, verify:
+
+- **Description**: Was the described behavior implemented?
+- **Success criteria**: Were they met? Run verification commands if applicable.
+- **Constraints**: Were "do not change" directives respected?
+- **Expected files**: Do the actual changes match the planned file modifications?
+
+Classify drift into four categories:
+
+| Category | Meaning |
+|---|---|
+| **Missing** | Planned behavior that was not implemented |
+| **Extra** | Behavior added that was not in the plan |
+| **Contradicting** | Behavior that contradicts the plan or spec |
+| **Unverified** | Success criteria that require runtime verification and cannot be confirmed from the diff alone |
+
+For **Unverified** items: attempt to run the relevant verification commands from the task's success criteria before classifying something as Unverified. If the commands cannot be run (e.g., require a live service), surface the item to the user as "requires manual verification" rather than including it in a correction wave.
+
+### Step 3: Collect Non-Blocking Review Findings
+
+Gather all non-blocking review findings from the "Non-Blocking Review Findings" section of every coder's completion report across all waves. For each finding, check whether the referenced file was subsequently modified by a later wave's task (`git log --oneline <commit-where-finding-was-raised>..HEAD -- <file>`, where `<commit-where-finding-was-raised>` is the HEAD commit of the wave that produced the finding). If it was, re-read the current state of the relevant section and judge whether the finding's concern still applies — do not automatically drop it based on line-number matching alone. Retain any finding whose concern may still be present; drop only findings whose concern is clearly resolved by the later change.
+
+### Step 4: Assess and Report
+
+**If no drift and no non-blocking findings of severity "important" or higher:** State "Validation passed -- no drift detected" and proceed to Phase 4. Suggestions-only findings do not trigger the correction path.
+
+**If drift is detected or non-blocking findings of severity "important" or higher warrant attention:**
+
+1. **Present drift findings** with specific file:line references, categorized by type (Missing, Extra, Contradicting, Unverified).
+2. **Present non-blocking review findings** that were not addressed during the coder review cycles, grouped by reviewer category (correctness, failure-path, readability, security).
+3. **Propose a correction wave** with specific tasks to address Missing, Extra, and Contradicting drift. Each task follows the same self-contained prompt format as Phase 2 task prompts.
+4. **Wait for user decision:**
+   - If the user approves the correction wave: execute it (return to Phase 3, Steps 1-3), then re-run Phase 3.5 from Step 1 using the correction wave's task plan as the reference for Step 2's alignment check. The base-commit for Step 1 remains the original pre-flight base-commit.
+   - If the user wants to address specific items only: adjust the correction wave, execute it (return to Phase 3, Steps 1-3), then re-run Phase 3.5 from Step 1.
+   - If the user accepts the current state as-is: proceed to Phase 4.
+   - After 2 correction wave iterations: if drift persists, present the remaining drift to the user and require an explicit decision: accept as-is, abort, or re-enter Phase 1 for re-decomposition. Do not spawn a third correction wave automatically.
 
 ## Phase 4: Reporting
 
@@ -230,8 +289,10 @@ When all waves are complete:
    - How many review iterations each task went through
    - Any notable decisions made by coders during implementation
    - Any security findings that were resolved
-    - **Combine results**: how many commits were combined per wave, whether any conflicts occurred and how they were resolved
+   - **Combine results**: how many commits were combined per wave, whether any conflicts occurred and how they were resolved
    - **Final commit summary**: the commit log from the session (use `git log --oneline` from the recorded base to HEAD)
+   - **Validation outcome**: whether Phase 3.5 found drift and how it was resolved (clean, corrected, or accepted as-is)
+   - **Non-blocking review findings**: any remaining non-blocking findings across all coders, for the user's awareness. Present grouped by reviewer category. The user may choose to address them in a follow-up or accept them.
 3. **Wait for user approval.**
    - If approved: done.
    - If feedback is given: determine whether it requires re-entering Phase 1 (new questions), Phase 2 (re-decomposition), or Phase 3 (spawn additional coders for fixes).
@@ -246,3 +307,4 @@ When all waves are complete:
 - **ALWAYS clean up worktrees and temporary branches** after successful wave combines. Do not leave stale worktrees in `/tmp/opencode-wt/`.
 - **ALWAYS use TodoWrite** to track progress across waves. Update it as waves complete.
 - **ALWAYS spawn Wave N+1 only after Wave N is fully complete** (all coders returned, all reviews passed, all branches combined).
+- **NEVER skip validation.** Phase 3.5 runs after every execution session, including correction waves. The alignment check is how you catch cumulative drift that per-task reviews miss.
