@@ -15,7 +15,7 @@ require("conform").setup({
         lua = { "stylua" },
         python = { "ruff_format" },
         fennel = { "fnlfmt" },
-        gd = { "gdformat" },
+        gdscript = { "gdscript-formatter" },
         tex = { "tex-fmt" },
         markdown = { "mdformat" },
         nix = { "nixfmt" },
