@@ -93,6 +93,24 @@ When the review loop terminates cleanly, return a structured report to the orche
   - readability-reviewer: [N critical, N important, N suggestion]
   - security-reviewer: [N critical, N important, N suggestion]
 
+### Non-Blocking Review Findings
+[Full text of each remaining non-blocking finding from the review cycle, using
+the standardized finding format. Group by reviewer. If none remain, state "None."]
+
+Example:
+
+**From correctness-reviewer:**
+
+**Severity:** suggestion
+**Blocking:** no
+**File:** src/utils.py:42
+**Category:** correctness
+**Description:** [description]
+**Recommendation:** [recommendation]
+
+**From readability-reviewer:**
+...
+
 ### Verification
 - [What tests/checks passed]
 - [Success criteria met]
