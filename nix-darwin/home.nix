@@ -346,14 +346,6 @@ in
       options = [ "--cmd cd" ];
     };
 
-    neovim = {
-      enable = true;
-      viAlias = true;
-      vimAlias = true;
-      withRuby = false;
-      withPython3 = false;
-    };
-
     home-manager = {
       enable = true;
       # path = "${config.xdg.configHome}/nix/home-manager";
