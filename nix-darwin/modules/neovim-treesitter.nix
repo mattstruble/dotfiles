@@ -4,12 +4,21 @@ let
   grammars = pkgs.tree-sitter-grammars;
   # luadoc, luap, and vimdoc are not available as standalone packages in
   # nixpkgs tree-sitter-grammars; they are omitted here.
-  # helm (tree-sitter-go-template-helm) is also omitted: grammarToPlugin
-  # names the parser go_template_helm.so, not helm.so, so Neovim's helm
-  # filetype would not find it.
+
+  # grammarToPlugin names the helm parser go_template_helm.so (derived from
+  # the Nix package name), but Neovim expects helm.so. The internal symbol
+  # is already tree_sitter_helm, so a rename is sufficient.
+  helm-parser = pkgs.runCommand "nvim-treesitter-grammar-helm" { } ''
+    mkdir -p $out/parser
+    ln -s ${pkgs.neovimUtils.grammarToPlugin grammars.tree-sitter-go-template-helm}/parser/go_template_helm.so $out/parser/helm.so
+  '';
+
   treesitter-parsers = pkgs.symlinkJoin {
     name = "neovim-treesitter-parsers";
-    paths = map (g: pkgs.neovimUtils.grammarToPlugin g) [
+    paths = [
+      helm-parser
+    ]
+    ++ map (g: pkgs.neovimUtils.grammarToPlugin g) [
       grammars.tree-sitter-bash
       grammars.tree-sitter-c
       grammars.tree-sitter-gitcommit
