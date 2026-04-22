@@ -1,37 +1,24 @@
-local ensure_installed = {
-    "bash", "c", "gitcommit", "helm", "html", "javascript", "jsdoc",
-    "json", "lua", "luadoc", "luap", "markdown", "markdown_inline",
-    "python", "query", "regex", "tsx", "typescript", "vim", "vimdoc", "yaml",
-}
-
--- Eager: treesitter core + extensions
+-- Eager: treesitter satellite plugins (parsers delivered by Nix)
 vim.pack.add({
     "https://gitlab.com/HiPhish/rainbow-delimiters.nvim",
     "https://github.com/nvim-treesitter/nvim-treesitter-context",
     { src = "https://github.com/nvim-treesitter/nvim-treesitter-textobjects", version = "main" },
-    "https://github.com/nvim-treesitter/nvim-treesitter",
     "https://github.com/windwp/nvim-ts-autotag",
 })
 
--- Install desired parsers (guarded -- vim.pack.add may not have plugins on first run)
-local ok_install, ts_install = pcall(require, "nvim-treesitter.install")
-if ok_install then
-    ts_install.install(ensure_installed)
-end
-
--- Auto-install parsers when entering a buffer with a new filetype
+-- Enable built-in tree-sitter highlighting for buffers where a parser is available
 vim.api.nvim_create_autocmd("FileType", {
-    group = vim.api.nvim_create_augroup("treesitter_auto_install", { clear = true }),
-    callback = function()
-        local ft = vim.bo.filetype
+    group = vim.api.nvim_create_augroup("treesitter_highlight", { clear = true }),
+    callback = function(ev)
+        local ft = vim.bo[ev.buf].filetype
         if ft == "" then return end
         local lang = vim.treesitter.language.get_lang(ft)
         if not lang then return end
-        local ok = pcall(vim.treesitter.language.inspect, lang)
-        if ok then return end
-        local ok_parsers, parsers = pcall(require, "nvim-treesitter.parsers")
-        if ok_parsers and parsers[lang] then
-            pcall(require("nvim-treesitter.install").install, { lang })
+        if pcall(vim.treesitter.language.inspect, lang) then
+            local ok, err = pcall(vim.treesitter.start, ev.buf, lang)
+            if not ok then
+                vim.notify("treesitter.start failed for " .. lang .. ": " .. tostring(err), vim.log.levels.WARN)
+            end
         end
     end,
 })
