@@ -13,6 +13,31 @@ let
     ln -s ${pkgs.neovimUtils.grammarToPlugin grammars.tree-sitter-go-template-helm}/parser/go_template_helm.so $out/parser/helm.so
   '';
 
+  # nixpkgs ships tree-sitter-lua v0.0.19 while upstream is at v0.5.0.
+  # Override the source until nixpkgs catches up.
+  lua-grammar = grammars.tree-sitter-lua.overrideAttrs {
+    version = "0.5.0";
+    src = pkgs.fetchFromGitHub {
+      owner = "tree-sitter-grammars";
+      repo = "tree-sitter-lua";
+      rev = "v0.5.0";
+      hash = "sha256-VzaaN5pj7jMAb/u1fyyH6XmLI+yJpsTlkwpLReTlFNY=";
+    };
+  };
+
+  # nixpkgs ships tree-sitter-vim v0.2.0 (2023), but Neovim 0.12's bundled
+  # queries/vim/highlights.scm references node types (e.g. "tab") added in
+  # later versions. Override the source until nixpkgs catches up.
+  vim-grammar = grammars.tree-sitter-vim.overrideAttrs {
+    version = "0.8.1";
+    src = pkgs.fetchFromGitHub {
+      owner = "tree-sitter-grammars";
+      repo = "tree-sitter-vim";
+      rev = "v0.8.1";
+      hash = "sha256-MnLBFuJCJbetcS07fG5fkCwHtf/EcNP+Syf0Gn0K39c=";
+    };
+  };
+
   treesitter-parsers = pkgs.symlinkJoin {
     name = "neovim-treesitter-parsers";
     paths = [
@@ -26,7 +51,7 @@ let
       grammars.tree-sitter-javascript
       grammars.tree-sitter-jsdoc
       grammars.tree-sitter-json
-      grammars.tree-sitter-lua
+      lua-grammar
       grammars.tree-sitter-markdown
       grammars.tree-sitter-markdown-inline
       grammars.tree-sitter-python
@@ -34,7 +59,7 @@ let
       grammars.tree-sitter-regex
       grammars.tree-sitter-tsx
       grammars.tree-sitter-typescript
-      grammars.tree-sitter-vim
+      vim-grammar
       grammars.tree-sitter-yaml
     ];
   };
