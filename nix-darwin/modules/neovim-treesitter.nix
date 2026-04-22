@@ -3,11 +3,10 @@
 let
   grammars = pkgs.tree-sitter-grammars;
   # luadoc, luap, and vimdoc are not available as standalone packages in
-  # nixpkgs tree-sitter-grammars; they are omitted here and will be
-  # downloaded and compiled by nvim-treesitter at runtime.
+  # nixpkgs tree-sitter-grammars; they are omitted here.
   # helm (tree-sitter-go-template-helm) is also omitted: grammarToPlugin
-  # names the parser go_template_helm.so, not helm.so, so it would not be
-  # found by nvim-treesitter's helm filetype mapping.
+  # names the parser go_template_helm.so, not helm.so, so Neovim's helm
+  # filetype would not find it.
   treesitter-parsers = pkgs.symlinkJoin {
     name = "neovim-treesitter-parsers";
     paths = map (g: pkgs.neovimUtils.grammarToPlugin g) [
@@ -33,9 +32,9 @@ let
 in
 {
   # Only the parser/ directory is symlinked. The queries/ directory from
-  # pkgs.tree-sitter-grammars is intentionally excluded: those queries are
-  # incompatible with nvim-treesitter's query format and would shadow
-  # nvim-treesitter's own bundled queries, breaking highlighting and
-  # textobjects. nvim-treesitter manages queries internally.
+  # pkgs.tree-sitter-grammars is intentionally excluded: grammar repo queries
+  # would shadow Neovim's built-in runtime queries (which are curated by the
+  # Neovim team). Highlighting relies on Neovim's bundled queries; textobject
+  # queries are shipped by the nvim-treesitter-textobjects plugin itself.
   xdg.dataFile."nvim/site/parser".source = "${treesitter-parsers}/parser";
 }
