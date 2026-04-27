@@ -74,7 +74,6 @@ with pkgs;
   nix-diff
   nix-index
   nix-info
-  nix-prefetch-scripts
   nixd
   nixfmt
   nixpkgs-lint
