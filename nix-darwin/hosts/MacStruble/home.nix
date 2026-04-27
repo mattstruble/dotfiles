@@ -17,14 +17,29 @@ in
       ai-agents = {
         opencode = {
           config = {
-            plugin = [ "opencode-claude-auth@latest" ];
-            model = "anthropic/claude-sonnet-4-5-20250929";
+            model = "opencode-go/glm-5.1";
+            small_model = "opencode-go/deepseek-v4-flash";
             agent = {
               orchestrator = {
-                model = "anthropic/claude-sonnet-4-5-20250929";
+                model = "opencode-go/glm-5.1";
               };
               coder = {
-                model = "anthropic/claude-sonnet-4-5-20250929";
+                model = "opencode-go/deepseek-v4-pro";
+              };
+              correctness-reviewer = {
+                model = "opencode-go/qwen3.6-plus";
+              };
+              failure-path-reviewer = {
+                model = "opencode-go/qwen3.6-plus";
+              };
+              readability-reviewer = {
+                model = "opencode-go/qwen3.6-plus";
+              };
+              security-reviewer = {
+                model = "opencode-go/qwen3.6-plus";
+              };
+              fetcher = {
+                model = "opencode-go/deepseek-v4-flash";
               };
             };
           };
