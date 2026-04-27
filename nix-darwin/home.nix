@@ -196,6 +196,16 @@ in
           type = "remote";
           url = "https://mcp.context7.com/mcp";
         };
+        nixos = {
+          type = "local";
+          command = [
+            "nix"
+            "run"
+            "github:utensils/mcp-nixos"
+            "--"
+          ];
+          enabled = false;
+        };
       };
 
       opencode = {
@@ -203,6 +213,7 @@ in
         config = {
           "$schema" = "https://opencode.ai/config.json";
           plugin = [ "opencode-claude-auth@latest" ];
+          autoupdate = false;
           agent = {
             orchestrator = {
               tools = {
@@ -211,7 +222,7 @@ in
             };
             fetcher = {
               tools = {
-                "context7*" = false;
+                "context7*" = true;
               };
             };
           };
