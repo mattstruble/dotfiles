@@ -212,7 +212,6 @@ in
         agentsFile = config.lib.file.mkOutOfStoreSymlink "${path}/opencode/.config/opencode/AGENTS.md";
         config = {
           "$schema" = "https://opencode.ai/config.json";
-          plugin = [ "opencode-claude-auth@latest" ];
           autoupdate = false;
           agent = {
             orchestrator = {

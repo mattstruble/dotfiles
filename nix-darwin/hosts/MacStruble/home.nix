@@ -17,6 +17,7 @@ in
       ai-agents = {
         opencode = {
           config = {
+            plugin = [ "opencode-claude-auth@latest" ];
             model = "anthropic/claude-sonnet-4-5-20250929";
             agent = {
               orchestrator = {
