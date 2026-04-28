@@ -4,16 +4,26 @@ vim.pack.add({
 })
 
 local lj = require("line-justice")
-lj.setup({ line_numbers = { theme = nil } })
+lj.setup({
+    line_numbers = {
+        theme = nil,
+        overrides = {
+            CursorLine    = { fg = "#f1e9d2", bold = true },
+            AbsoluteAbove = { fg = "#5b5e5a" },
+            AbsoluteBelow = { fg = "#5b5e5a" },
+            RelativeAbove = { fg = "#70c2be" },
+            RelativeBelow = { fg = "#8fb573" },
+            WrappedLine   = { fg = "#5b5e5a", italic = true },
+        },
+    },
+})
 
-local builtin = require("statuscol.builtin")
 require("statuscol").setup({
     relculright = true,
     segments = {
-        { text = { builtin.foldfunc },                                                      click = "v:lua.ScFa" },
-        { sign = { namespace = { "MiniDiffViz" }, maxwidth = 1, colwidth = 1, auto = true }, click = "v:lua.ScSa" },
-        { sign = { namespace = { "diagnostic/signs" }, maxwidth = 2, auto = true },         click = "v:lua.ScSa" },
-        { sign = { name = { ".*" }, maxwidth = 2, colwidth = 1, auto = true, wrap = true }, click = "v:lua.ScSa" },
-        { text = { lj.segment },                                                            click = "v:lua.ScLa" },
+        { sign = { namespace = { "diagnostic%.signs" }, maxwidth = 1, colwidth = 1 },           click = "v:lua.ScSa" },
+        { sign = { name = { ".*" }, text = { ".*" }, maxwidth = 1, colwidth = 1, wrap = true }, click = "v:lua.ScSa" },
+        { text = { lj.segment },                                                                click = "v:lua.ScLa" },
+        { sign = { namespace = { "MiniDiffViz" }, maxwidth = 1, colwidth = 1 },                 click = "v:lua.ScSa" },
     },
 })

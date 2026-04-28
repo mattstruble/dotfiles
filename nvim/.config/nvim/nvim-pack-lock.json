@@ -69,6 +69,10 @@
       "rev": "ff2cbcba459b637ec3fd165a2be59b7bbaeedf0d",
       "src": "https://github.com/folke/lazydev.nvim"
     },
+    "line-justice.nvim": {
+      "rev": "557439f408d6196a8518c7d93477d268451ace6e",
+      "src": "https://github.com/zaakiy/line-justice.nvim"
+    },
     "llama.vim": {
       "rev": "a1c8e6e40cb45df59b78add5b65d575386832465",
       "src": "https://github.com/ggml-org/llama.vim"
@@ -173,6 +177,10 @@
     "snacks.nvim": {
       "rev": "ad9ede6a9cddf16cedbd31b8932d6dcdee9b716e",
       "src": "https://github.com/folke/snacks.nvim"
+    },
+    "statuscol.nvim": {
+      "rev": "c46172d0911aa5d49ba5f39f4351d1bb7aa289cc",
+      "src": "https://github.com/luukvbaal/statuscol.nvim"
     },
     "symbol-usage.nvim": {
       "rev": "e07c07dfe7504295a369281e95a24e1afa14b243",
