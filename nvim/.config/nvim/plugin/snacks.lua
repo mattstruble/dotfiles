@@ -15,7 +15,7 @@ require("snacks").setup({
     words = { enabled = true },
     lazygit = { enabled = true },
     scroll = { enabled = false },
-    statuscolumn = { enabled = true },
+    statuscolumn = { enabled = false },
     styles = {
         notifications = { wo = { wrap = true } },
     },
