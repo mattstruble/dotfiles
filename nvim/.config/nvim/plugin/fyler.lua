@@ -1,6 +1,5 @@
 vim.pack.add({
-    "https://github.com/A7Lavinraj/fyler.nvim",
-    version = "stable",
+    { src = "https://github.com/A7Lavinraj/fyler.nvim", version = "stable" },
 })
 
 require("fyler").setup({
@@ -12,6 +11,14 @@ require("fyler").setup({
             },
         },
     },
+})
+
+vim.api.nvim_create_autocmd("VimEnter", {
+    callback = function()
+        if vim.fn.argc() == 0 then
+            require("fyler").open({ kind = "replace" })
+        end
+    end,
 })
 
 vim.keymap.set("n", "<leader>e", function()

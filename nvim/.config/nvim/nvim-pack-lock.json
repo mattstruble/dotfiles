@@ -37,6 +37,11 @@
       "rev": "6cd7280adead7f586db6fccbd15d2cac7e2188b9",
       "src": "https://github.com/rafamadriz/friendly-snippets"
     },
+    "fyler.nvim": {
+      "rev": "bb8b9f30c652c948d35211958b0deec3496bcc08",
+      "src": "https://github.com/A7Lavinraj/fyler.nvim",
+      "version": "'stable'"
+    },
     "fzf-lua": {
       "rev": "c9e7b7bfbd01f949164988ee1684035468e1995c",
       "src": "https://github.com/ibhagwan/fzf-lua"
