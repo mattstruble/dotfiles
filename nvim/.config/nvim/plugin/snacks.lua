@@ -2,7 +2,6 @@ vim.pack.add({ "https://github.com/folke/snacks.nvim" })
 require("snacks").setup({
     animate = { enabled = false },
     bigfile = { enabled = true },
-    explorer = { replace_netrw = true },
     quickfile = { enabled = true },
     notifier = { enabled = true, timeout = 3000 },
     picker = {

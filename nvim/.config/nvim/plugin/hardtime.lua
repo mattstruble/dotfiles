@@ -4,7 +4,7 @@
 vim.pack.add({ "https://github.com/m4xshen/hardtime.nvim" })
 require("hardtime").setup({
     disabled_filetypes = {
-        "qf", "netrw", "NvimTree", "lazy", "mason",
+        "qf", "netrw", "fyler", "lazy", "mason",
         "toggleterm", "oil", "snacks_terminal",
     },
     resetting_keys = {
