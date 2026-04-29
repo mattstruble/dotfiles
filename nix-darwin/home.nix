@@ -460,6 +460,7 @@ in
           ds = "diff --staged";
           from = "!${pkgs.git}/bin/git bisect start && ${pkgs.git}/bin/git bisect bad HEAD && ${pkgs.git}/bin/git bisect good";
           ls-ignored = "ls-files --exclude-standard --ignored --others";
+          mt = "mergetool";
           rc = "rebase --continue";
           rh = "reset --hard";
           ri = "rebase --interactive";
@@ -498,7 +499,7 @@ in
         branch.autosetupmerge = true;
         commit.status = false;
         credential.helper = "store";
-        mergetool.keepBackup = true;
+        mergetool.keepBackup = false;
         pull.rebase = true;
         rebase.autosquash = true;
         rerere.enabled = true;
@@ -535,6 +536,7 @@ in
         merge = {
           conflictstyle = "diff3";
           stat = true;
+          tool = "nvimdiff";
         };
 
         "color \"sh\"" = {
@@ -573,6 +575,10 @@ in
 
         "difftool \"kitty.gui\"" = {
           cmd = "kitten diff $LOCAL $REMOTE";
+        };
+
+        "mergetool \"nvimdiff\"" = {
+          layout = "LOCAL,BASE,REMOTE / MERGED";
         };
 
         advice = {
