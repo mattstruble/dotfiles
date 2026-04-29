@@ -38,13 +38,5 @@ require("config.autocmds")
 require("config.diagnostics")
 require("config.keymaps")
 
--- Built-in extui: nightly-only, not in stable 0.12.
--- noice.nvim handles cmdline/message UI for now (see plugin/noice.lua).
--- When extui lands in stable, noice can be dropped and this uncommented:
--- pcall(function()
---     require("vim._extui").enable({
---         enable = true,
---         msg = { target = "cmd", timeout = 4000 },
---     })
--- end)
+-- Native ui2 message routing + tiny-cmdline.nvim (see plugin/noice.lua).
 

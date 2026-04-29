@@ -1,26 +1,89 @@
--- Deferred: noice.nvim floating cmdline, message routing, LSP UI
-vim.schedule(function()
-    vim.pack.add({
-        "https://github.com/MunifTanjim/nui.nvim",
-        "https://github.com/folke/noice.nvim",
-    })
-    require("noice").setup({
-        lsp = {
-            override = {
-                ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-                ["vim.lsp.util.stylize_markdown"] = true,
-                ["cmp.entry.get_documentation"] = true,
-            },
-            signature = { enabled = true },
-            hover = { enabled = true },
+-- ui2 message routing + tiny-cmdline floating cmdline
+
+require("vim._core.ui2").enable({
+    enable = true,
+    msg = {
+        targets = {
+            [""] = "msg",
+            empty = "cmd",
+            bufwrite = "msg",
+            confirm = "cmd",
+            emsg = "pager",
+            echo = "msg",
+            echomsg = "msg",
+            echoerr = "pager",
+            completion = "cmd",
+            list_cmd = "pager",
+            lua_error = "pager",
+            lua_print = "msg",
+            progress = "pager",
+            rpc_error = "pager",
+            quickfix = "msg",
+            search_cmd = "cmd",
+            search_count = "cmd",
+            shell_cmd = "pager",
+            shell_err = "pager",
+            shell_out = "pager",
+            shell_ret = "msg",
+            undo = "msg",
+            verbose = "pager",
+            wildlist = "cmd",
+            wmsg = "msg",
+            typed_cmd = "cmd",
         },
-        presets = {
-            inc_rename = true,
-            bottom_search = true,
-            command_palette = true,
-            long_message_to_split = true,
-            lsp_doc_border = true,
-        },
-        notify = { enabled = false },
-    })
-end)
+        cmd = { height = 0.5 },
+        dialog = { height = 0.5 },
+        msg = { height = 0.3, timeout = 5000 },
+        pager = { height = 0.5 },
+    },
+})
+
+vim.pack.add({ "https://github.com/rachartier/tiny-cmdline.nvim" })
+
+-- Reposition msg window to top-right after each set_pos call.
+-- ui2 positions msg at bottom by default; this overrides to top-right.
+local ui2 = require("vim._core.ui2")
+local msgs = require("vim._core.ui2.messages")
+local orig_set_pos = msgs.set_pos
+if type(orig_set_pos) == "function" then
+    msgs.set_pos = function(tgt)
+        orig_set_pos(tgt)
+        -- Guard ui2.wins and ui2.wins.msg before validity check
+        if (tgt == "msg" or tgt == nil) and ui2.wins and ui2.wins.msg and vim.api.nvim_win_is_valid(ui2.wins.msg) then
+            pcall(vim.api.nvim_win_set_config, ui2.wins.msg, {
+                relative = "editor",
+                anchor = "NE",
+                row = 1,
+                col = vim.o.columns - 1,
+                border = "rounded",
+            })
+        end
+    end
+end
+
+-- Style the msg window
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "msg",
+    callback = function()
+        local win = ui2.wins and ui2.wins.msg
+        if win and vim.api.nvim_win_is_valid(win) then
+            vim.api.nvim_set_option_value(
+                "winhighlight",
+                "Normal:NormalFloat,FloatBorder:FloatBorder",
+                { scope = "local", win = win }
+            )
+        end
+    end,
+})
+
+-- Route vim.notify through nvim_echo into ui2's msg area
+vim.notify = function(msg, level, _opts)
+    local hl = ({
+        [vim.log.levels.ERROR] = "ErrorMsg",
+        [vim.log.levels.WARN] = "WarningMsg",
+        [vim.log.levels.INFO] = "Normal",
+        [vim.log.levels.DEBUG] = "Comment",
+        [vim.log.levels.TRACE] = "Comment",
+    })[level] or "Normal"
+    vim.api.nvim_echo({ { msg, hl } }, true, {})
+end

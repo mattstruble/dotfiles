@@ -212,6 +212,23 @@ A.nvim_create_autocmd("LspProgress", {
     end,
 })
 
+-- LSP progress in ui2 msg area (requires plugin/noice.lua ui2 setup)
+A.nvim_create_autocmd("LspProgress", {
+    group = my_au,
+    callback = function(ev)
+        local value = ev.data.params.value
+        if not value or not value.kind then return end
+        vim.api.nvim_echo({ { value.message or "done" } }, false, {
+            id = "lsp." .. ev.data.client_id,
+            kind = "progress",
+            source = "vim.lsp",
+            title = value.title,
+            status = value.kind ~= "end" and "running" or "success",
+            percent = value.percentage,
+        })
+    end,
+})
+
 local augroup = function(name)
     return vim.api.nvim_create_augroup("user_" .. name, { clear = true })
 end
