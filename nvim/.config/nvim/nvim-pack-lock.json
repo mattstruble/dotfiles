@@ -191,6 +191,10 @@
       "rev": "e07c07dfe7504295a369281e95a24e1afa14b243",
       "src": "https://github.com/Wansmer/symbol-usage.nvim"
     },
+    "tiny-cmdline.nvim": {
+      "rev": "ad58747b955d0743ccfd56e97da1a4c1fac89f58",
+      "src": "https://github.com/rachartier/tiny-cmdline.nvim"
+    },
     "tiny-glimmer.nvim": {
       "rev": "932e6c2cc4a43ce578f007db1f8f61ad6798f938",
       "src": "https://github.com/rachartier/tiny-glimmer.nvim"

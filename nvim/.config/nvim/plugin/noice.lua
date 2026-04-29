@@ -5,7 +5,7 @@ require("vim._core.ui2").enable({
     msg = {
         targets = {
             [""] = "msg",
-            empty = "cmd",
+            empty = "msg",
             bufwrite = "msg",
             confirm = "cmd",
             emsg = "pager",
@@ -38,6 +38,9 @@ require("vim._core.ui2").enable({
     },
 })
 
+vim.g.tiny_cmdline = {
+    position = { y = "30%" },
+}
 vim.pack.add({ "https://github.com/rachartier/tiny-cmdline.nvim" })
 
 -- Reposition msg window to top-right after each set_pos call.
