@@ -231,6 +231,7 @@ in
               "/tmp/opencode-wt/**" = "allow";
               "/private/tmp/opencode-wt/**" = "allow";
               "~/.opencode/**" = "allow";
+              "~/llm-wiki/**" = "allow";
             };
             bash = {
               # Default: prompt for all commands
@@ -337,6 +338,9 @@ in
     agent-sandbox = {
       enable = true;
       package = inputs.agent-sandbox.packages.${pkgs.system}.default;
+      settings.mounts.extraPaths = [
+        "~/llm-wiki"
+      ];
     };
 
     direnv = {
