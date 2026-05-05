@@ -26,6 +26,7 @@ require("conform").setup({
         terraform = { "terraform_fmt", "tofu_fmt", stop_after_first = true },
         hcl = { "terraform_fmt", "tofu_fmt", stop_after_first = true },
         yaml = { "yamlfmt", "trim_newlines" },
+        ["*"] = { "injected" },
     },
     formatters = {
         injected = { options = { ignore_errors = true } },

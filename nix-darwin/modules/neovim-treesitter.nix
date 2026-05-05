@@ -57,6 +57,7 @@ let
       grammars.tree-sitter-python
       grammars.tree-sitter-query
       grammars.tree-sitter-regex
+      grammars.tree-sitter-sql
       grammars.tree-sitter-tsx
       grammars.tree-sitter-typescript
       vim-grammar
