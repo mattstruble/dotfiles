@@ -601,6 +601,16 @@ in
       enableDefaultConfig = false;
 
       matchBlocks = {
+        "github-llm-wiki" = {
+          hostname = "github.com";
+          user = "git";
+          identityFile = "~/.ssh/llm_wiki_deploy";
+          identitiesOnly = true;
+          extraOptions = {
+            IdentityAgent = "none";
+          };
+        };
+
         "*" = {
           compression = true;
           addKeysToAgent = "yes";
