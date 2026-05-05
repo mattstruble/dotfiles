@@ -53,6 +53,10 @@ touches one function, do not rewrite the module.
 - Save active plans in `~/.opencode/drafts/*.plan.md`.
 - Update plans continuously as scope/order/assumptions change.
 
+# Knowledge Base
+
+Knowledge base: ~/llm-wiki
+
 # Context7-First Research
 
 Use Context7 docs before general web search.

@@ -159,6 +159,7 @@ in
     inputs.ai-agents.homeManagerModules.default
     inputs.agent-sandbox.homeManagerModules.default
     ./modules/ebook-mcp.nix
+    ./modules/llm-wiki.nix
     ./modules/neovim-treesitter.nix
     ./modules/pdf-fast.nix
     ./modules/pdf-visual.nix
