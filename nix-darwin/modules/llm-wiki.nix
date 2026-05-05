@@ -30,6 +30,9 @@ in {
     elif [ "$CURRENT_REMOTE" != "${remoteUrl}" ]; then
       ${pkgs.git}/bin/git -C "${wikiPath}" remote set-url origin "${remoteUrl}"
     fi
+
+    # Disable commit signing (avoid 1Password prompt in background agent)
+    ${pkgs.git}/bin/git -C "${wikiPath}" config commit.gpgsign false
   '';
 
   launchd.agents.llm-wiki-sync = {
