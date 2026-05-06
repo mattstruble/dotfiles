@@ -21,11 +21,11 @@
     },
     "ai-agents": {
       "locked": {
-        "lastModified": 1773843298,
-        "narHash": "sha256-rMRZiMhEsEtm6tps3UlbZC9DAiVSOShCrYkhI3x/g4A=",
+        "lastModified": 1778099417,
+        "narHash": "sha256-hNViCCHR4LmBDQ0rQDGLQElP97u6VXiuDvl1vm1nLn0=",
         "owner": "mattstruble",
         "repo": "nix-ai-agents",
-        "rev": "93b3d8f88d47b0c0db529f4e400844d27e67c609",
+        "rev": "80c12ba47e3a637f94239591b9bcc0b632af2a9d",
         "type": "github"
       },
       "original": {
@@ -231,11 +231,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777988791,
-        "narHash": "sha256-DtbtSW5+Hls7z+D9BfsAXvFuivt5iZ0OzUXjQ8d8lB8=",
+        "lastModified": 1778009629,
+        "narHash": "sha256-nUoQtf4Zq7DRYJrfv904hjrxjAlWVP6a1pNNFKx3FCg=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "d987617879f613053f6fdf4491fe28ce0283d543",
+        "rev": "00ed86e58bb6979a7921859fd1615d19382eac5c",
         "type": "github"
       },
       "original": {
@@ -358,11 +358,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1777918403,
-        "narHash": "sha256-7QiZv0LcW1yIOLo2LNuCQjWon1Z1r99FwK24hbtBOF4=",
+        "lastModified": 1778036283,
+        "narHash": "sha256-62EWg6lI0qyzm7oAx5cAnGkLutvJsRBe0KkEW2JDZCE=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "afc5551119aae6eab73a95c1960891cfe63204f6",
+        "rev": "ed67bc86e84e51d4a88e73c7fd36006dc876476f",
         "type": "github"
       },
       "original": {
@@ -390,11 +390,11 @@
     "skills-mattpocock": {
       "flake": false,
       "locked": {
-        "lastModified": 1777549091,
-        "narHash": "sha256-qOhU5bBnT6kI8c7i0r0IyecrgLJNNPlmQtAb6qWM73Q=",
+        "lastModified": 1778080078,
+        "narHash": "sha256-V7urzcmq2cJDwKP9dLirBAmKuXbVp2Jsyd+3jlzZ5+Y=",
         "owner": "mattpocock",
         "repo": "skills",
-        "rev": "b843cb5ea74b1fe5e58a0fc23cddef9e66076fb8",
+        "rev": "70141119e9fe47430b62b93bcf166a73e6580048",
         "type": "github"
       },
       "original": {
@@ -406,11 +406,11 @@
     "skills-mattstruble": {
       "flake": false,
       "locked": {
-        "lastModified": 1777991017,
-        "narHash": "sha256-cYe76q9tc5PijVWLlW1ZF6SAn8joMqaddZm5fBgHKhU=",
+        "lastModified": 1778098613,
+        "narHash": "sha256-1Ar0clacGyOuZR4CnzZ5PuM7SvVJdpV1a1mkNVkf3fk=",
         "owner": "mattstruble",
         "repo": "skills",
-        "rev": "ce9fad62fe0e2b5c60f77777cbb39a69f0c02b64",
+        "rev": "bb8f98759e93fd5a78e628303ba392ec8680821d",
         "type": "github"
       },
       "original": {
