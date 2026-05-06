@@ -176,9 +176,8 @@ in
       subagents = [
         "${path}/opencode/.config/opencode/agents/"
       ];
-      skills = [
-
-        {
+      skills = {
+        superpowers = {
           source = inputs.skills-superpowers;
           exclude = [
             "brainstorming"
@@ -187,10 +186,13 @@ in
             "using-superpowers"
             "writing-skills"
           ];
-        }
-
-        inputs.skills-mattstruble
-      ];
+          priority = 100;
+        };
+        mattstruble = {
+          source = inputs.skills-mattstruble;
+          priority = 200;
+        };
+      };
 
       mcpServers = {
         context7 = {
