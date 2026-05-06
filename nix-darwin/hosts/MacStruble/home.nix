@@ -13,6 +13,8 @@ in
       ca-bundle_path = ca-bundle_path;
       ca-bundle_crt = ca-bundle_crt;
     };
+
+    services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
     programs = {
       ai-agents = {
         opencode = {
