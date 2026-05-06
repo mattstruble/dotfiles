@@ -198,8 +198,8 @@ in
           url = "https://mcp.context7.com/mcp";
         };
         slack = {
-          type = "remote";
-          url = "https://mcp.slack.com/mcp";
+          type = "local";
+          command = [ "npx" "-y" "slack-mcp-server@latest" "--transport" "stdio" ];
           enabled = false;
         };
         nixos = {
