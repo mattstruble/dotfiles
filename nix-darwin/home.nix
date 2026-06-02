@@ -607,30 +607,28 @@ in
       enable = true;
       enableDefaultConfig = false;
 
-      matchBlocks = {
+      settings = {
         "github-llm-wiki" = {
-          hostname = "github.com";
-          user = "git";
-          identityFile = "~/.ssh/llm_wiki_deploy";
-          identitiesOnly = true;
-          extraOptions = {
-            IdentityAgent = "none";
-          };
+          HostName = "github.com";
+          User = "git";
+          IdentityFile = "~/.ssh/llm_wiki_deploy";
+          IdentitiesOnly = true;
+          IdentityAgent = "none";
         };
 
         "*" = {
-          compression = true;
-          addKeysToAgent = "yes";
-          controlMaster = "auto";
-          controlPath = "${tmpdir}/ssh-%u-%r@%h:%p";
-          controlPersist = "no";
+          Compression = true;
+          AddKeysToAgent = "yes";
+          ControlMaster = "auto";
+          ControlPath = "${tmpdir}/ssh-%u-%r@%h:%p";
+          ControlPersist = "no";
 
-          forwardAgent = true;
-          serverAliveInterval = 60;
+          ForwardAgent = true;
+          ServerAliveInterval = 60;
 
-          hashKnownHosts = true;
-          userKnownHostsFile = "${home}/.ssh/known_hosts";
-          identityAgent = "${onePassPath}";
+          HashKnownHosts = true;
+          UserKnownHostsFile = "${home}/.ssh/known_hosts";
+          IdentityAgent = "${onePassPath}";
         };
       };
     };
