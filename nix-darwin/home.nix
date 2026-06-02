@@ -206,12 +206,7 @@ in
         };
         nixos = {
           type = "local";
-          command = [
-            "nix"
-            "run"
-            "github:utensils/mcp-nixos"
-            "--"
-          ];
+          command = [ "mcp-nixos" ];
           enabled = false;
         };
       };

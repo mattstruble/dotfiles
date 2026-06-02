@@ -67,6 +67,7 @@ with pkgs;
   markdownlint-cli
   markdownlint-cli2
   markdown-oxide
+  mcp-nixos
   mas
   mdformat
   mermaid-cli
