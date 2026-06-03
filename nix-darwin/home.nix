@@ -115,6 +115,13 @@ in
         echo '{"cliPluginsExtraDirs": ["'"$BREW_PLUGINS"'"]}' | ${pkgs.jq}/bin/jq . > "$DOCKER_CONFIG_JSON"
       fi
     '';
+
+    activation.seedFortuneCow = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      FORTUNE_COW_CACHE="''${XDG_CACHE_HOME:-$HOME/.cache}/fortune-cow"
+      mkdir -p "$(dirname "$FORTUNE_COW_CACHE")"
+      ${pkgs.fortune}/bin/fortune -a fortunes wisdom | ${pkgs.cowsay}/bin/cowsay > "$FORTUNE_COW_CACHE.tmp" && \
+        mv "$FORTUNE_COW_CACHE.tmp" "$FORTUNE_COW_CACHE"
+    '';
   };
 
   xdg.configFile =
@@ -719,13 +726,15 @@ in
           eval "$(pyenv init --path)"
         fi
 
-        if [ $(command -v fortune) ] && [ $UID != '0' ] && [[ $- == *i* ]] && [ $TERM != 'dumb' ]; then
-            ### Cowsay At Login ###
-            if [ $(command -v cowsay) ]; then
-                fortune -a fortunes wisdom | cowsay
-            else
-                fortune -a fortunes wisdom
-            fi
+        # Display cached fortune instantly; regenerate in background for next session
+        if [ $UID != '0' ] && [[ $- == *i* ]] && [ $TERM != 'dumb' ]; then
+            FORTUNE_COW_CACHE="''${XDG_CACHE_HOME:-$HOME/.cache}/fortune-cow"
+            [[ -f "$FORTUNE_COW_CACHE" ]] && cat "$FORTUNE_COW_CACHE"
+            {
+              ${pkgs.fortune}/bin/fortune -a fortunes wisdom | ${pkgs.cowsay}/bin/cowsay > "$FORTUNE_COW_CACHE.tmp" && \
+              mv "$FORTUNE_COW_CACHE.tmp" "$FORTUNE_COW_CACHE"
+            } &!
+            unset FORTUNE_COW_CACHE
         fi
       '';
 
