@@ -387,6 +387,10 @@ in
         "--border"
         "--exact"
       ];
+      fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
+      fileWidgetOptions = [
+        "--preview '${pkgs.bat}/bin/bat -n --color=always --line-range :500 {}'"
+      ];
     };
 
     bash = {
@@ -633,6 +637,8 @@ in
 
       enable = true;
       enableCompletion = false;
+      autocd = true;
+      setOptions = [ "NO_BEEP" "NUMERIC_GLOB_SORT" ];
 
       autosuggestion.enable = true;
       syntaxHighlighting.enable = true;
@@ -645,6 +651,8 @@ in
         share = true;
         extended = true;
         ignoreSpace = true;
+        expireDuplicatesFirst = true;
+        findNoDups = true;
       };
 
       sessionVariables = {
@@ -656,6 +664,7 @@ in
         LESS = "-FRSXM";
         LESSCHARSET = "utf-8";
         PAGER = "less";
+        MANPAGER = "sh -c 'col -bx | ${pkgs.bat}/bin/bat -l man -p'";
         SSH_AUTH_SOCK = "${onePassPath}";
         TINC_USE_NIX = "yes";
         WORDCHARS = "";
@@ -665,7 +674,7 @@ in
         vi = "nvim";
         vim = "nvim";
         v = "vim_opener";
-        ls = "${pkgs.coreutils}/bin/ls -h --color=auto";
+        ls = "eza --icons --color=always";
         sl = "ls";
         grep = "grep --color=auto";
         back = "cd $OLDPWD";
@@ -678,8 +687,9 @@ in
 
         as = "agent-sandbox --follow-symlinks";
 
-        ll = "ls -lha";
-        la = "ls -A";
+        ll = "eza --icons --color=always -lh --git";
+        la = "eza --icons --color=always -lah --git";
+        tree = "eza --icons --color=always --tree";
         python = "python3";
       };
 
@@ -752,8 +762,9 @@ in
 
           zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
           zstyle ':completion:*' menu no
-          zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
-          zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
+          zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --icons --color=always $realpath'
+          zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'eza -1 --icons --color=always $realpath'
+          zstyle ':fzf-tab:complete:*:*' fzf-preview '${pkgs.bat}/bin/bat -n --color=always --line-range :500 $realpath 2>/dev/null || eza -1 --icons --color=always $realpath 2>/dev/null'
           zstyle ':completion:*:*:docker:*' option-stacking yes
           zstyle ':completion:*:*:docker-*:*' option-stacking yes
 

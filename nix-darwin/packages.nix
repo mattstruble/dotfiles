@@ -14,6 +14,7 @@ with pkgs;
     doCheck = false;
   }))
   awscli2
+  bat
   bash-language-server
   bibtex2html
   cacert
@@ -29,6 +30,7 @@ with pkgs;
   diffutils
   direnv
   docutils
+  eza
   fd
   fennel-ls
   ffmpeg
