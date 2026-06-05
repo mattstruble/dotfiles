@@ -184,17 +184,6 @@ in
         "${path}/opencode/.config/opencode/agents/"
       ];
       skills = {
-        superpowers = {
-          source = inputs.skills-superpowers;
-          exclude = [
-            "brainstorming"
-            "requesting-code-review"
-            "test-driven-development"
-            "using-superpowers"
-            "writing-skills"
-          ];
-          priority = 100;
-        };
         mattstruble = {
           source = inputs.skills-mattstruble;
           priority = 200;
@@ -208,7 +197,13 @@ in
         };
         slack = {
           type = "local";
-          command = [ "npx" "-y" "slack-mcp-server@latest" "--transport" "stdio" ];
+          command = [
+            "npx"
+            "-y"
+            "slack-mcp-server@latest"
+            "--transport"
+            "stdio"
+          ];
           enabled = false;
         };
         nixos = {
@@ -645,7 +640,10 @@ in
       enable = true;
       enableCompletion = false;
       autocd = true;
-      setOptions = [ "NO_BEEP" "NUMERIC_GLOB_SORT" ];
+      setOptions = [
+        "NO_BEEP"
+        "NUMERIC_GLOB_SORT"
+      ];
 
       autosuggestion.enable = true;
       syntaxHighlighting.enable = true;

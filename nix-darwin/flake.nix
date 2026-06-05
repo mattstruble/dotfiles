@@ -25,11 +25,6 @@
       flake = false;
     };
 
-    skills-superpowers = {
-      url = "github:obra/superpowers";
-      flake = false;
-    };
-
     ebook-mcp = {
       url = "github:onebirdrocks/ebook-mcp";
       flake = false;
