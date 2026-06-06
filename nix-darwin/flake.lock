@@ -231,11 +231,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780515920,
-        "narHash": "sha256-8KX2hEeOX6KP3hBBJJI8dGWVrzbOOf1rBPmg/GUG24U=",
+        "lastModified": 1780679734,
+        "narHash": "sha256-KmRNvpNOb7QEORa06bVgjW9kITcx0VhsI7w0vhmZyD8=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "4c5c1e8ba14f1c7475fa31ff11bc1c19cd220974",
+        "rev": "b2b7db486e06e098711dc291bb25db82850e1d16",
         "type": "github"
       },
       "original": {
@@ -383,8 +383,7 @@
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs_4",
         "skills-mattpocock": "skills-mattpocock",
-        "skills-mattstruble": "skills-mattstruble",
-        "skills-superpowers": "skills-superpowers"
+        "skills-mattstruble": "skills-mattstruble"
       }
     },
     "skills-mattpocock": {
@@ -416,22 +415,6 @@
       "original": {
         "owner": "mattstruble",
         "repo": "skills",
-        "type": "github"
-      }
-    },
-    "skills-superpowers": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1780085125,
-        "narHash": "sha256-P/FD8HTQO+QzvMe3A/B2v2vjs8T6ZmIYH3MPp79dSzo=",
-        "owner": "obra",
-        "repo": "superpowers",
-        "rev": "6fd4507659784c351abbd2bc264c7162cfd386dc",
-        "type": "github"
-      },
-      "original": {
-        "owner": "obra",
-        "repo": "superpowers",
         "type": "github"
       }
     }
