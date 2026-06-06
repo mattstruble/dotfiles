@@ -56,7 +56,7 @@ in
     };
   };
 
-  fonts.packages = with pkgs; [ iosevka ];
+  fonts.packages = with pkgs; [ nerd-fonts.iosevka ];
 
   homebrew = {
     enable = true;
