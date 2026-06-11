@@ -31,7 +31,7 @@ in
 
   determinateNix = {
     enable = true;
-    nixosVmBasedLinuxBuilder.enable = true;
+    nixosVmBasedLinuxBuilder.enable = false;
 
     registry = lib.mapAttrs (_: value: { flake = value; }) inputs;
 
@@ -80,8 +80,8 @@ in
       }
       {
         name = "colima";
-        start_service = true;
-        restart_service = "changed";
+        # start_service = true;
+        # restart_service = "changed";
       }
       "docker"
       "docker-compose"
