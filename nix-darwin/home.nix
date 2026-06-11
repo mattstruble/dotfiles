@@ -235,6 +235,7 @@ in
               "/tmp/opencode-wt/**" = "allow";
               "/private/tmp/opencode-wt/**" = "allow";
               "~/.opencode/**" = "allow";
+              "~/.beads-planning/**" = "allow";
               "~/llm-wiki/**" = "allow";
             };
             bash = {
