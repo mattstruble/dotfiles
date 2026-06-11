@@ -50,7 +50,7 @@ touches one function, do not rewrite the module.
 # Planning Discipline
 
 - Maintain one explicit plan/checklist.
-- Save active plans in `~/.opencode/drafts/*.plan.md`.
+- Save active plans in `.opencode/drafts/*.plan.md`.
 - Update plans continuously as scope/order/assumptions change.
 
 # Knowledge Base
@@ -64,6 +64,7 @@ Use Context7 docs before general web search.
 # Obra Superpowers Skill Conventions
 
 Several skills are imported from obra/superpowers. When these skills reference:
+
 - `superpowers:X` -- this means the skill named `X`
 - `CLAUDE.md` or `GEMINI.md` -- use this file (AGENTS.md) instead
 - `docs/superpowers/specs/` -- use `docs/specs/` instead
