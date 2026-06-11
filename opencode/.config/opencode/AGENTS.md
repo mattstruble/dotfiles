@@ -140,6 +140,8 @@ When `.beads/` exists:
   "CI requires --legacy-peer-deps", "auth module uses RS256 JWTs").
 - **Cross-project knowledge** → write to the knowledge base wiki (e.g.,
   decisions, entities, patterns that apply across repos).
+- **Never store**: secrets, credentials, API keys, tokens, connection
+  strings, or confidential information. Beads data is plaintext.
 
 ## Promotion Workflow
 
