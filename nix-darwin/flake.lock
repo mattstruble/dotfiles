@@ -49,6 +49,26 @@
         "type": "github"
       }
     },
+    "beads": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781192516,
+        "narHash": "sha256-mINE5v4pUzJTC5pPjctLsuXoWx/J1OXP5fzJksVf/6U=",
+        "owner": "gastownhall",
+        "repo": "beads",
+        "rev": "88d1c2b5efc61a2d7fdda5db9d24951223207945",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gastownhall",
+        "repo": "beads",
+        "type": "github"
+      }
+    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -56,11 +76,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780795403,
-        "narHash": "sha256-AkWx4Zt9pQbD/f82Z8N57+d0HGLN/rV3gdMKJTpBPKs=",
+        "lastModified": 1781190005,
+        "narHash": "sha256-hxcGr859ZpHUBM8tgCQ4cFJt4yL14XDsCYG7omr1omc=",
         "owner": "LnL7",
         "repo": "nix-darwin",
-        "rev": "6a771120d607dcccb279a27d227650e324815c35",
+        "rev": "d9ffa378a62b3db830d6074e8660ce20e19ab14f",
         "type": "github"
       },
       "original": {
@@ -231,11 +251,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781102921,
-        "narHash": "sha256-RnV6ngnudMp9tmfl9Wyrjnk84NkkzbJpuJKQ7bp0wHE=",
+        "lastModified": 1781189114,
+        "narHash": "sha256-5inaamLgUMWy+MOBE9ChF9QAF1o/74LFuHkI0W/9rqc=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "74887eaee2995bbdba1f0fbd64e43c1d14a86eca",
+        "rev": "486595d2cf49cfcd649b58a284fa11ac0e34da22",
         "type": "github"
       },
       "original": {
@@ -377,6 +397,7 @@
         "agent-sandbox": "agent-sandbox",
         "ai-agents": "ai-agents",
         "arkenfox-userjs": "arkenfox-userjs",
+        "beads": "beads",
         "darwin": "darwin",
         "determinate": "determinate",
         "ebook-mcp": "ebook-mcp",
@@ -405,11 +426,11 @@
     "skills-mattstruble": {
       "flake": false,
       "locked": {
-        "lastModified": 1781020807,
-        "narHash": "sha256-oHvJLweQ4tjV3ctsNHQf/jlnv0vzX76oSo3QAIdAtg0=",
+        "lastModified": 1781194854,
+        "narHash": "sha256-+WTxu97sByIzVKjiAoR/DgCgOZw9UwkI95cUMMKrl9c=",
         "owner": "mattstruble",
         "repo": "skills",
-        "rev": "c6df63bd4f31c44ad20cb8014547d6b6584fdcd3",
+        "rev": "181e8f3e21ccc14867465db7406cba209e3f7d43",
         "type": "github"
       },
       "original": {
