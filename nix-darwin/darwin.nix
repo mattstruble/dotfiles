@@ -22,6 +22,7 @@ in
 
   environment = {
     darwinConfig = "${path}/nix-darwin";
+    variables.HOMEBREW_NO_REQUIRE_TAP_TRUST = "1";
   };
 
   services = {
@@ -63,6 +64,7 @@ in
     onActivation = {
       autoUpdate = true;
       upgrade = true;
+      extraEnv.HOMEBREW_NO_REQUIRE_TAP_TRUST = "1";
     };
 
     taps = [
