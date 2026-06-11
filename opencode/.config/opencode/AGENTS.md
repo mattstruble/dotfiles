@@ -60,3 +60,66 @@ Knowledge base: ~/llm-wiki
 # Context7-First Research
 
 Use Context7 docs before general web search.
+
+# Beads Task Tracking
+
+This system uses [beads](https://github.com/gastownhall/beads) (`bd`) for
+persistent task tracking in projects that have it initialized.
+
+## Guard
+
+Only engage beads if `.beads/` exists in the project root. If it does not
+exist and the current work is multi-step, multi-session, or would benefit
+from dependency tracking, offer to initialize: `bd init --stealth && bd setup opencode`.
+
+## Session Start
+
+When `.beads/` exists:
+
+1. Run `bd prime` — loads project task state and stored memories.
+2. Read the knowledge base (wiki) informed by the task context from step 1.
+
+## Two-Tier Task Tracking
+
+- **Beads** — persistent project-level task graph (epics, tasks,
+  dependencies, priorities). Use for work that spans sessions or involves
+  multiple steps with ordering constraints.
+- **TodoWrite** — ephemeral micro-steps within a single beads task.
+  Use for implementation details that don't need to persist after the task
+  closes.
+
+## Task Lifecycle
+
+1. Pick work: `bd ready` (shows unblocked tasks).
+2. Claim: `bd update <id> --claim` (atomic — sets assignee + in_progress).
+3. Execute the task (use TodoWrite for micro-steps).
+4. Close: `bd close <id>`.
+
+## Subagent Model
+
+- The parent agent owns beads orchestration (claiming, closing, status).
+- Subagents spawned via Task are beads-unaware workers — they receive
+  work instructions in their prompt and report back. Do not include beads
+  commands in subagent prompts unless the subagent itself needs to
+  decompose further.
+
+## Defaults
+
+- Always use `--stealth` when initializing (`bd init --stealth`). This
+  keeps beads local and does not commit files to the project repo.
+- When initializing, also run `bd setup opencode` to inject beads' own
+  command reference into the project's AGENTS.md.
+
+## bd remember Boundary
+
+- **Project-specific operational notes** → `bd remember "..."` (e.g.,
+  "CI requires --legacy-peer-deps", "auth module uses RS256 JWTs").
+- **Cross-project knowledge** → write to the knowledge base wiki (e.g.,
+  decisions, entities, patterns that apply across repos).
+
+## Promotion Workflow
+
+On beads task closure, review the session's `bd remember` entries and any
+other durable context that surfaced. Propose wiki writes for anything with
+cross-project value. This replaces the "batch at natural breaks" heuristic —
+task closure is the concrete trigger.
