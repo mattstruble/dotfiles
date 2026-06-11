@@ -16,6 +16,7 @@ with pkgs;
   awscli2
   bat
   bash-language-server
+  beads
   bibtex2html
   cacert
   (pkgs.lib.lowPrio cargo)

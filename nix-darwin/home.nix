@@ -285,6 +285,28 @@ in
               "git switch *" = "ask";
               "git tag *" = "ask";
 
+              # --- Beads issue tracking (read-only) ---
+              "bd list *" = "allow";
+              "bd ready *" = "allow";
+              "bd show *" = "allow";
+              "bd stats *" = "allow";
+              "bd blocked *" = "allow";
+              "bd count *" = "allow";
+              "bd search *" = "allow";
+              "bd graph *" = "allow";
+              "bd duplicates *" = "allow";
+              "bd comments *" = "allow";
+              "bd current *" = "allow";
+              "bd ping *" = "allow";
+              "bd export *" = "allow";
+              "bd prime *" = "allow";
+              "bd where *" = "allow";
+              "bd version *" = "allow";
+              "bd context *" = "allow";
+
+              # --- Beads write/destructive (require confirmation) ---
+              "bd *" = "ask";
+
               # --- Python read-only ---
               "pip list *" = "allow";
               "pip show *" = "allow";

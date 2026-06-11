@@ -15,6 +15,11 @@
     ai-agents.url = "github:mattstruble/nix-ai-agents";
     agent-sandbox.url = "github:mattstruble/agent-sandbox";
 
+    beads = {
+      url = "github:gastownhall/beads";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     skills-mattpocock = {
       url = "github:mattpocock/skills";
       flake = false;
@@ -49,6 +54,11 @@
                   allowInsecure = false;
                   allowUnsupportedSystem = false;
                 };
+                overlays = [
+                  (final: prev: {
+                    beads = inputs.beads.packages.${system}.default;
+                  })
+                ];
               };
 
               inherit system;
