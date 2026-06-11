@@ -57,6 +57,30 @@ touches one function, do not rewrite the module.
 
 Knowledge base: ~/llm-wiki
 
+At the start of any non-trivial conversation (planning, strategy, resuming
+prior work, discussing a known topic), silently load context:
+
+1. Read `~/llm-wiki/INDEX.md` — identifies available MOCs.
+2. Read the relevant MOC (informed by the user's opening question, or by
+   `bd prime` task context if available).
+3. Read 1-5 atomic notes most relevant to the conversation.
+4. Follow wikilinks selectively if a loaded note references something
+   directly relevant.
+
+Do not narrate the read. Absorb and respond as if you already knew it.
+
+Mid-conversation: if the user references something as if you should know it
+and you don't, traverse the wiki for it before responding.
+
+Explicit: "load context", "check the wiki", "what do we know about X" —
+traverse immediately.
+
+Skip for: trivial questions, one-off coding tasks, conversations with no
+cross-session context.
+
+For writing conventions and graph maintenance, load the `knowledge-base`
+skill.
+
 # Context7-First Research
 
 Use Context7 docs before general web search.
