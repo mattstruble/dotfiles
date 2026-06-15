@@ -1,4 +1,6 @@
-local mode = require("utils.mode")
+local function mode_has(modes)
+	return vim.tbl_contains(modes, vim.api.nvim_get_mode().mode)
+end
 
 local get_py_venv = function()
     local venv_path = os.getenv("VIRTUAL_ENV")
@@ -29,11 +31,11 @@ require("lualine").setup({
             {
                 "mode",
                 fmt = function()
-                    return mode.isNormal() and "󱣱"
-                        or mode.isInsert() and ""
-                        or mode.isVisual() and "󰒉"
-                        or mode.isCommand() and ""
-                        or mode.isReplace() and ""
+                    return mode_has({ "n", "niI", "niR", "niV", "nt", "ntT" }) and "󱣱"
+                        or mode_has({ "i", "ic", "ix" }) and ""
+                        or mode_has({ "v", "vs", "V", "Vs", "\22", "\22s", "s", "S", "\19" }) and "󰒉"
+                        or mode_has({ "c", "cv", "ce", "rm", "r?" }) and ""
+                        or mode_has({ "R", "Rc", "Rx", "Rv", "Rvc", "Rvx", "r" }) and ""
                         or vim.api.nvim_get_mode().mode == "t" and ""
                         or ""
                 end,
