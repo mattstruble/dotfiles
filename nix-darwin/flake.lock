@@ -392,6 +392,22 @@
         "type": "github"
       }
     },
+    "ponytail": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781533352,
+        "narHash": "sha256-X5a3JyVjVCunke8Sb7tcCCh1+uHv0AKHutdmxewuFlg=",
+        "owner": "DietrichGebert",
+        "repo": "ponytail",
+        "rev": "2e6a93765aabb345b7325cdcac4c8efef7955644",
+        "type": "github"
+      },
+      "original": {
+        "owner": "DietrichGebert",
+        "repo": "ponytail",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "agent-sandbox": "agent-sandbox",
@@ -403,6 +419,7 @@
         "ebook-mcp": "ebook-mcp",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs_4",
+        "ponytail": "ponytail",
         "skills-mattpocock": "skills-mattpocock",
         "skills-mattstruble": "skills-mattstruble"
       }

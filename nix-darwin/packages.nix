@@ -82,6 +82,7 @@ with pkgs;
   nixfmt
   nixpkgs-lint
   nmap
+  nodejs
   obsidian
   opam
   opencode

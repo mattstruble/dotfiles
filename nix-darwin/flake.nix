@@ -35,6 +35,11 @@
       flake = false;
     };
 
+    ponytail = {
+      url = "github:DietrichGebert/ponytail";
+      flake = false;
+    };
+
     determinate.url = "github:DeterminateSystems/determinate";
 
   };

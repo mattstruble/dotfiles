@@ -90,6 +90,9 @@ in
 
         ".local/bin/vim_opener".source = mkLink "${path}/commands/.local/bin/vim_opener";
         ".local/bin/um".source = mkLink "${path}/commands/.local/bin/um";
+
+        # Ponytail: expose full repo so plugin's relative requires resolve
+        ".local/share/ponytail".source = inputs.ponytail;
       };
 
     activation.setupDockerCliPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -146,6 +149,21 @@ in
 
       "opencode/tui.json".source = mkLink "${path}/opencode/.config/opencode/tui.json";
       "opencode/themes".source = mkLink "${path}/opencode/.config/opencode/themes";
+
+      # Ponytail: plugin (auto-discovered from plugins/ dir)
+      "opencode/plugins/ponytail.mjs".source = mkLink "${home}/.local/share/ponytail/.opencode/plugins/ponytail.mjs";
+
+      # Ponytail: slash commands
+      "opencode/commands/ponytail.md".source = mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail.md";
+      "opencode/commands/ponytail-review.md".source = mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-review.md";
+      "opencode/commands/ponytail-audit.md".source = mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-audit.md";
+      "opencode/commands/ponytail-debt.md".source = mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-debt.md";
+
+      # Beads: automatic bd prime injection plugin
+      "opencode/plugins/beads.mjs".source = mkLink "${path}/opencode/.config/opencode/plugins/beads.mjs";
+
+      # Knowledge base: auto-inject ~/llm-wiki/INDEX.md and commit on idle
+      "opencode/plugins/knowledge-base.mjs".source = mkLink "${path}/opencode/.config/opencode/plugins/knowledge-base.mjs";
 
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support
