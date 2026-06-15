@@ -29,7 +29,6 @@ with pkgs;
   darwin.cctools
   diffstat
   diffutils
-  direnv
   docutils
   eza
   fd
@@ -37,11 +36,9 @@ with pkgs;
   ffmpeg
   fnlfmt
   fortune
-  fzf
   git-credential-oauth
   git-extras
   gitlint
-  gitMinimal
   gnugrep
   gnumake
   gnupg
@@ -54,7 +51,6 @@ with pkgs;
   imagemagick
   iperf
   jiq
-  jq
   just
   killall
   kubectl
@@ -145,11 +141,8 @@ with pkgs;
   yubikey-manager
   yubikey-personalization
   zfs-prune-snapshots
-  zoxide
   zsh
-  zsh-autosuggestions
   zsh-fzf-history-search
   zsh-powerlevel10k
-  zsh-syntax-highlighting
   zsh-vi-mode
 ]
