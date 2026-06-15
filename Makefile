@@ -2,9 +2,6 @@
 ### GLOBALS
 ###
 
-LDFLAGS="-L/opt/homebrew/opt/lapack/lib"
-CPPFLAGS="-I/opt/homebrew/opt/lapack/include"
-
 ZSH=$(HOME)/.oh-my-zsh
 NIX-PATH=/nix/var/nix/profiles/default/bin/nix
 NIX-FLAKE=~/.config/nix-darwin/flake.nix
@@ -143,7 +140,7 @@ refresh: rebuild
 ### UPDATE
 
 .PHONY: update_nix
-update_nix: $(NIX-DARWIN-PATH)
+update_nix: $(NIX-DARWIN)
 	cd nix-darwin && nix flake update --extra-experimental-features nix-command --extra-experimental-features flakes
 
 .PHONY: update
@@ -185,14 +182,6 @@ uninstall: uninstall-nix uninstall-config
 start_zsh: $(stow_dirs)
 	/bin/zsh ~/.zshrc
 
-.PHONY: start_yabai
-start_yabai: start_zsh
-	yabai --start-service
-
-.PHONY: start_skhd
-start_skhd: start_zsh
-	skhd --start-service
-
 .PHONY: start_tmux
 start_tmux: start_zsh
 	tmux source-file ~/.tmux.conf
@@ -202,15 +191,7 @@ start_gpg:
 	gpg-agent --daemon --enable-ssh-support
 
 .PHONY: start
-start: start_zsh start_yabai start_skhd start_gpg
-
-.PHONY: restart_yabai
-restart_yabai:
-	yabai --restart-service
-
-.PHONY: restart skhd
-restart_skhd:
-	skhd --restart-service
+start: start_zsh start_gpg
 
 .PHONY: restart_tmux
 restart_tmux:
@@ -222,7 +203,7 @@ restart_nix_daemon:
 	sudo launchctl load /Library/LaunchDaemons/org.nixos.nix-daemon.plist
 
 .PHONY: restart
-restart: restart_yabai restart_skhd restart_tmux
+restart: restart_tmux
 
 .PHONY: fix-compinit
 fix-compinit:
