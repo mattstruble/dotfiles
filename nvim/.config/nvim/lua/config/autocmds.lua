@@ -50,7 +50,6 @@ A.nvim_create_autocmd("FileType", {
         "man",
         "notify",
         "qf",
-        "spectre_panel",
     },
     callback = function(event)
         vim.bo[event.buf].buflisted = false
