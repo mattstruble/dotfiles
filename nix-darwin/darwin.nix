@@ -25,11 +25,6 @@ in
     variables.HOMEBREW_NO_REQUIRE_TAP_TRUST = "1";
   };
 
-  services = {
-    yabai.enable = false;
-    skhd.enable = false;
-  };
-
   determinateNix = {
     enable = true;
     nixosVmBasedLinuxBuilder.enable = false;
