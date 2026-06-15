@@ -144,7 +144,6 @@ in
       '';
       "sketchybar".source = mkLink "${path}/sketchybar/.config/sketchybar";
       "tmux".source = mkLink "${path}/tmux/.config/tmux";
-      "wezterm".source = mkLink "${path}/wezterm/.config/wezterm";
       "yamlfmt".source = mkLink "${path}/yamlfmt/.config/yamlfmt";
 
       "opencode/tui.json".source = mkLink "${path}/opencode/.config/opencode/tui.json";
