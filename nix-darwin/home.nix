@@ -15,12 +15,8 @@ let
   home = "/Users/${userName}";
   path = "${home}/dotfiles";
   onePassPath = "~/Library/Group\\ Containers/2BUA8C4S2C.com.1password/t/agent.sock";
-  # onePassPath = "~/.1password/agent.sock";
 
-  # ca-bundle_path = "${pkgs.cacert}/etc/ssl/certs";
-  # ca-bundle_crt = "${ca-bundle_path}/ca-bundle.crt";
   brew_path = "/opt/homebrew/bin";
-  # if pkgs.stdenv.targetPlatform.isx86_64 then "/usr/local/Homebrew/bin" else "/opt/homebrew/bin";
 in
 {
   home = {
@@ -35,7 +31,6 @@ in
       GNUPGHOME = "${config.xdg.configHome}/gnupg";
       JAVA_OPTS = "-Xverify:none";
       LESSHISTFILE = "${config.xdg.cacheHome}/less/history";
-      #NIX_CONF_DIR = "${config.xdg.configHome}/nix";
       VAGRANT_HOME = "${config.xdg.dataHome}/vagrant";
       TZ = "America/New_York";
       EDITOR = "nvim";
@@ -390,7 +385,6 @@ in
 
     home-manager = {
       enable = true;
-      # path = "${config.xdg.configHome}/nix/home-manager";
     };
 
     # firefox = {
@@ -561,11 +555,6 @@ in
           autoSetupRemote = true;
           recurseSubmodules = "no";
         };
-
-        # "merge \"merge-changelog\"" = {
-        #   name = "GNU-style ChangeLog merge driver";
-        #   driver = "${pkgs.git-scripts}/bin/git-merge-changelog %O %A %B";
-        # };
 
         merge = {
           conflictstyle = "diff3";
