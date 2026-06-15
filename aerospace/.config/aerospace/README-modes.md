@@ -86,7 +86,6 @@ alias aerospace-detect="~/.config/aerospace/auto-detect-mode.sh"
 
 - `switch-mode.sh`: Manual mode switcher
 - `auto-detect-mode.sh`: Automatic monitor detection and switching
-- `on-monitor-change.sh`: Monitor change handler (for future AeroSpace versions)
 - `.current_mode`: State file to track current mode
 
 ## Customization
@@ -107,7 +106,7 @@ To modify workspace assignments, edit the scripts in `~/.config/aerospace/`:
 Current app IDs configured:
 - Zen Browser: `app.zen-browser.zen`
 - Firefox: `org.mozilla.firefox`
-- Ghostty Terminal: `com.mitchellh.ghostty`
+- Kitty Terminal: `net.kovidgoyal.kitty`
 - Outlook: `com.microsoft.Outlook`
 - Slack: `com.tinyspeck.slackmacgap`
 - Zoom: `us.zoom.xos`
