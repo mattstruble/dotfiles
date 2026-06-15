@@ -19,7 +19,7 @@ case $MODE in
         # Move apps to laptop-optimized workspaces (letter-based)
         aerospace list-windows --monitor all --app-bundle-id app.zen-browser.zen --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} B 2>/dev/null || true
         aerospace list-windows --monitor all --app-bundle-id org.mozilla.firefox --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} B 2>/dev/null || true
-        aerospace list-windows --monitor all --app-bundle-id com.mitchellh.ghostty --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} T 2>/dev/null || true
+        aerospace list-windows --monitor all --app-bundle-id net.kovidgoyal.kitty --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} T 2>/dev/null || true
         aerospace list-windows --monitor all --app-bundle-id md.obsidian --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} N 2>/dev/null || true
         aerospace list-windows --monitor all --app-bundle-id com.tinyspeck.slackmacgap --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} S 2>/dev/null || true
         aerospace list-windows --monitor all --app-bundle-id us.zoom.xos --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} Z 2>/dev/null || true
@@ -40,7 +40,7 @@ case $MODE in
         # Move apps to ultrawide monitor optimized workspaces (numbered, 2 apps each)
         aerospace list-windows --monitor all --app-bundle-id app.zen-browser.zen --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} 1 2>/dev/null || true
         aerospace list-windows --monitor all --app-bundle-id org.mozilla.firefox --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} 1 2>/dev/null || true
-        aerospace list-windows --monitor all --app-bundle-id com.mitchellh.ghostty --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} 1 2>/dev/null || true
+        aerospace list-windows --monitor all --app-bundle-id net.kovidgoyal.kitty --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} 1 2>/dev/null || true
         aerospace list-windows --monitor all --app-bundle-id com.tinyspeck.slackmacgap --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} 2 2>/dev/null || true
         aerospace list-windows --monitor all --app-bundle-id com.microsoft.Outlook --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} 2 2>/dev/null || true
         aerospace list-windows --monitor all --app-bundle-id md.obsidian --format '%{window-id}' | xargs -I {} aerospace move-node-to-workspace --window-id {} 3 2>/dev/null || true
