@@ -153,7 +153,11 @@ in
       "opencode/themes".source = mkLink "${path}/opencode/.config/opencode/themes";
 
       # Ponytail: plugin (auto-discovered from plugins/ dir)
-      "opencode/plugins/ponytail.mjs".source = mkLink "${home}/.local/share/ponytail/.opencode/plugins/ponytail.mjs";
+      "opencode/plugins/ponytail.js".source = mkLink "${home}/.local/share/ponytail/.opencode/plugins/ponytail.mjs";
+
+      # Ponytail: hooks (required by plugin via relative require('../../hooks/...'))
+      "hooks/ponytail-instructions.js".source = mkLink "${home}/.local/share/ponytail/hooks/ponytail-instructions.js";
+      "hooks/ponytail-config.js".source = mkLink "${home}/.local/share/ponytail/hooks/ponytail-config.js";
 
       # Ponytail: slash commands
       "opencode/commands/ponytail.md".source = mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail.md";
@@ -162,10 +166,10 @@ in
       "opencode/commands/ponytail-debt.md".source = mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-debt.md";
 
       # Beads: automatic bd prime injection plugin
-      "opencode/plugins/beads.mjs".source = mkLink "${path}/opencode/.config/opencode/plugins/beads.mjs";
+      "opencode/plugins/beads.js".source = mkLink "${path}/opencode/.config/opencode/plugins/beads.js";
 
       # Knowledge base: auto-inject ~/llm-wiki/INDEX.md and commit on idle
-      "opencode/plugins/knowledge-base.mjs".source = mkLink "${path}/opencode/.config/opencode/plugins/knowledge-base.mjs";
+      "opencode/plugins/knowledge-base.js".source = mkLink "${path}/opencode/.config/opencode/plugins/knowledge-base.js";
 
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support
