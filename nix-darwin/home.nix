@@ -47,9 +47,6 @@ in
       CURL_CA_BUNDLE = "${ca-bundle_crt}";
       PIP_CERT = "${ca-bundle_crt}";
 
-      PYENV_ROOT = "${home}/.pyenv";
-      PYENV_VIRTUALENV_DISABLE_PROMPT = "1";
-
       MANPATH = lib.concatStringsSep ":" [
         "${home}/.nix-profile/share/man"
         "/run/current-system/sw/share/man"
@@ -119,6 +116,17 @@ in
       mkdir -p "$(dirname "$FORTUNE_COW_CACHE")"
       ${pkgs.fortune}/bin/fortune -a fortunes wisdom | ${pkgs.cowsay}/bin/cowsay > "$FORTUNE_COW_CACHE.tmp" && \
         mv "$FORTUNE_COW_CACHE.tmp" "$FORTUNE_COW_CACHE"
+    '';
+
+    activation.umCompletion = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      cacheDir="''${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+      mkdir -p "$cacheDir"
+      if [ -x "$HOME/.local/bin/um" ]; then
+        "$HOME/.local/bin/um" --completion > "$cacheDir/um-completion.zsh.tmp" 2>/dev/null \
+          && mv "$cacheDir/um-completion.zsh.tmp" "$cacheDir/um-completion.zsh" \
+          || rm -f "$cacheDir/um-completion.zsh.tmp"
+      fi
+      true
     '';
   };
 
@@ -414,13 +422,6 @@ in
       enable = true;
       bashrcExtra = lib.mkBefore ''
         source /etc/bashrc
-
-        export PATH="$HOME/.pyenv:$PATH"
-        export PYENV_VIRTUALENV_DISABLE_PROMPT=1
-
-        eval "$(pyenv init --path)"
-        eval "$(pyenv init -)"
-        eval "$(pyenv virtualenv-init -)"
       '';
     };
 
@@ -683,6 +684,7 @@ in
         SSH_AUTH_SOCK = "${onePassPath}";
         TINC_USE_NIX = "yes";
         WORDCHARS = "";
+        ZVM_INIT_MODE = "sourcing";
       };
 
       shellAliases = {
@@ -722,17 +724,7 @@ in
         [ -d "$HOME/bin" ] && PATH="$HOME/bin:$PATH"
         [ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
 
-        if type brew &>/dev/null; then
-          FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
-        fi
-
-        # pyenv (must run before .zshrc so OMZ pyenv plugin finds shims in PATH)
-        if [ -d "$PYENV_ROOT/bin" ]; then
-          export PATH="$PYENV_ROOT/bin:$PATH"
-        fi
-        if command -v pyenv >/dev/null 2>&1; then
-          eval "$(pyenv init --path)"
-        fi
+        FPATH=/opt/homebrew/share/zsh-completions:$FPATH
 
         # Display cached fortune instantly; regenerate in background for next session
         if [ $UID != '0' ] && [[ $- == *i* ]] && [ $TERM != 'dumb' ]; then
@@ -754,7 +746,8 @@ in
           fi
         '')
         ''
-          autoload -Uz compinit && compinit
+          autoload -Uz compinit
+          if [[ -n $ZDOTDIR/.zcompdump(#qN.mh+24) ]]; then compinit; else compinit -C; fi
 
           bindkey -v
           bindkey '^f' autosuggest-accept
@@ -766,17 +759,6 @@ in
           bindkey '^[[B' history-substring-search-down
           HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
 
-          # zsh-vi-mode clobbers all bindings via deferred init.
-          # Re-apply bindings after it initializes.
-          function zvm_after_init() {
-            bindkey '^f' autosuggest-accept
-            bindkey '^p' history-search-backward
-            bindkey '^n' history-search-forward
-            bindkey '^[w' kill-region
-            bindkey '^[[A' history-substring-search-up
-            bindkey '^[[B' history-substring-search-down
-          }
-
           zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
           zstyle ':completion:*' menu no
           zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --icons --color=always $realpath'
@@ -787,16 +769,18 @@ in
 
           [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-          eval "$(${brew_path}/brew shellenv)"
+          export HOMEBREW_PREFIX="/opt/homebrew"
+          export HOMEBREW_CELLAR="/opt/homebrew/Cellar"
+          export HOMEBREW_REPOSITORY="/opt/homebrew"
+          export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+          [ -z "''${MANPATH-}" ] || export MANPATH=":''${MANPATH#:}"
+          export INFOPATH="/opt/homebrew/share/info:''${INFOPATH:-}"
 
           # Go up N directories
           up() { cd $(eval printf '../'%.0s {1..$1}) && pwd; }
 
-          # um completions
-          eval "$(um --completion)"
-
-          # npm global bin
-          export PATH="$PATH:$(npm config get prefix)/bin"
+          # um completions (cached at darwin-rebuild time)
+          [[ -r "''${XDG_CACHE_HOME:-$HOME/.cache}/zsh/um-completion.zsh" ]] && source "''${XDG_CACHE_HOME:-$HOME/.cache}/zsh/um-completion.zsh"
         ''
       ];
 

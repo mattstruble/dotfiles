@@ -25,6 +25,11 @@ in
     variables.HOMEBREW_NO_REQUIRE_TAP_TRUST = "1";
   };
 
+  programs.zsh = {
+    enableGlobalCompInit = false;
+    enableBashCompletion = false;
+  };
+
   determinateNix = {
     enable = true;
     nixosVmBasedLinuxBuilder.enable = false;
@@ -93,7 +98,6 @@ in
         start_service = true;
         restart_service = "changed";
       }
-      "pyenv-virtualenv"
       "uv"
       "zsh-completions"
     ];
