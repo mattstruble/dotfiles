@@ -684,7 +684,6 @@ in
         SSH_AUTH_SOCK = "${onePassPath}";
         TINC_USE_NIX = "yes";
         WORDCHARS = "";
-        ZVM_INIT_MODE = "sourcing";
       };
 
       shellAliases = {
@@ -758,6 +757,17 @@ in
           bindkey '^[[A' history-substring-search-up
           bindkey '^[[B' history-substring-search-down
           HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
+
+          # zsh-vi-mode clobbers all bindings via deferred init.
+          # Re-apply bindings after it initializes.
+          function zvm_after_init() {
+            bindkey '^f' autosuggest-accept
+            bindkey '^p' history-search-backward
+            bindkey '^n' history-search-forward
+            bindkey '^[w' kill-region
+            bindkey '^[[A' history-substring-search-up
+            bindkey '^[[B' history-substring-search-down
+          }
 
           zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
           zstyle ':completion:*' menu no
