@@ -117,9 +117,12 @@ _um() {
     opts=(-e -d -h)
 
     if (( CURRENT == 2 )); then
-        # First argument: offer options and note names
-        compadd -a opts
-        compadd -a notes
+        # Flags only when typing a dash, otherwise note names
+        if [[ "${words[2]}" == -* ]]; then
+            compadd -a opts
+        else
+            compadd -a notes
+        fi
     elif (( CURRENT == 3 )); then
         # Second argument: if previous was -e or -d, offer note names
         case "${words[2]}" in
