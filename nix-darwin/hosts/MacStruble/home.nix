@@ -22,11 +22,17 @@ in
             model = "opencode-go/glm-5.1";
             small_model = "opencode-go/deepseek-v4-flash";
             agent = {
-              orchestrator = {
+              planner = {
                 model = "opencode-go/glm-5.1";
+              };
+              orchestrator = {
+                model = "opencode-go/deepseek-v4-pro";
               };
               coder = {
                 model = "opencode-go/deepseek-v4-pro";
+              };
+              plan-critic = {
+                model = "opencode-go/qwen3.6-plus";
               };
               correctness-reviewer = {
                 model = "opencode-go/qwen3.6-plus";
