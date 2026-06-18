@@ -103,29 +103,78 @@ When `.beads/` exists:
 1. Run `bd prime` — loads project task state and stored memories.
 2. Read the knowledge base (wiki) informed by the task context from step 1.
 
-## Two-Tier Task Tracking
+## Beads Awareness Model
 
-- **Beads** — persistent project-level task graph (epics, tasks,
-  dependencies, priorities). Use for work that spans sessions or involves
-  multiple steps with ordering constraints.
-- **TodoWrite** — ephemeral micro-steps within a single beads task.
-  Use for implementation details that don't need to persist after the task
-  closes.
+Agents have tiered beads access based on their role:
 
-## Task Lifecycle
+| Agent | Access | Actions |
+|-------|--------|---------|
+| Planner | Full R+W | Create epics/tasks, run critique loop, manage plan lifecycle |
+| Orchestrator | Full R+W | Read ready tasks, create review subtasks, track execution |
+| Coder | Full R+W | Claim assigned task, create subtasks with file scope, close |
+| Reviewers | R + self-manage | Claim own review subtask, `bd show` for context, close on LGTM |
+| Plan-Critic | Read-only | Read task graph, return structured suggestions |
+| Fetcher | Unaware | No beads interaction |
 
-1. Pick work: `bd ready` (shows unblocked tasks).
-2. Claim: `bd update <id> --claim` (atomic — sets assignee + in_progress).
-3. Execute the task (use TodoWrite for micro-steps).
-4. Close: `bd close <id>`.
+## Planner Lifecycle
 
-## Subagent Model
+The planner decomposes work into beads tasks:
+1. Q&A loop to understand the spec.
+2. Create epics and tasks following story structure (summary, acceptance
+   criteria, open questions, out of scope).
+3. Spawn plan-critic agent to stress-test the task graph.
+4. Integrate critic feedback, iterate until convergence or soft cap (3-5
+   rounds). If the loop doesn't converge, present to user with remaining
+   suggestions.
+5. Present refined plan to user for approval. Stop — do not execute.
 
-- The parent agent owns beads orchestration (claiming, closing, status).
-- Subagents spawned via Task are beads-unaware workers — they receive
-  work instructions in their prompt and report back. Do not include beads
-  commands in subagent prompts unless the subagent itself needs to
-  decompose further.
+To execute, the user switches to the orchestrator agent.
+
+## Orchestrator Lifecycle
+
+The orchestrator executes from the existing task graph:
+1. `bd ready` — find unblocked tasks.
+2. Spawn coders with task IDs for ready work.
+3. Create review subtasks before spawning reviewers.
+4. Track completion, repeat until no ready tasks remain.
+
+If no task graph exists, directs the user to switch to the planner.
+
+**Resume detection** — on session start, if `bd prime` reveals existing work:
+- **Planner**: surfaces task graph state, offers to revise or directs to orchestrator.
+- **Orchestrator**: surfaces ready/in-progress tasks, offers to execute or directs to planner.
+
+## Coder Lifecycle
+
+Coders are beads-aware for their assigned task. They replace TodoWrite with
+persistent beads subtasks for crash recovery.
+
+1. Receive task ID from orchestrator.
+2. `bd update <id> --claim` — claim the task.
+3. Create subtasks with file scope hints as implementation progresses
+   (e.g., "create auth middleware — src/middleware/auth.ts").
+4. Close subtasks as phases complete.
+5. Spawn reviewers for open review subtasks only.
+6. On LGTM from all reviewers: `bd close <id>` — close parent task.
+
+**On re-spawn (crash recovery):** `bd show <id>` — read task state, skip
+closed subtasks, resume from first open subtask.
+
+## Reviewer Lifecycle
+
+Reviewers (correctness, failure-path, readability, security) self-manage
+their review subtask. They receive a review subtask ID and the parent task
+ID from the coder.
+
+1. `bd update <review-id> --claim` — claim the review subtask.
+2. `bd show <parent-id>` — read parent task for intent and acceptance
+   criteria context.
+3. Review current code state (stateless — always fresh, no memory of prior
+   runs).
+4. **LGTM:** `bd close <review-id>` — close the review subtask.
+5. **Issues found:** report findings to coder. Leave subtask open.
+
+The coder re-spawns only reviewers whose subtasks remain open.
 
 ## Defaults
 
