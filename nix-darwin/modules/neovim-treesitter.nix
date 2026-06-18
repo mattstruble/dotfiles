@@ -55,6 +55,7 @@ let
       grammars.tree-sitter-markdown
       grammars.tree-sitter-markdown-inline
       grammars.tree-sitter-nix
+      grammars.tree-sitter-odin
       grammars.tree-sitter-python
       grammars.tree-sitter-query
       grammars.tree-sitter-regex
