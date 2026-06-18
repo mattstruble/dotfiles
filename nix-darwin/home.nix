@@ -122,9 +122,9 @@ in
       cacheDir="''${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
       mkdir -p "$cacheDir"
       if [ -x "$HOME/.local/bin/um" ]; then
-        "$HOME/.local/bin/um" --completion > "$cacheDir/um-completion.zsh.tmp" 2>/dev/null \
-          && mv "$cacheDir/um-completion.zsh.tmp" "$cacheDir/um-completion.zsh" \
-          || rm -f "$cacheDir/um-completion.zsh.tmp"
+      	"$HOME/.local/bin/um" --completion >"$cacheDir/um-completion.zsh.tmp" 2>/dev/null &&
+      		mv "$cacheDir/um-completion.zsh.tmp" "$cacheDir/um-completion.zsh" ||
+      		rm -f "$cacheDir/um-completion.zsh.tmp"
       fi
       true
     '';
@@ -153,23 +153,30 @@ in
       "opencode/themes".source = mkLink "${path}/opencode/.config/opencode/themes";
 
       # Ponytail: plugin (auto-discovered from plugins/ dir)
-      "opencode/plugins/ponytail.js".source = mkLink "${home}/.local/share/ponytail/.opencode/plugins/ponytail.mjs";
+      "opencode/plugins/ponytail.js".source =
+        mkLink "${home}/.local/share/ponytail/.opencode/plugins/ponytail.mjs";
 
       # Ponytail: hooks (required by plugin via relative require('../../hooks/...'))
-      "hooks/ponytail-instructions.js".source = mkLink "${home}/.local/share/ponytail/hooks/ponytail-instructions.js";
+      "hooks/ponytail-instructions.js".source =
+        mkLink "${home}/.local/share/ponytail/hooks/ponytail-instructions.js";
       "hooks/ponytail-config.js".source = mkLink "${home}/.local/share/ponytail/hooks/ponytail-config.js";
 
       # Ponytail: slash commands
-      "opencode/commands/ponytail.md".source = mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail.md";
-      "opencode/commands/ponytail-review.md".source = mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-review.md";
-      "opencode/commands/ponytail-audit.md".source = mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-audit.md";
-      "opencode/commands/ponytail-debt.md".source = mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-debt.md";
+      "opencode/commands/ponytail.md".source =
+        mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail.md";
+      "opencode/commands/ponytail-review.md".source =
+        mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-review.md";
+      "opencode/commands/ponytail-audit.md".source =
+        mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-audit.md";
+      "opencode/commands/ponytail-debt.md".source =
+        mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-debt.md";
 
       # Beads: automatic bd prime injection plugin
       "opencode/plugins/beads.js".source = mkLink "${path}/opencode/.config/opencode/plugins/beads.js";
 
       # Knowledge base: auto-inject ~/llm-wiki/INDEX.md and commit on idle
-      "opencode/plugins/knowledge-base.js".source = mkLink "${path}/opencode/.config/opencode/plugins/knowledge-base.js";
+      "opencode/plugins/knowledge-base.js".source =
+        mkLink "${path}/opencode/.config/opencode/plugins/knowledge-base.js";
 
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support
@@ -460,6 +467,7 @@ in
         ".envrc"
         "Thumbs.db"
         ".bundle"
+        ".opencode"
       ];
 
       signing = {
