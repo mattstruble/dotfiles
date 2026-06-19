@@ -91,6 +91,8 @@ in
       "fennel"
       "fnlfmt"
       "ical-buddy"
+      "odin"
+      "ols"
       "markdown-toc"
       "mas"
       {
