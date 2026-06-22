@@ -94,11 +94,11 @@ in
             infra.dirs = [ "~/software/infra" ];
           };
           config = {
-            model = "opencode-go/glm-5.1";
+            model = "opencode-go/glm-5.2";
             small_model = "opencode-go/deepseek-v4-flash";
             agent = {
               planner = {
-                model = "opencode-go/glm-5.1";
+                model = "opencode-go/glm-5.2";
               };
               orchestrator = {
                 model = "opencode-go/deepseek-v4-pro";
@@ -107,19 +107,19 @@ in
                 model = "opencode-go/deepseek-v4-pro";
               };
               plan-critic = {
-                model = "opencode-go/qwen3.6-plus";
+                model = "opencode-go/glm-5.2";
               };
               correctness-reviewer = {
-                model = "opencode-go/qwen3.6-plus";
+                model = "opencode-go/deepseek-v4-pro";
               };
               failure-path-reviewer = {
-                model = "opencode-go/qwen3.6-plus";
+                model = "opencode-go/deepseek-v4-pro";
               };
               readability-reviewer = {
-                model = "opencode-go/qwen3.6-plus";
+                model = "opencode-go/deepseek-v4-pro";
               };
               security-reviewer = {
-                model = "opencode-go/qwen3.6-plus";
+                model = "opencode-go/deepseek-v4-pro";
               };
               fetcher = {
                 model = "opencode-go/deepseek-v4-flash";
