@@ -196,6 +196,7 @@ in
   imports = [
     inputs.ai-agents.homeManagerModules.default
     inputs.agent-sandbox.homeManagerModules.default
+    ./modules/aws.nix
     ./modules/ebook-mcp.nix
     ./modules/llm-wiki.nix
     ./modules/neovim-treesitter.nix
