@@ -171,6 +171,9 @@ in
       "opencode/commands/ponytail-debt.md".source =
         mkLink "${home}/.local/share/ponytail/.opencode/command/ponytail-debt.md";
 
+      # RTK: token-saving proxy plugin for opencode
+      "opencode/plugins/rtk.ts".source = "${inputs.rtk}/hooks/opencode/rtk.ts";
+
       # Beads: automatic bd prime injection plugin
       "opencode/plugins/beads.js".source = mkLink "${path}/opencode/.config/opencode/plugins/beads.js";
 
@@ -320,6 +323,7 @@ in
 
               # --- Beads issue tracking ---
               "bd *" = "allow";
+              "rtk *" = "allow";
 
               # --- Python read-only ---
               "pip list *" = "allow";

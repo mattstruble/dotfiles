@@ -100,6 +100,7 @@ in
         start_service = true;
         restart_service = "changed";
       }
+      "rtk"
       "uv"
       "zsh-completions"
     ];

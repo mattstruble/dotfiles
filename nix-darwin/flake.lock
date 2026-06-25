@@ -418,8 +418,25 @@
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs_4",
         "ponytail": "ponytail",
+        "rtk": "rtk",
         "skills-mattpocock": "skills-mattpocock",
         "skills-mattstruble": "skills-mattstruble"
+      }
+    },
+    "rtk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782370924,
+        "narHash": "sha256-4JZmyssNQ/tsOKLTZCBtzLDsXj0Um9fXiETcpkJJJE8=",
+        "owner": "rtk-ai",
+        "repo": "rtk",
+        "rev": "af81b08175af063c8b631979959d80c9007d089f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rtk-ai",
+        "repo": "rtk",
+        "type": "github"
       }
     },
     "skills-mattpocock": {

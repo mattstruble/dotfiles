@@ -40,6 +40,11 @@
       flake = false;
     };
 
+    rtk = {
+      url = "github:rtk-ai/rtk";
+      flake = false;
+    };
+
     determinate.url = "github:DeterminateSystems/determinate";
 
   };
