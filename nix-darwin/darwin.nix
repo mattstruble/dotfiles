@@ -88,11 +88,7 @@ in
       "docker"
       "docker-compose"
       "docker-buildx"
-      "fennel"
-      "fnlfmt"
       "ical-buddy"
-      "odin"
-      "ols"
       "markdown-toc"
       "mas"
       {
