@@ -203,6 +203,7 @@ in
     ./modules/ebook-mcp.nix
     ./modules/llm-wiki.nix
     ./modules/neovim-treesitter.nix
+    ./modules/opencode-profiles.nix
     ./modules/pdf-fast.nix
     ./modules/pdf-visual.nix
   ];
