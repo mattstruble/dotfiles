@@ -17,13 +17,56 @@ let
   onePassPath = "~/Library/Group\\ Containers/2BUA8C4S2C.com.1password/t/agent.sock";
 
   brew_path = "/opt/homebrew/bin";
+
+  # opencode-profile: session-scope a skill profile without touching project files.
+  # Generated at build time from resolvedProfiles; no-op (null) when no profiles declared.
+  opencodeProfileScript =
+    let
+      profiles = config.programs.ai-agents.opencode.resolvedProfiles;
+    in
+    if profiles == { } then
+      null
+    else
+      let
+        profileNames = lib.concatStringsSep " " (builtins.attrNames profiles);
+        caseEntries = lib.concatStringsSep "\n      " (
+          lib.mapAttrsToList (name: meta: ''${name}) _paths+=("${meta.path}") ;;'') profiles
+        );
+      in
+      pkgs.writeShellScriptBin "opencode-profile" ''
+        set -euo pipefail
+        AVAILABLE_PROFILES="${profileNames}"
+        if [ $# -eq 0 ]; then
+          echo "Usage: opencode-profile <profile...>" >&2
+          echo "Available profiles: $AVAILABLE_PROFILES" >&2
+          exit 1
+        fi
+        _paths=()
+        for _profile in "$@"; do
+          case "$_profile" in
+            ${caseEntries}
+            *) echo "opencode-profile: unknown profile '$_profile'" >&2; exit 1 ;;
+          esac
+        done
+        _json='{"skills":{"paths":['
+        _first=true
+        for _p in "''${_paths[@]}"; do
+          if [ "$_first" = true ]; then _first=false; else _json+=","; fi
+          _json+="\"$_p\""
+        done
+        _json+=']}}'
+        OPENCODE_CONFIG_CONTENT="$_json" exec ${pkgs.opencode}/bin/opencode
+      '';
 in
 {
   home = {
     stateVersion = "23.11";
     enableNixpkgsReleaseCheck = false;
 
-    packages = import ./packages.nix pkgs ++ import ./hosts/${hostname}/packages.nix pkgs;
+    packages =
+      import ./packages.nix pkgs
+      ++ import ./hosts/${hostname}/packages.nix pkgs
+      ++ lib.optional (opencodeProfileScript != null) opencodeProfileScript;
 
     sessionVariables = {
       FONTCONFIG_FILE = "${config.xdg.configHome}/fontconfig/fonts.conf";
