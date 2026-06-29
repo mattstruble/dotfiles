@@ -262,10 +262,92 @@ in
       subagents = [
         "${path}/opencode/.config/opencode/agents/"
       ];
+      opencode.profiles = {
+        software = {
+          dirs = [ "~/software" ];
+        };
+        gamedev = {
+          dirs = [ "~/software/gamedev" ];
+        };
+        nix = {
+          dirs = [ "~/software/nix" "~/dotfiles" ];
+        };
+      };
+
       skills = {
-        mattstruble = {
+        # Always-on: workflow, meta, and cross-cutting skills
+        mattstruble-base = {
           source = inputs.skills-mattstruble;
           priority = 200;
+          include = [
+            "brainstorm"
+            "code-reviewer"
+            "git-commit"
+            "git-pr"
+            "knowledge-base"
+            "logging"
+            "software-design"
+          ];
+        };
+
+        # Software development skills
+        mattstruble-software = {
+          source = inputs.skills-mattstruble;
+          priority = 200;
+          profiles = [ "software" ];
+          include = [
+            "api-design"
+            "application-architecture"
+            "docker"
+            "docker-buildx"
+            "github-actions"
+            "openai-api"
+            "prd-to-stories"
+            "prd-writing"
+            "python-code-style"
+            "python-design"
+            "skill-creator"
+            "skill-finder"
+            "test-design"
+            "test-driven-development"
+            "uv"
+          ];
+        };
+
+        # Game development skills
+        mattstruble-gamedev = {
+          source = inputs.skills-mattstruble;
+          priority = 200;
+          profiles = [ "gamedev" ];
+          include = [
+            "game-audio"
+            "game-design"
+            "game-narrative"
+            "game-patterns"
+            "game-performance"
+            "game-rendering"
+            "game-visuals"
+            "godot"
+            "godot-shader"
+            "level-design"
+            "love2d"
+            "love2d-fennel"
+            "odin-design"
+            "odin-gamedev"
+          ];
+        };
+
+        # Nix / dotfiles / config skills
+        mattstruble-nix = {
+          source = inputs.skills-mattstruble;
+          priority = 200;
+          profiles = [ "nix" ];
+          include = [
+            "customize-opencode"
+            "nix"
+            "nix-dendritic"
+            "nix-packaging"
+          ];
         };
       };
 
