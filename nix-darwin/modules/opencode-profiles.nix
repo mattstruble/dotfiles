@@ -1,8 +1,43 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   cfg = config.programs.ai-agents.opencode;
   profiles = cfg.resolvedProfiles;
+
+  # All dirs across all profiles (for nesting detection)
+  allProfileDirs = lib.concatLists (
+    lib.mapAttrsToList (_name: meta: meta.dirs) profiles
+  );
+
+  # Expand ~ to home directory for comparison
+  expandHome = dir: lib.strings.replaceStrings [ "~" ] [ config.home.homeDirectory ] dir;
+
+  # A dir is nested if any OTHER dir (across all profiles) is a strict prefix of it
+  isNested = dir:
+    let expanded = expandHome dir;
+    in lib.any (other:
+      let expandedOther = expandHome other;
+      in other != dir && lib.hasPrefix (expandedOther + "/") expanded
+    ) allProfileDirs;
+
+  # Build dir -> [profile names] mapping (handles dirs shared across profiles)
+  dirToProfiles = lib.foldlAttrs (acc: profileName: meta:
+    lib.foldl (a: dir:
+      let existing = a.${dir} or [];
+      in a // { ${dir} = existing ++ [ profileName ]; }
+    ) acc meta.dirs
+  ) {} profiles;
+
+  # Generate one .envrc per dir, listing all applicable profiles
+  envrcFiles = lib.mapAttrs' (dir: profileNames:
+    let
+      expandedDir = expandHome dir;
+      content = (lib.optionalString (isNested dir) "source_up\n")
+        + "use opencode_profile ${lib.concatStringsSep " " profileNames}";
+    in lib.nameValuePair
+      "${lib.removePrefix (config.home.homeDirectory + "/") expandedDir}/.envrc"
+      { text = content; }
+  ) dirToProfiles;
 in
 lib.mkIf (config.programs.ai-agents.enable && profiles != { }) {
   xdg.configFile."direnv/lib/opencode.sh".text = ''
@@ -44,5 +79,18 @@ lib.mkIf (config.programs.ai-agents.enable && profiles != { }) {
       _json+=']}}'
       export OPENCODE_CONFIG_CONTENT="$_json"
     }
+  '';
+
+  home.file = envrcFiles;
+
+  home.activation.allowOpencodeProfileEnvrc = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ${lib.concatMapStrings (dir:
+      let expandedDir = lib.strings.replaceStrings [ "~" ] [ "$HOME" ] dir;
+      in ''
+        if [ -f "${expandedDir}/.envrc" ]; then
+          $DRY_RUN_CMD ${pkgs.direnv}/bin/direnv allow "${expandedDir}/.envrc" || true
+        fi
+      ''
+    ) allProfileDirs}
   '';
 }
