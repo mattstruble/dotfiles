@@ -88,7 +88,7 @@ lib.mkIf (config.programs.ai-agents.enable && profiles != { }) {
       let expandedDir = lib.strings.replaceStrings [ "~" ] [ "$HOME" ] dir;
       in ''
         if [ -f "${expandedDir}/.envrc" ]; then
-          $DRY_RUN_CMD ${pkgs.direnv}/bin/direnv allow "${expandedDir}/.envrc" || true
+          (cd "${expandedDir}" && $DRY_RUN_CMD ${pkgs.direnv}/bin/direnv allow) || true
         fi
       ''
     ) allProfileDirs}
