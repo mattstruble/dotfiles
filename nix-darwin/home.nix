@@ -270,7 +270,10 @@ in
           dirs = [ "~/software/gamedev" ];
         };
         nix = {
-          dirs = [ "~/software/nix" "~/dotfiles" ];
+          dirs = [
+            "~/software/nix"
+            "~/dotfiles"
+          ];
         };
       };
 
@@ -285,8 +288,8 @@ in
             "git-commit"
             "git-pr"
             "knowledge-base"
-            "logging"
-            "software-design"
+            "prd-to-stories"
+            "prd-writing"
           ];
         };
 
@@ -299,43 +302,15 @@ in
             "api-design"
             "application-architecture"
             "docker"
-            "docker-buildx"
-            "github-actions"
-            "openai-api"
-            "prd-to-stories"
-            "prd-writing"
-            "python-code-style"
+            "logging"
             "python-design"
+            "software-design"
             "skill-creator"
-            "skill-finder"
             "test-design"
             "test-driven-development"
-            "uv"
           ];
         };
 
-        # Game development skills
-        mattstruble-gamedev = {
-          source = inputs.skills-mattstruble;
-          priority = 200;
-          profiles = [ "gamedev" ];
-          include = [
-            "game-audio"
-            "game-design"
-            "game-narrative"
-            "game-patterns"
-            "game-performance"
-            "game-rendering"
-            "game-visuals"
-            "godot"
-            "godot-shader"
-            "level-design"
-            "love2d"
-            "love2d-fennel"
-            "odin-design"
-            "odin-gamedev"
-          ];
-        };
 
         # Nix / dotfiles / config skills
         mattstruble-nix = {
@@ -343,7 +318,6 @@ in
           priority = 200;
           profiles = [ "nix" ];
           include = [
-            "customize-opencode"
             "nix"
             "nix-dendritic"
             "nix-packaging"
