@@ -20,11 +20,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    skills-mattpocock = {
-      url = "github:mattpocock/skills";
-      flake = false;
-    };
-
     skills-mattstruble = {
       url = "github:mattstruble/skills";
       flake = false;
