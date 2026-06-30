@@ -419,7 +419,6 @@
         "nixpkgs": "nixpkgs_4",
         "ponytail": "ponytail",
         "rtk": "rtk",
-        "skills-mattpocock": "skills-mattpocock",
         "skills-mattstruble": "skills-mattstruble"
       }
     },
@@ -436,22 +435,6 @@
       "original": {
         "owner": "rtk-ai",
         "repo": "rtk",
-        "type": "github"
-      }
-    },
-    "skills-mattpocock": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1782815803,
-        "narHash": "sha256-nIA5wobtzjSoOe6ZgRiiUoLxkISEG9/Omk2OXg13twI=",
-        "owner": "mattpocock",
-        "repo": "skills",
-        "rev": "801dca688564c529fa84f247f64472520d9ebe28",
-        "type": "github"
-      },
-      "original": {
-        "owner": "mattpocock",
-        "repo": "skills",
         "type": "github"
       }
     },

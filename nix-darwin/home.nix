@@ -266,9 +266,6 @@ in
         software = {
           dirs = [ "~/software" ];
         };
-        gamedev = {
-          dirs = [ "~/software/gamedev" ];
-        };
         nix = {
           dirs = [
             "~/software/nix"
@@ -310,7 +307,6 @@ in
             "test-driven-development"
           ];
         };
-
 
         # Nix / dotfiles / config skills
         mattstruble-nix = {
