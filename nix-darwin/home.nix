@@ -355,6 +355,7 @@ in
           autoupdate = false;
           agent = {
             orchestrator = {
+              model = "amazon-bedrock/us.anthropic.claude-opus-4-6-v1";
               tools = {
                 "github*" = true;
               };
