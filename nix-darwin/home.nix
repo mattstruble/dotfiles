@@ -224,6 +224,10 @@ in
       "opencode/plugins/knowledge-base.js".source =
         mkLink "${path}/opencode/.config/opencode/plugins/knowledge-base.js";
 
+      # Conductor: async subagent lifecycle management plugin
+      "opencode/plugins/conductor.js".source =
+        mkLink "${path}/opencode/.config/opencode/plugins/conductor.js";
+
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support
         default-cache-ttl 86400
