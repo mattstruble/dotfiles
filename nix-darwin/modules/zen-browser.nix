@@ -1,4 +1,4 @@
-{ inputs, pkgs, ... }:
+{ inputs, pkgs, lib, ... }:
 
 # Extensions deliberately NOT included (redundant with AdNauseam + arkenfox + AdGuard Home):
 # - ClearURLs (uBlock/AdNauseam handles URL parameter stripping)
@@ -10,6 +10,176 @@
 
 {
   imports = [ inputs.zen-browser.homeModules.beta ];
+
+  # Bundle ID confirmed from /Applications/Zen.app/Contents/Info.plist
+  targets.darwin.defaults."app.zen-browser.zen" = {
+    EnterprisePoliciesEnabled = true;
+
+    ExtensionSettings = {
+      # AdNauseam — uBlock fork with ad-clicking for counter-surveillance.
+      # Available on AMO (slug: adnauseam). adminSettings configured below via 3rdparty.Extensions.
+      "adnauseam@rednoise.org" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/adnauseam/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # 1Password
+      "{d634138d-c276-4fc8-924b-40a0ea21d284}" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/1password-x-password-manager/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # SponsorBlock — skip YouTube sponsor segments
+      "sponsorBlocker@ajay.app" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/sponsorblock/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # DeArrow — crowdsourced YouTube titles and thumbnails
+      "deArrow@ajay.app" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/dearrow/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Facebook Container
+      "@contain-facebook" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/facebook-container/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Vimium — keyboard-driven browsing
+      "{d7742d87-e61d-4b78-b8a1-b469842139fa}" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/vimium-ff/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Karakeep — self-hosted bookmark manager (formerly Hoarder).
+      # AMO slug: karakeep, guid: addon@karakeep.app.
+      # Managed storage investigation: the extension uses the 'storage' permission but
+      # ships no managed_storage schema in its manifest. Server URL must be configured
+      # manually in the extension popup after install — no policy-based pre-configuration.
+      "addon@karakeep.app" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/karakeep/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Auto Tab Discard — suspend inactive tabs to save memory
+      "{c2c003ee-bd69-42a2-b0e9-6f34222cb046}" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/auto-tab-discard/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Enhancer for YouTube
+      "enhancerforyoutube@maximerf.addons.mozilla.org" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/enhancer-for-youtube/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Disable Twitch Extensions
+      "disable-twitch-extensions@rootonline.de" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/disable-twitch-extensions/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Old Reddit Redirect
+      "{9063c2e9-e07c-4c2c-9646-cfe7ca8d0498}" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/old-reddit-redirect/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Unpaywall — open access academic papers
+      "{f209234a-76f0-4735-9920-eb62507a54cd}" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/unpaywall/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Refined GitHub
+      "{a4c4eda4-fb84-4a84-b4a1-f7c1cbf2a1ad}" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/refined-github-/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # arXiv Vanity — render arXiv papers as readable HTML
+      "{e92bf629-488c-4d5f-8771-04812b17c143}" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/arxiv-vanity/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Code Finder: CatalyzeX — find code for ML papers
+      "{a3f8e50c-bc39-4e48-ae2f-2ed36fa6752b}" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/code-finder-catalyzex/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Imagus — hover zoom for images
+      "{00000f2a-7cde-4f20-83ed-434fcb420d71}" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/imagus/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # GNU Terry Pratchett — X-Clacks-Overhead header
+      "jid1-HGPgB0x6133Hig@jetpack" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/gnu_terry_pratchett/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+    };
+
+    "3rdparty".Extensions = {
+      # AdNauseam is a uBlock Origin fork — adminSettings format is identical.
+      # Transcribed from programs/firefox.nix uBlock0@raymondhill.net config.
+      "adnauseam@rednoise.org".adminSettings = {
+        userSettings = rec {
+          cloudStorageEnabled = false;
+          importedLists = [
+            "https://big.oisd.nl"
+            "https://github.com/DandelionSprout/adfilt/raw/master/LegitimateURLShortener.txt"
+            # https://github.com/mchangrh/yt-neuter/blob/main/README.md
+            "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/yt-neuter.txt"
+            "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/sponsorblock.txt"
+            "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/noview.txt"
+          ];
+          externalLists = lib.concatStringsSep "\n" importedLists;
+        };
+        selectedFilterLists = [
+          "adguard-annoyance"
+          "adguard-cookies"
+          "adguard-generic"
+          "adguard-mobile"
+          "adguard-mobile-app-banners"
+          "adguard-other-annoyances"
+          "adguard-popup-overlays"
+          "adguard-social"
+          "adguard-spyware"
+          "adguard-spyware-url"
+          "adguard-widgets"
+          "block-lan"
+          "curben-phishing"
+          "dpollock-0"
+          "easylist"
+          "easyprivacy"
+          "plowe-0"
+          "ublock-abuse"
+          "ublock-annoyances"
+          "ublock-cookies-adguard"
+          "ublock-badware"
+          "ublock-filters"
+          "ublock-privacy"
+          "ublock-quick-fixes"
+          "ublock-unbreak"
+          "urlhaus-1"
+          "https://big.oisd.nl"
+          "https://github.com/DandelionSprout/adfilt/raw/master/LegitimateURLShortener.txt"
+          "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/yt-neuter.txt"
+          "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/sponsorblock.txt"
+          "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/noview.txt"
+        ];
+        hiddenSettings = {
+          # https://github.com/mchangrh/yt-neuter/blob/main/README.md#scriptlets
+          userResourceLocation = "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/scriptlets.js";
+        };
+      };
+    };
+  };
 
   programs.zen-browser = {
     enable = true;
