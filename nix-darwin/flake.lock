@@ -419,7 +419,8 @@
         "nixpkgs": "nixpkgs_4",
         "ponytail": "ponytail",
         "rtk": "rtk",
-        "skills-mattstruble": "skills-mattstruble"
+        "skills-mattstruble": "skills-mattstruble",
+        "zen-browser": "zen-browser"
       }
     },
     "rtk": {
@@ -451,6 +452,29 @@
       "original": {
         "owner": "mattstruble",
         "repo": "skills",
+        "type": "github"
+      }
+    },
+    "zen-browser": {
+      "inputs": {
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783190846,
+        "narHash": "sha256-UcdKHKcDxLxBon0HsOjDRRA7l1vVT28R83LkCIAlYYc=",
+        "owner": "0xc000022070",
+        "repo": "zen-browser-flake",
+        "rev": "0758bc86f7a55bbe002f0cede9e1a49e5a6e34d9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "0xc000022070",
+        "repo": "zen-browser-flake",
         "type": "github"
       }
     }
