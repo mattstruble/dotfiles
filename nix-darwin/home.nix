@@ -511,13 +511,6 @@ in
       enable = true;
     };
 
-    # firefox = {
-    #   enable = true;
-    #   profiles.myprofile.settings = inputs.arkenfox-userjs.lib.userjs // {
-    #     # your overrides here, e.g.
-    #   };
-    # };
-
     fzf = {
       enable = true;
       enableZshIntegration = true;
