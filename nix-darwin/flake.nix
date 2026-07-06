@@ -86,7 +86,7 @@
                   home-manager = {
                     useGlobalPkgs = true;
                     backupFileExtension = "backup";
-                    users = import ./hosts/${hostname}/home.nix;
+                    users = import ./hosts/${hostname}/home.nix { inherit inputs; };
                     extraSpecialArgs = {
                       inherit hostname inputs;
                     };

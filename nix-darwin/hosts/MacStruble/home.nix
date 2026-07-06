@@ -12,6 +12,7 @@ in
     imports = [
       ../../profiles/macos.nix
       ../../home.nix
+      ../../modules/zen-browser.nix
     ];
     _module.args = {
       ca-bundle_path = ca-bundle_path;
