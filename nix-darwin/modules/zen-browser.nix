@@ -122,6 +122,12 @@
         install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/gnu_terry_pratchett/latest.xpi";
         installation_mode = "normal_installed";
       };
+
+      # Dark Reader — dark mode for web content
+      "addon@darkreader.org" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/darkreader/latest.xpi";
+        installation_mode = "normal_installed";
+      };
     };
 
     "3rdparty".Extensions = {
@@ -205,9 +211,19 @@
 
         # --- DNS: network-level AdGuard Home handles this; DoH is redundant ---
         "network.trr.mode" = 5; # 5 = disabled (off, use OS resolver)
+        "doh-rollout.mode" = 0;
+        "doh-rollout.self-enabled" = false;
 
         # --- WebRTC: disabled on personal machine; work host re-enables ---
         "media.peerconnection.enabled" = false;
+
+        # --- 1Password handles credentials; disable built-in password/autofill ---
+        "signon.rememberSignons" = false;
+        "extensions.formautofill.addresses.enabled" = false;
+        "extensions.formautofill.creditCards.enabled" = false;
+
+        # --- Media ---
+        "media.videocontrols.picture-in-picture.enable-when-switching-tabs.enabled" = true;
 
         # --- SanitizeOnShutdown: clear ephemeral data, keep persistent state ---
         "privacy.sanitize.sanitizeOnShutdown" = true;
