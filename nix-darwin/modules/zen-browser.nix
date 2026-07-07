@@ -11,6 +11,18 @@
 {
   imports = [ inputs.zen-browser.homeModules.beta ];
 
+  # Zen/Firefox needs writable profiles.ini — HM symlinks to the read-only Nix store.
+  # This activation script converts the symlink to a writable copy after each switch.
+  home.activation.fixZenProfilesIni = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    ZEN_DIR="$HOME/Library/Application Support/Zen"
+    if [ -L "$ZEN_DIR/profiles.ini" ]; then
+      cp -L "$ZEN_DIR/profiles.ini" "$ZEN_DIR/profiles.ini.tmp"
+      rm "$ZEN_DIR/profiles.ini"
+      mv "$ZEN_DIR/profiles.ini.tmp" "$ZEN_DIR/profiles.ini"
+      chmod 644 "$ZEN_DIR/profiles.ini"
+    fi
+  '';
+
   # Bundle ID confirmed from /Applications/Zen.app/Contents/Info.plist
   targets.darwin.defaults."app.zen-browser.zen" = {
     EnterprisePoliciesEnabled = true;
@@ -208,6 +220,8 @@
         # Keep all protections except timezone spoofing (timezone leaks real location
         # but spoofing breaks calendar apps and scheduling tools).
         "privacy.fingerprintingProtection.overrides" = "+AllProtections,-TimezoneOverride";
+        # Full RFP in private windows only — maximum protection when needed
+        "privacy.resistFingerprinting.pbmode" = true;
 
         # --- DNS: network-level AdGuard Home handles this; DoH is redundant ---
         "network.trr.mode" = 5; # 5 = disabled (off, use OS resolver)
