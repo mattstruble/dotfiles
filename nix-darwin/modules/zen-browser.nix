@@ -207,8 +207,12 @@
     package = null;
 
     profiles.default = {
-      # Mods: mechanism in place for future use.
-      mods = [];
+      mods = [
+        "d8b79d4a-6cba-4495-9ff6-d6d30b0e94fe" # Better Active Tab
+        "272850c0-36b4-4867-be8f-7c4b5942069f" # DoubleClickless
+        "4ab93b88-151c-451b-a1b7-a1e0e28fa7f8" # No Sidebar Scrollbar
+        # "1b88a6d1-d931-45e8-b6c3-bfdca2c7e9d6" # Remove Tab X (disabled)
+      ];
 
       settings = inputs.arkenfox-userjs.lib.userjs // {
         # --- Fingerprinting: granular protection, not the nuclear option ---
