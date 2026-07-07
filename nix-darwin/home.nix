@@ -518,8 +518,8 @@ in
         "--border"
         "--exact"
       ];
-      fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
-      fileWidgetOptions = [
+      fileWidget.command = "fd --type f --hidden --follow --exclude .git";
+      fileWidget.options = [
         "--preview '${pkgs.bat}/bin/bat -n --color=always --line-range :500 {}'"
       ];
     };

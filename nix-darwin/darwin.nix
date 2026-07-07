@@ -267,4 +267,9 @@ in
     };
   };
 
+  documentation.enable = false;
+  documentation.man.enable = true;
+
+  system.tools.darwin-uninstaller.enable = false;
+
 }
