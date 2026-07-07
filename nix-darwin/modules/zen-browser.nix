@@ -261,6 +261,18 @@
           "amazondotcom-us".metaData.hidden = true;
         };
       };
+
+      liveFolders = {
+        "Pull requests" = {
+          id = "6007b674-05a3-4264-93ec-5d0d8572a14b";
+          kind = "github:pull-requests";
+          position = 400;
+          github = {
+            authorMe = true;
+            assignedMe = true;
+          };
+        };
+      };
     };
   };
 }

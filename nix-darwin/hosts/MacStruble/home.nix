@@ -129,6 +129,14 @@ in
           };
         };
       };
+      zen-browser.profiles.default.liveFolders = {
+        "Review requests" = {
+          id = "0c3244d2-2bd6-4cc1-bc36-f811473ce054";
+          kind = "github:pull-requests";
+          position = 401;
+          github.reviewRequested = true;
+        };
+      };
       git = {
         settings = {
           user = {
