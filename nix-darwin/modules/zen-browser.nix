@@ -1,25 +1,22 @@
-{ inputs, pkgs, lib, ... }:
-
-# Extensions deliberately NOT included (redundant with AdNauseam + arkenfox + AdGuard Home):
-# - ClearURLs (uBlock/AdNauseam handles URL parameter stripping)
-# - Random User Agent (fingerprintingProtection already spoofs UA)
-# - TrackMeNot (makes you more unique, not less)
-# - Spoof Geolocation (geo.enabled = false covers this)
-# - Skip Redirect (AdNauseam + ClearURLs built-in handles this)
-# - Private Relay (Mozilla service, not relevant for Zen)
+{
+  inputs,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   imports = [ inputs.zen-browser.homeModules.beta ];
 
   # Zen/Firefox needs writable profiles.ini — HM symlinks to the read-only Nix store.
   # This activation script converts the symlink to a writable copy after each switch.
-  home.activation.fixZenProfilesIni = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.fixZenProfilesIni = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     ZEN_DIR="$HOME/Library/Application Support/Zen"
     if [ -L "$ZEN_DIR/profiles.ini" ]; then
-      cp -L "$ZEN_DIR/profiles.ini" "$ZEN_DIR/profiles.ini.tmp"
-      rm "$ZEN_DIR/profiles.ini"
-      mv "$ZEN_DIR/profiles.ini.tmp" "$ZEN_DIR/profiles.ini"
-      chmod 644 "$ZEN_DIR/profiles.ini"
+    	cp -L "$ZEN_DIR/profiles.ini" "$ZEN_DIR/profiles.ini.tmp"
+    	rm "$ZEN_DIR/profiles.ini"
+    	mv "$ZEN_DIR/profiles.ini.tmp" "$ZEN_DIR/profiles.ini"
+    	chmod 644 "$ZEN_DIR/profiles.ini"
     fi
   '';
 
@@ -138,6 +135,12 @@
       # Dark Reader — dark mode for web content
       "addon@darkreader.org" = {
         install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/darkreader/latest.xpi";
+        installation_mode = "normal_installed";
+      };
+
+      # Firefox Relay — generate email aliases to protect real address
+      "private-relay@firefox.com" = {
+        install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/private-relay/latest.xpi";
         installation_mode = "normal_installed";
       };
     };
