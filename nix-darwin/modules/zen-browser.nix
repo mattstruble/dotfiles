@@ -254,6 +254,10 @@
         "privacy.clearOnShutdown.history" = false;
         "privacy.clearOnShutdown.sessions" = false;
         "privacy.clearOnShutdown.siteSettings" = false;
+        # v2 prefs (Firefox 128+) — supersede legacy clearOnShutdown prefs
+        "privacy.clearOnShutdown_v2.cookiesAndStorage" = false;
+        "privacy.clearOnShutdown_v2.cache" = true;
+        "privacy.clearOnShutdown_v2.siteSettings" = false;
       };
 
       search = {
