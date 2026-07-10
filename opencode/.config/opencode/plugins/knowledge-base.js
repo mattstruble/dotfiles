@@ -27,7 +27,7 @@ function commitIfDirty() {
     }).trim();
     if (status) {
       execSync(
-        `git add -A && git commit -m "auto-sync: session idle $(date -u +%Y-%m-%dT%H:%M:%SZ)"`,
+        "git add -A && git commit -m 'auto-sync: session idle $(date -u +%Y-%m-%dT%H:%M:%SZ)' && git push",
         { cwd: WIKI_PATH, encoding: "utf8", timeout: 10000 },
       );
     }
