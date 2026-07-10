@@ -225,6 +225,22 @@ in
       "opencode/plugins/conductor.js".source =
         mkLink "${path}/opencode/.config/opencode/plugins/conductor.js";
 
+      # Guardrails: commit format, branch protection, secret scanning, doom loop
+      "opencode/plugins/guardrails.js".source =
+        mkLink "${path}/opencode/.config/opencode/plugins/guardrails.js";
+
+      # Rules enforcer: persist critical behavioral rules through compaction
+      "opencode/plugins/rules-enforcer.js".source =
+        mkLink "${path}/opencode/.config/opencode/plugins/rules-enforcer.js";
+
+      # Audit: append-only tool call logging to ~/.local/share/opencode/audit.jsonl
+      "opencode/plugins/audit.js".source =
+        mkLink "${path}/opencode/.config/opencode/plugins/audit.js";
+
+      # Notification: desktop alert on session idle
+      "opencode/plugins/notification.js".source =
+        mkLink "${path}/opencode/.config/opencode/plugins/notification.js";
+
       "gnupg/gpg-agent.conf".text = ''
         enable-ssh-support
         default-cache-ttl 86400
@@ -351,6 +367,8 @@ in
         config = {
           "$schema" = "https://opencode.ai/config.json";
           autoupdate = false;
+          formatter = true;
+          lsp = true;
           agent = {
             orchestrator = {
               tools = {
