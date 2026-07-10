@@ -64,19 +64,19 @@ export const GuardrailsPlugin = async ({ $ }) => {
       }
 
       // ── Branch guard ─────────────────────────────────────────────────────
-      if (/git\s+(commit|merge|rebase)/.test(cmd)) {
-        let branch = "";
-        try {
-          branch = (await $`git branch --show-current`.text()).trim();
-        } catch {
-          // If git isn't available or not a repo, skip the guard
-        }
-        if (branch === "main" || branch === "master") {
-          throw new Error(
-            `Cannot commit/merge/rebase on ${branch}. Create a branch first.`
-          );
-        }
-      }
+      // if (/git\s+(commit|merge|rebase)/.test(cmd)) {
+      //   let branch = "";
+      //   try {
+      //     branch = (await $`git branch --show-current`.text()).trim();
+      //   } catch {
+      //     // If git isn't available or not a repo, skip the guard
+      //   }
+      //   if (branch === "main" || branch === "master") {
+      //     throw new Error(
+      //       `Cannot commit/merge/rebase on ${branch}. Create a branch first.`
+      //     );
+      //   }
+      // }
 
       // ── Commit format enforcement ────────────────────────────────────────
       const commitMsgMatch = cmd.match(/git\s+commit\s+.*-m\s+["'](.+?)["']/);
