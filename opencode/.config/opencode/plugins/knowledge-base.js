@@ -23,12 +23,13 @@ function commitIfDirty() {
     const status = execSync("git status --porcelain", {
       cwd: WIKI_PATH,
       encoding: "utf8",
+      stdio: ["pipe", "pipe", "ignore"],
       timeout: 5000,
     }).trim();
     if (status) {
       execSync(
         "git add -A && git commit -m 'auto-sync: session idle $(date -u +%Y-%m-%dT%H:%M:%SZ)' && git push",
-        { cwd: WIKI_PATH, encoding: "utf8", timeout: 10000 },
+        { cwd: WIKI_PATH, encoding: "utf8", stdio: "ignore", timeout: 10000 },
       );
     }
   } catch {}
