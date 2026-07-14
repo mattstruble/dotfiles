@@ -96,34 +96,34 @@ in
           };
           config = {
             model = "opencode-go/glm-5.2";
-            small_model = "opencode-go/deepseek-v4-flash";
+            small_model = "opencode-go/deepseek-v4-flash-free";
             agent = {
               planner = {
                 model = "opencode-go/glm-5.2";
               };
               orchestrator = {
-                model = "opencode-go/deepseek-v4-pro";
+                model = "opencode/deepseek-v4-flash-free";
               };
               coder = {
-                model = "opencode-go/deepseek-v4-pro";
+                model = "opencode/deepseek-v4-flash-free";
               };
               plan-critic = {
                 model = "opencode-go/glm-5.2";
               };
               correctness-reviewer = {
-                model = "opencode-go/deepseek-v4-pro";
+                model = "opencode/deepseek-v4-flash-free";
               };
               failure-path-reviewer = {
-                model = "opencode-go/deepseek-v4-pro";
+                model = "opencode/deepseek-v4-flash-free";
               };
               readability-reviewer = {
-                model = "opencode-go/deepseek-v4-pro";
+                model = "opencode/deepseek-v4-flash-free";
               };
               security-reviewer = {
-                model = "opencode-go/deepseek-v4-pro";
+                model = "opencode/deepseek-v4-flash-free";
               };
               fetcher = {
-                model = "opencode-go/deepseek-v4-flash";
+                model = "opencode/deepseek-v4-flash-free";
               };
             };
           };
