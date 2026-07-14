@@ -1,4 +1,5 @@
 -- Eager: fff.nvim needs to initialize its event loop integration at startup
+vim.g.fff = { logging = { log_level = "error" } }
 vim.pack.add({ "https://github.com/dmtrKovalenko/fff.nvim" })
 
 local map = vim.keymap.set
