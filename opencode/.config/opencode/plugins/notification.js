@@ -42,7 +42,7 @@ export const NotificationPlugin = async ({ $ }) => {
         if (event.type === "permission.asked") {
           state = "permission";
           await setTitle("󰂞");
-        } else if (event.type === "session.idle" && state !== "permission") {
+        } else if (event.type === "session.idle" && state !== "permission" && state !== "idle") {
           state = "idle";
           await setTitle("󰸞");
         } else if (state !== "active" && event.type !== "session.idle") {
