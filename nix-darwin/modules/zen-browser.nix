@@ -147,56 +147,91 @@
 
     "3rdparty".Extensions = {
       # AdNauseam is a uBlock Origin fork — adminSettings format is identical.
-      # Transcribed from programs/firefox.nix uBlock0@raymondhill.net config.
       "adnauseam@rednoise.org".adminSettings = {
         userSettings = rec {
           cloudStorageEnabled = false;
           importedLists = [
             "https://big.oisd.nl"
             "https://github.com/DandelionSprout/adfilt/raw/master/LegitimateURLShortener.txt"
-            # https://github.com/mchangrh/yt-neuter/blob/main/README.md
+            # https://github.com/mchangrh/yt-neuter
             "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/yt-neuter.txt"
             "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/sponsorblock.txt"
             "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/noview.txt"
+            "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/noshorts.txt"
+            "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/nolive.txt"
+            # https://github.com/yokoffing/filterlists
+            "https://raw.githubusercontent.com/yokoffing/filterlists/main/annoyance_list.txt"
+            "https://raw.githubusercontent.com/yokoffing/filterlists/main/block_third_party_fonts.txt"
+            # https://github.com/DandelionSprout/adfilt
+            "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Dandelion%20Sprout's%20Anti-Malware%20List.txt"
           ];
           externalLists = lib.concatStringsSep "\n" importedLists;
         };
         selectedFilterLists = [
-          "adguard-annoyance"
-          "adguard-cookies"
-          "adguard-generic"
-          "adguard-mobile"
-          "adguard-mobile-app-banners"
-          "adguard-other-annoyances"
-          "adguard-popup-overlays"
-          "adguard-social"
-          "adguard-spyware"
-          "adguard-spyware-url"
-          "adguard-widgets"
-          "block-lan"
-          "curben-phishing"
-          "dpollock-0"
-          "easylist"
-          "easyprivacy"
-          "plowe-0"
-          "ublock-abuse"
-          "ublock-annoyances"
-          "ublock-cookies-adguard"
-          "ublock-badware"
+          # AdNauseam / uBlock built-in
+          "user-filters"
+          "adnauseam-filters"
           "ublock-filters"
+          "ublock-badware"
           "ublock-privacy"
           "ublock-quick-fixes"
           "ublock-unbreak"
+          "ublock-annoyances"
+          "ublock-cookies-adguard"
+          "ublock-cookies-easylist"
+          # EasyList
+          "easylist"
+          "easyprivacy"
+          "easylist-annoyances"
+          "easylist-chat"
+          "easylist-newsletters"
+          "easylist-notifications"
+          # AdGuard
+          "adguard-generic"
+          "adguard-mobile"
+          "adguard-mobile-app-banners"
+          "adguard-spyware-url"
+          "adguard-cookies"
+          "adguard-other-annoyances"
+          "adguard-popup-overlays"
+          "adguard-social"
+          "adguard-widgets"
+          # Fanboy
+          "fanboy-cookiemonster"
+          "fanboy-social"
+          "fanboy-thirdparty_social"
+          "fanboy-ai-suggestions"
+          # Misc built-in
+          "block-lan"
+          "curben-phishing"
+          "eff-dnt-whitelist"
+          "plowe-0"
           "urlhaus-1"
+          # External
           "https://big.oisd.nl"
           "https://github.com/DandelionSprout/adfilt/raw/master/LegitimateURLShortener.txt"
           "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/yt-neuter.txt"
           "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/sponsorblock.txt"
           "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/noview.txt"
+          "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/noshorts.txt"
+          "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/filters/nolive.txt"
+          "https://raw.githubusercontent.com/yokoffing/filterlists/main/annoyance_list.txt"
+          "https://raw.githubusercontent.com/yokoffing/filterlists/main/block_third_party_fonts.txt"
+          "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Dandelion%20Sprout's%20Anti-Malware%20List.txt"
         ];
+        userFilters = ''
+          ! Re-enable save-to-playlist (blocked by yt-neuter)
+          www.youtube.com#@#ytd-button-renderer:has(>yt-button-shape:has(> button:has-text(Save)):has(yt-icon))
+          www.youtube.com#@#tp-yt-paper-item:has(yt-icon):has(yt-formatted-string:has-text(Save))
+          www.youtube.com#@#yt-button-view-model:has(>button-view-model> button[aria-label="Save to playlist"])
+        '';
+        netWhitelist = ''
+          chrome-extension-scheme
+          moz-extension-scheme
+        '';
         hiddenSettings = {
-          # https://github.com/mchangrh/yt-neuter/blob/main/README.md#scriptlets
-          userResourceLocation = "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/scriptlets.js";
+          # https://github.com/mchangrh/yt-neuter#scriptlets
+          userResourcesLocation = "https://raw.githubusercontent.com/mchangrh/yt-neuter/main/scriptlets.js";
         };
       };
     };
