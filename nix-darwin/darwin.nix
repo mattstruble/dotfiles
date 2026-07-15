@@ -110,6 +110,7 @@ in
       "kitty"
       "menuwhere"
       "monitorcontrol"
+      "navigator"
       "only-switch"
       "scroll-reverser"
       #"wacom-tablet"
