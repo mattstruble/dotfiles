@@ -130,10 +130,21 @@ in
         };
       };
       zen-browser.profiles.default.liveFolders = {
+        "Pull requests" = {
+          id = "6007b674-05a3-4264-93ec-5d0d8572a14b";
+          kind = "github:pull-requests";
+          position = 400;
+          workspace = "TODO"; # get from about:config zen.workspaces.active
+          github = {
+            authorMe = true;
+            assignedMe = true;
+          };
+        };
         "Review requests" = {
           id = "0c3244d2-2bd6-4cc1-bc36-f811473ce054";
           kind = "github:pull-requests";
           position = 401;
+          workspace = "TODO"; # get from about:config zen.workspaces.active
           github.reviewRequested = true;
         };
       };
