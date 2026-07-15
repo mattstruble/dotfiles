@@ -81,16 +81,22 @@
                 ./darwin.nix
                 home-manager.darwinModules.home-manager
                 determinate.darwinModules.default
-                {
-                  home-manager = {
-                    useGlobalPkgs = true;
-                    backupFileExtension = "backup";
-                    users = import ./hosts/${hostname}/home.nix { inherit inputs; };
-                    extraSpecialArgs = {
-                      inherit hostname inputs;
+                (
+                  { pkgs, ... }:
+                  let
+                    hmBackup = pkgs.writeShellScript "hm-backup" ''mv -f "$1" "$1.backup"'';
+                  in
+                  {
+                    home-manager = {
+                      useGlobalPkgs = true;
+                      backupCommand = "${hmBackup}";
+                      users = import ./hosts/${hostname}/home.nix { inherit inputs; };
+                      extraSpecialArgs = {
+                        inherit hostname inputs;
+                      };
                     };
-                  };
-                }
+                  }
+                )
               ];
             };
         in
