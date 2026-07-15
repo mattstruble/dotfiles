@@ -11,7 +11,6 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    arkenfox-userjs.url = "github:petrkozorezov/arkenfox-userjs-nix";
     ai-agents.url = "github:mattstruble/nix-ai-agents";
     agent-sandbox.url = "github:mattstruble/agent-sandbox";
 

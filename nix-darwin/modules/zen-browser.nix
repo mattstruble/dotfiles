@@ -249,31 +249,31 @@
         "d8b79d4a-6cba-4495-9ff6-d6d30b0e94fe" # Better Active Tab
         "272850c0-36b4-4867-be8f-7c4b5942069f" # DoubleClickless
         "4ab93b88-151c-451b-a1b7-a1e0e28fa7f8" # No Sidebar Scrollbar
-        # "1b88a6d1-d931-45e8-b6c3-bfdca2c7e9d6" # Remove Tab X (disabled)
       ];
 
-      settings = inputs.arkenfox-userjs.lib.userjs // {
-        # --- Fingerprinting: granular protection, not the nuclear option ---
-        # resistFingerprinting breaks many sites (letterboxing, canvas noise, etc.)
-        # fingerprintingProtection is the modern per-API approach.
+      presets.betterfox.enable = true;
+
+      settings = {
+        # --- Fingerprinting: modern per-API protection ---
         "privacy.fingerprintingProtection" = true;
-        "privacy.resistFingerprinting" = false;
-        "privacy.resistFingerprinting.letterboxing" = false;
-        # Keep all protections except timezone spoofing (timezone leaks real location
-        # but spoofing breaks calendar apps and scheduling tools).
         "privacy.fingerprintingProtection.overrides" = "+AllProtections,-TimezoneOverride";
-        # Full RFP in private windows only — maximum protection when needed
         "privacy.resistFingerprinting.pbmode" = true;
 
-        # --- DNS: network-level AdGuard Home handles this; DoH is redundant ---
-        "network.trr.mode" = 5; # 5 = disabled (off, use OS resolver)
+        # --- Bounce tracking: purge cookies from redirect trackers ---
+        "privacy.bounceTrackingProtection.mode" = 1;
+
+        # --- TLS: reject servers without safe renegotiation ---
+        "security.ssl.require_safe_negotiation" = true;
+
+        # --- DNS: network-level AdGuard Home handles this ---
+        "network.trr.mode" = 5;
         "doh-rollout.mode" = 0;
         "doh-rollout.self-enabled" = false;
 
-        # --- WebRTC: disabled on personal machine; work host re-enables ---
+        # --- WebRTC: disabled on personal machine ---
         "media.peerconnection.enabled" = false;
 
-        # --- 1Password handles credentials; disable built-in password/autofill ---
+        # --- 1Password handles credentials ---
         "signon.rememberSignons" = false;
         "extensions.formautofill.addresses.enabled" = false;
         "extensions.formautofill.creditCards.enabled" = false;
@@ -281,18 +281,16 @@
         # --- Media ---
         "media.videocontrols.picture-in-picture.enable-when-switching-tabs.enabled" = true;
 
-        # --- SanitizeOnShutdown: clear ephemeral data, keep persistent state ---
+        # --- SanitizeOnShutdown: clear ephemeral, keep persistent ---
         "privacy.sanitize.sanitizeOnShutdown" = true;
         "privacy.clearOnShutdown.cache" = true;
         "privacy.clearOnShutdown.downloads" = true;
         "privacy.clearOnShutdown.formdata" = true;
         "privacy.clearOnShutdown.offlineApps" = true;
-        # Keep: browsing history, active sessions, cookies, site settings
         "privacy.clearOnShutdown.cookies" = false;
         "privacy.clearOnShutdown.history" = false;
         "privacy.clearOnShutdown.sessions" = false;
         "privacy.clearOnShutdown.siteSettings" = false;
-        # v2 prefs (Firefox 128+) — supersede legacy clearOnShutdown prefs
         "privacy.clearOnShutdown_v2.cookiesAndStorage" = false;
         "privacy.clearOnShutdown_v2.cache" = true;
         "privacy.clearOnShutdown_v2.siteSettings" = false;
@@ -308,17 +306,6 @@
         };
       };
 
-      liveFolders = {
-        "Pull requests" = {
-          id = "6007b674-05a3-4264-93ec-5d0d8572a14b";
-          kind = "github:pull-requests";
-          position = 400;
-          github = {
-            authorMe = true;
-            assignedMe = true;
-          };
-        };
-      };
     };
   };
 }
