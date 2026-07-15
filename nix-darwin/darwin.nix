@@ -270,7 +270,7 @@ in
 
   system.activationScripts.postActivation.text = ''
     echo "pruning nix generations older than 14d..." >&2
-    ${pkgs.nix}/bin/nix-collect-garbage --delete-older-than 14d
+    ${pkgs.nix}/bin/nix-collect-garbage --delete-older-than 14d > /dev/null
   '';
 
   documentation.enable = false;
