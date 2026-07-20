@@ -14,6 +14,11 @@
     ai-agents.url = "github:mattstruble/nix-ai-agents";
     agent-sandbox.url = "github:mattstruble/agent-sandbox";
 
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     beads = {
       url = "github:gastownhall/beads";
       inputs.nixpkgs.follows = "nixpkgs";

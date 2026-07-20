@@ -266,6 +266,7 @@ in
     ./modules/pdf-fast.nix
     ./modules/pdf-visual.nix
     ./modules/rtk.nix
+    ./modules/sops.nix
   ];
 
   programs = {
