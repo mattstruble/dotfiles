@@ -45,7 +45,7 @@ export const NotificationPlugin = async ({ $ }) => {
         } else if (event.type === "session.idle" && state !== "permission" && state !== "idle") {
           state = "idle";
           await setTitle("󰸞");
-        } else if (state !== "active" && event.type !== "session.idle") {
+        } else {
           state = "active";
           await clearTitle();
         }
