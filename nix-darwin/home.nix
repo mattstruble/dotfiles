@@ -303,6 +303,7 @@ in
             "git-commit"
             "git-pr"
             "knowledge-base"
+            "pr-reviewer"
             "prd-to-stories"
             "prd-writing"
           ];
