@@ -234,8 +234,7 @@ in
         mkLink "${path}/opencode/.config/opencode/plugins/rules-enforcer.js";
 
       # Audit: append-only tool call logging to ~/.local/share/opencode/audit.jsonl
-      "opencode/plugins/audit.js".source =
-        mkLink "${path}/opencode/.config/opencode/plugins/audit.js";
+      "opencode/plugins/audit.js".source = mkLink "${path}/opencode/.config/opencode/plugins/audit.js";
 
       # Notification: desktop alert on session idle
       "opencode/plugins/notification.js".source =
@@ -300,6 +299,7 @@ in
           include = [
             "brainstorm"
             "code-reviewer"
+            "daily-log"
             "git-commit"
             "git-pr"
             "knowledge-base"
