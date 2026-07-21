@@ -306,6 +306,42 @@
         };
       };
 
+      spaces.default = {
+        id = "0af700c8-663d-4382-a999-4c4531e997fe";
+        position = 1000;
+        theme = {
+          type = "gradient";
+          colors = [
+            {
+              red = 75;
+              green = 7;
+              blue = 34;
+              algorithm = "complementary";
+              primary = true;
+              lightness = 17;
+              position = {
+                x = 209;
+                y = 167;
+              };
+            }
+            {
+              red = 7;
+              green = 80;
+              blue = 56;
+              algorithm = "complementary";
+              primary = false;
+              lightness = 17;
+              position = {
+                x = 149;
+                y = 191;
+              };
+            }
+          ];
+          opacity = 0.636;
+          texture = 0.3125;
+        };
+      };
+
     };
   };
 }
