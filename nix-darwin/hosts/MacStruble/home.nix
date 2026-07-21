@@ -8,155 +8,181 @@ let
   ca-bundle_crt = "${ca-bundle_path}/ca-certificates.crt";
 in
 {
-  "${userName}" = {
-    imports = [
-      ../../profiles/macos.nix
-      ../../home.nix
-      ../../modules/zen-browser.nix
-    ];
-    _module.args = {
-      ca-bundle_path = ca-bundle_path;
-      ca-bundle_crt = ca-bundle_crt;
-    };
+  "${userName}" =
+    {
+      config,
+      lib,
+      pkgs,
+      inputs,
+      ...
+    }:
+    {
+      imports = [
+        ../../profiles/macos.nix
+        ../../home.nix
+        ../../modules/zen-browser.nix
+      ];
+      _module.args = {
+        ca-bundle_path = ca-bundle_path;
+        ca-bundle_crt = ca-bundle_crt;
+      };
 
-    services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
-    programs = {
-      ai-agents = {
-        skills = {
-          # Game development skills
-          mattstruble-gamedev = {
-            source = inputs.skills-mattstruble;
-            priority = 200;
-            profiles = [ "gamedev" ];
-            include = [
-              "game-audio"
-              "game-design"
-              "game-narrative"
-              "game-patterns"
-              "game-performance"
-              "game-rendering"
-              "game-visuals"
-              "gpu-rendering-architecture"
-              "level-design"
-            ];
-          };
-          mattstruble-love = {
-            source = inputs.skills-mattstruble;
-            priority = 200;
-            profiles = [ "love" ];
-            include = [
-              "love2d"
-              "love2d-fennel"
-            ];
-          };
-          mattstruble-godot = {
-            source = inputs.skills-mattstruble;
-            priority = 200;
-            profiles = [ "godot" ];
-            include = [
-              "godot"
-              "godot-shader"
-            ];
-          };
-          mattstruble-odin = {
-            source = inputs.skills-mattstruble;
-            priority = 200;
-            profiles = [ "odin" ];
-            include = [
-              "odin-design"
-              "odin-gamedev"
-            ];
-          };
-          # Infra skills
-          mattstruble-infra = {
-            source = inputs.skills-mattstruble;
-            priority = 200;
-            profiles = [ "infra" ];
-            include = [
-              "grafana"
-              "helm"
-              "homelab-monitoring"
-              "k3s"
-              "k8s-networking"
-              "k8s-operations"
-              "k8s-storage"
-              "k8s-workloads"
-              "logql"
-              "promql"
-            ];
-          };
+      sops = {
+        defaultSopsFile = ./secrets.yaml;
+        secrets = {
+          n8n-mcp-token = { };
         };
-        opencode = {
-          profiles = {
-            gamedev.dirs = [ "~/software/gamedev" ];
-            odin.dirs = [ "~/software/gamedev/odin" ];
-            love.dirs = [ "~/software/gamedev/love2d" ];
-            godot.dirs = [ "~/software/gamedev/godot" ];
-            infra.dirs = [ "~/software/infra" ];
+      };
+
+      services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
+      programs = {
+        ai-agents = {
+          skills = {
+            # Game development skills
+            mattstruble-gamedev = {
+              source = inputs.skills-mattstruble;
+              priority = 200;
+              profiles = [ "gamedev" ];
+              include = [
+                "game-audio"
+                "game-design"
+                "game-narrative"
+                "game-patterns"
+                "game-performance"
+                "game-rendering"
+                "game-visuals"
+                "gpu-rendering-architecture"
+                "level-design"
+              ];
+            };
+            mattstruble-love = {
+              source = inputs.skills-mattstruble;
+              priority = 200;
+              profiles = [ "love" ];
+              include = [
+                "love2d"
+                "love2d-fennel"
+              ];
+            };
+            mattstruble-godot = {
+              source = inputs.skills-mattstruble;
+              priority = 200;
+              profiles = [ "godot" ];
+              include = [
+                "godot"
+                "godot-shader"
+              ];
+            };
+            mattstruble-odin = {
+              source = inputs.skills-mattstruble;
+              priority = 200;
+              profiles = [ "odin" ];
+              include = [
+                "odin-design"
+                "odin-gamedev"
+              ];
+            };
+            # Infra skills
+            mattstruble-infra = {
+              source = inputs.skills-mattstruble;
+              priority = 200;
+              profiles = [ "infra" ];
+              include = [
+                "grafana"
+                "helm"
+                "homelab-monitoring"
+                "k3s"
+                "k8s-networking"
+                "k8s-operations"
+                "k8s-storage"
+                "k8s-workloads"
+                "logql"
+                "promql"
+              ];
+            };
           };
-          config = {
-            model = "opencode-go/glm-5.2";
-            small_model = "opencode-go/deepseek-v4-flash-free";
-            agent = {
-              planner = {
-                model = "opencode-go/glm-5.2";
+          mcpServers = {
+            n8n = {
+              type = "remote";
+              url = "http://roque:5678/mcp-server/http";
+              headers = {
+                "Authorization" = "Bearer {file:${config.sops.secrets.n8n-mcp-token.path}}";
               };
-              orchestrator = {
-                model = "opencode/deepseek-v4-flash-free";
-              };
-              coder = {
-                model = "opencode/deepseek-v4-flash-free";
-              };
-              plan-critic = {
-                model = "opencode-go/glm-5.2";
-              };
-              correctness-reviewer = {
-                model = "opencode/deepseek-v4-flash-free";
-              };
-              failure-path-reviewer = {
-                model = "opencode/deepseek-v4-flash-free";
-              };
-              readability-reviewer = {
-                model = "opencode/deepseek-v4-flash-free";
-              };
-              security-reviewer = {
-                model = "opencode/deepseek-v4-flash-free";
-              };
-              fetcher = {
-                model = "opencode/deepseek-v4-flash-free";
+              enabled = false;
+
+            };
+          };
+          opencode = {
+            profiles = {
+              gamedev.dirs = [ "~/software/gamedev" ];
+              odin.dirs = [ "~/software/gamedev/odin" ];
+              love.dirs = [ "~/software/gamedev/love2d" ];
+              godot.dirs = [ "~/software/gamedev/godot" ];
+              infra.dirs = [ "~/software/infra" ];
+            };
+            config = {
+              model = "opencode-go/glm-5.2";
+              small_model = "opencode-go/deepseek-v4-flash-free";
+              agent = {
+                planner = {
+                  model = "opencode-go/glm-5.2";
+                };
+                orchestrator = {
+                  model = "opencode/deepseek-v4-flash-free";
+                };
+                coder = {
+                  model = "opencode/deepseek-v4-flash-free";
+                };
+                plan-critic = {
+                  model = "opencode-go/glm-5.2";
+                };
+                correctness-reviewer = {
+                  model = "opencode/deepseek-v4-flash-free";
+                };
+                failure-path-reviewer = {
+                  model = "opencode/deepseek-v4-flash-free";
+                };
+                readability-reviewer = {
+                  model = "opencode/deepseek-v4-flash-free";
+                };
+                security-reviewer = {
+                  model = "opencode/deepseek-v4-flash-free";
+                };
+                fetcher = {
+                  model = "opencode/deepseek-v4-flash-free";
+                };
               };
             };
           };
         };
-      };
-      zen-browser.profiles.default.liveFolders = {
-        "Pull requests" = {
-          id = "6007b674-05a3-4264-93ec-5d0d8572a14b";
-          kind = "github:pull-requests";
-          position = 400;
-          workspace = "TODO"; # get from about:config zen.workspaces.active
-          github = {
-            authorMe = true;
-            assignedMe = true;
+        zen-browser.profiles.default.liveFolders = {
+          "Pull requests" = {
+            id = "6007b674-05a3-4264-93ec-5d0d8572a14b";
+            kind = "github:pull-requests";
+            position = 400;
+            workspace = "TODO"; # get from about:config zen.workspaces.active
+            github = {
+              authorMe = true;
+              assignedMe = true;
+            };
+          };
+          "Review requests" = {
+            id = "0c3244d2-2bd6-4cc1-bc36-f811473ce054";
+            kind = "github:pull-requests";
+            position = 401;
+            workspace = "TODO"; # get from about:config zen.workspaces.active
+            github.reviewRequested = true;
           };
         };
-        "Review requests" = {
-          id = "0c3244d2-2bd6-4cc1-bc36-f811473ce054";
-          kind = "github:pull-requests";
-          position = 401;
-          workspace = "TODO"; # get from about:config zen.workspaces.active
-          github.reviewRequested = true;
-        };
-      };
-      git = {
-        settings = {
-          user = {
-            name = "Matt Struble";
-            email = "4325029+mattstruble@users.noreply.github.com";
+        git = {
+          settings = {
+            user = {
+              name = "Matt Struble";
+              email = "4325029+mattstruble@users.noreply.github.com";
+            };
+            github.user = "mattstruble";
           };
-          github.user = "mattstruble";
         };
       };
     };
-  };
 }

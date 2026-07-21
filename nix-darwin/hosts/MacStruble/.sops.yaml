@@ -1,2 +1,2 @@
 creation_rules:
-  - age: "" # TODO: run `ssh-to-age -i ~/.ssh/id_ed25519.pub` on MacStruble
+  - age: "age1rae24hwrq3vnldppz92wkx2gqv6rml0vse76l52aaqra8m23pueqdyemh3"
