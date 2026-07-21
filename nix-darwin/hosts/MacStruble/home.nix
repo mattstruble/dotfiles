@@ -178,7 +178,7 @@ in
             id = "6007b674-05a3-4264-93ec-5d0d8572a14b";
             kind = "github:pull-requests";
             position = 400;
-            workspace = "TODO"; # get from about:config zen.workspaces.active
+            workspace = "0af700c8-663d-4382-a999-4c4531e997fe";
             github = {
               authorMe = true;
               assignedMe = true;
@@ -188,7 +188,7 @@ in
             id = "0c3244d2-2bd6-4cc1-bc36-f811473ce054";
             kind = "github:pull-requests";
             position = 401;
-            workspace = "TODO"; # get from about:config zen.workspaces.active
+            workspace = "0af700c8-663d-4382-a999-4c4531e997fe";
             github.reviewRequested = true;
           };
         };
