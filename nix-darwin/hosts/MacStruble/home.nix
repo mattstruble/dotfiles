@@ -39,6 +39,23 @@ in
         ai-agents = {
           skills = {
             # Game development skills
+            mattstruble-ai = {
+              source = inputs.skills-mattstruble;
+              priority = 200;
+              profiles = [ "ai" ];
+              include = [
+                "agent-architecture"
+                "agent-evaluation"
+                "agent-memory"
+                "agent-post-training"
+                "agent-self-evolution"
+                "agent-tool-design"
+                "context-engineering"
+                "ml-post-training"
+                "multi-agent-collaboration"
+                "rag-design"
+              ];
+            };
             mattstruble-gamedev = {
               source = inputs.skills-mattstruble;
               priority = 200;
@@ -119,6 +136,7 @@ in
               love.dirs = [ "~/software/gamedev/love2d" ];
               godot.dirs = [ "~/software/gamedev/godot" ];
               infra.dirs = [ "~/software/infra" ];
+              ai.dirs = [ "~/software/ai" ];
             };
             config = {
               model = "opencode-go/glm-5.2";
