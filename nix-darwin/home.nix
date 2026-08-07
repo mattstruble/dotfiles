@@ -14,7 +14,7 @@ let
   userName = import ./hosts/${hostname}/username.nix;
   home = "/Users/${userName}";
   path = "${home}/dotfiles";
-  onePassPath = "~/Library/Group\\ Containers/2BUA8C4S2C.com.1password/t/agent.sock";
+  onePassPath = "${home}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
 
   brew_path = "/opt/homebrew/bin";
 
@@ -792,7 +792,7 @@ in
 
           HashKnownHosts = true;
           UserKnownHostsFile = "${home}/.ssh/known_hosts";
-          IdentityAgent = "${onePassPath}";
+          IdentityAgent = ''"${onePassPath}"'';
         };
       };
     };
@@ -998,5 +998,4 @@ in
   };
 
   news.display = "silent";
-
 }
