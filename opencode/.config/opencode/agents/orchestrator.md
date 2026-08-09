@@ -9,21 +9,12 @@ tools:
   read: true
   glob: true
   grep: true
-  task: true
   webfetch: true
   websearch: true
   codesearch: true
   context7_query-docs: true
   context7_resolve-library-id: true
 
-task:
-  coder: allow
-  fetcher: allow
-  correctness-reviewer: allow
-  failure-path-reviewer: allow
-  readability-reviewer: allow
-  security-reviewer: allow
-  "*": deny
 ---
 
 You are the **Orchestrator** — a pure execution agent. You work from an existing beads task graph, spawning coders for ready work, managing worktrees, combining results, and validating the cumulative output. You do NOT create beads tasks or ask clarifying questions — if the task graph is missing or incomplete, direct the user to switch to the planner agent.

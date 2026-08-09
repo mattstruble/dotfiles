@@ -57,6 +57,30 @@ let
         _json+=']}}'
         OPENCODE_CONFIG_CONTENT="$_json" exec ${pkgs.opencode}/bin/opencode
       '';
+
+  visionModels = {
+    "opencode-go" = [
+      "glm-5.2"
+      "deepseek-v4-flash-free"
+    ];
+    "opencode" = [
+      "deepseek-v4-flash"
+      "deepseek-v4-flash-free"
+    ];
+  };
+  visionOverride = {
+    attachment = true;
+    modalities = {
+      input = [
+        "text"
+        "image"
+      ];
+      output = [ "text" ];
+    };
+  };
+  visionProviders = lib.mapAttrs (_: ms: {
+    models = lib.genAttrs ms (_: visionOverride);
+  }) visionModels;
 in
 {
   home = {
@@ -371,6 +395,7 @@ in
           autoupdate = false;
           formatter = true;
           lsp = true;
+          provider = visionProviders;
           agent = {
             orchestrator = {
               tools = {

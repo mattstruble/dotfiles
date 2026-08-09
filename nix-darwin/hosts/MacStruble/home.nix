@@ -126,7 +126,11 @@ in
                 "Authorization" = "Bearer {file:${config.sops.secrets.n8n-mcp-token.path}}";
               };
               enabled = false;
-
+            };
+            fusion = {
+              type = "remote";
+              url = "http://127.0.0.1:27182/mcp";
+              enabled = false;
             };
           };
           opencode = {
@@ -146,25 +150,25 @@ in
                   model = "opencode-go/glm-5.2";
                 };
                 orchestrator = {
-                  model = "opencode/deepseek-v4-flash-free";
+                  model = "opencode/deepseek-v4-flash";
                 };
                 coder = {
-                  model = "opencode/deepseek-v4-flash-free";
+                  model = "opencode/deepseek-v4-flash";
                 };
                 plan-critic = {
                   model = "opencode-go/glm-5.2";
                 };
                 correctness-reviewer = {
-                  model = "opencode/deepseek-v4-flash-free";
+                  model = "opencode/deepseek-v4-flash";
                 };
                 failure-path-reviewer = {
-                  model = "opencode/deepseek-v4-flash-free";
+                  model = "opencode/deepseek-v4-flash";
                 };
                 readability-reviewer = {
-                  model = "opencode/deepseek-v4-flash-free";
+                  model = "opencode/deepseek-v4-flash";
                 };
                 security-reviewer = {
-                  model = "opencode/deepseek-v4-flash-free";
+                  model = "opencode/deepseek-v4-flash";
                 };
                 fetcher = {
                   model = "opencode/deepseek-v4-flash-free";
