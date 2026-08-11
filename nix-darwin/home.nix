@@ -287,6 +287,7 @@ in
     ./modules/llm-wiki.nix
     ./modules/neovim-treesitter.nix
     ./modules/opencode-profiles.nix
+    ./modules/pi-profiles.nix
     ./modules/pdf-fast.nix
     ./modules/pdf-visual.nix
     ./modules/rtk.nix
@@ -300,9 +301,11 @@ in
       agents = [
         "opencode"
         "claude"
+        "pi"
       ];
       subagents = [
         "${path}/opencode/.config/opencode/agents/"
+        "${path}/pi/.pi/agent/agents/"
       ];
       opencode.profiles = {
         software = {
@@ -386,6 +389,41 @@ in
           command = [ "mcp-nixos" ];
           enabled = false;
         };
+      };
+
+      pi = {
+        config = {
+          defaultProvider = "bedrock";
+          defaultModel = "us.anthropic.claude-sonnet-4-6-v1";
+          defaultThinkingLevel = "medium";
+          theme = "dark";
+          enableSkillCommands = true;
+          defaultProjectTrust = "always";
+          hideThinkingBlock = true;
+          compaction = {
+            enabled = true;
+            keepRecentTokens = 20000;
+          };
+          enabledModels = [
+            "bedrock/us.anthropic.claude-sonnet-4-6-v1"
+            "bedrock/us.anthropic.claude-opus-4-6-v1"
+          ];
+        };
+        systemPromptFile = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/SYSTEM.md";
+        extensions = map (f: config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/extensions/${f}") [
+          "skill-enforcer.ts"
+          "profile-loader.ts"
+          "guardrails.ts"
+          "beads.ts"
+          "knowledge-base.ts"
+          "ponytail.ts"
+          "conductor.ts"
+          "notification.ts"
+        ];
+        packages = [
+          "npm:pi-mcp-adapter"
+          "npm:@gotgenes/pi-permission-system"
+        ];
       };
 
       opencode = {
