@@ -83,6 +83,9 @@ with pkgs;
   opam
   opencode
   opensc
+  (pkgs.writeShellScriptBin "pi" ''
+    exec ${pkgs.nodejs_22}/bin/npx --yes @earendil-works/pi-coding-agent@0.84.1 "$@"
+  '')
   openssh
   openssl
   pandoc
