@@ -1,9 +1,3 @@
-// plan-mode-guard — Pi extension
-// Enforces read-only mode when the planner profile is active.
-// Reads plan-mode state from globalThis.__piPlanMode (set by agent-profiles extension).
-// Allowed in plan mode: read, grep, glob, fetch (read-only by nature), and bd commands.
-// Blocked in plan mode: write, edit, and all bash except `bd *`.
-
 import type { ExtensionAPI, ToolCallEvent } from "@earendil-works/pi-coding-agent";
 
 function isPlanModeActive(): boolean {
@@ -15,6 +9,14 @@ export default function (pi: ExtensionAPI): void {
     if (!isPlanModeActive()) return;
 
     if (event.toolName === "write" || event.toolName === "edit") {
+      const targetPath: string =
+        (event.input as any).path ?? (event.input as any).filePath ?? "";
+      if (targetPath.endsWith(".md")) {
+        return {
+          ask: true,
+          reason: `Plan mode — confirm markdown file write: ${targetPath}`,
+        };
+      }
       return {
         block: true,
         reason:
@@ -29,6 +31,17 @@ export default function (pi: ExtensionAPI): void {
         block: true,
         reason:
           "Plan mode active — only bd commands allowed in bash. Switch to orchestrator for full access.",
+      };
+    }
+
+    if (
+      event.toolName === "dispatch" ||
+      event.toolName === "workflow" ||
+      event.toolName === "mcpScript"
+    ) {
+      return {
+        block: true,
+        reason: `Plan mode active — ${event.toolName} is blocked. Switch to orchestrator to dispatch work.`,
       };
     }
   });
