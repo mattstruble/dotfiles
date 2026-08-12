@@ -5,16 +5,18 @@ export default function (pi: ExtensionAPI) {
   let lastActivity = Date.now();
   let agentRunning = false;
   let watchdogInterval: ReturnType<typeof setInterval> | null = null;
+  let sessionCtx: any = null;
 
   const touch = () => {
     lastActivity = Date.now();
   };
 
-  pi.on("session_start", async () => {
+  pi.on("session_start", async (_event, ctx) => {
+    sessionCtx = ctx;
     watchdogInterval = setInterval(() => {
-      if (agentRunning && Date.now() - lastActivity > timeoutMs) {
-        pi.notify(`Agent stalled for ${timeoutMs / 1000}s — aborting`);
-        pi.abort();
+      if (agentRunning && Date.now() - lastActivity > timeoutMs && sessionCtx) {
+        sessionCtx.ui.notify(`Agent stalled for ${timeoutMs / 1000}s — aborting`, "warning");
+        sessionCtx.abort();
       }
     }, 5000);
   });
