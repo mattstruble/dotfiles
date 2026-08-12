@@ -72,6 +72,7 @@ export default function (pi: ExtensionAPI): void {
     currentIndex = (currentIndex + 1) % profiles.length;
     const profile = profiles[currentIndex];
     currentPlanMode = profile.planMode;
+    (globalThis as any).__piPlanMode = profile.planMode;
 
     pi.setModel(profile.model);
     ctx.ui.setStatus("profile", `[${profile.name}]`);
@@ -125,6 +126,7 @@ export default function (pi: ExtensionAPI): void {
       currentIndex = idx;
       const profile = profiles[currentIndex];
       currentPlanMode = profile.planMode;
+      (globalThis as any).__piPlanMode = profile.planMode;
       pi.setModel(profile.model);
       ctx.ui.setStatus("profile", `[${profile.name}]`);
       ctx.ui.notify(`Profile: ${profile.name} (${profile.model})`, "info");
