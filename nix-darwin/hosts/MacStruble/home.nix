@@ -32,6 +32,26 @@ in
         secrets = {
           n8n-mcp-token = { };
         };
+        templates."pi-mcp-json" = {
+          content = builtins.toJSON {
+            mcpServers = {
+              context7 = {
+                url = "https://mcp.context7.com/mcp";
+              };
+              nixos = {
+                command = "uvx";
+                args = [ "mcp-nixos" ];
+              };
+              n8n = {
+                url = "http://roque:5678/mcp-server/http";
+                headers = {
+                  Authorization = "Bearer ${config.sops.placeholder.n8n-mcp-token}";
+                };
+              };
+            };
+          };
+          path = "${config.home.homeDirectory}/.pi/agent/mcp.json";
+        };
       };
 
       services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
