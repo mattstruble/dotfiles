@@ -91,7 +91,8 @@ export default function (pi: ExtensionAPI) {
     if (/git\s+commit/.test(cmd)) {
       let diff = "";
       try {
-        diff = await pi.exec("git", ["diff", "--cached"]);
+        const result = await pi.exec("git", ["diff", "--cached"]);
+        diff = result.stdout ?? "";
       } catch {
         // Not a repo or no staged changes — skip
       }
