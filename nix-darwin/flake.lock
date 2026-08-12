@@ -21,11 +21,11 @@
     },
     "ai-agents": {
       "locked": {
-        "lastModified": 1786542918,
-        "narHash": "sha256-NmQoQPo1dNQUEwwsPB8mW/tORjd47OBm7h2uoBeiGBY=",
+        "lastModified": 1786547421,
+        "narHash": "sha256-t7RQG0rmz3fo3967puJqP1x5G3oHG97J8WnPnXtsN1c=",
         "owner": "mattstruble",
         "repo": "nix-ai-agents",
-        "rev": "87f24d01aa1e23bc248e7214c7f9afdf2df5f2d5",
+        "rev": "9d45d9de837f14b7eae7b787794ab655f09e8578",
         "type": "github"
       },
       "original": {
