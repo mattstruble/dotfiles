@@ -42,6 +42,10 @@ in
                 command = "uvx";
                 args = [ "mcp-nixos" ];
               };
+              pdf-fast = {
+                command = "npx";
+                args = [ "@sylphx/pdf-reader-mcp" ];
+              };
               n8n = {
                 url = "http://roque:5678/mcp-server/http";
                 headers = {
