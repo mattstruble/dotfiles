@@ -152,6 +152,17 @@ in
 
         # Ponytail: expose full repo so plugin's relative requires resolve
         ".local/share/ponytail".source = inputs.ponytail;
+
+        # pi-mcp-adapter reads ~/.pi/agent/mcp.json as the Pi global MCP override.
+        # Precedence (lowest→highest): ~/.config/mcp/mcp.json, ~/.agents/mcp.json,
+        # ~/.pi/agent/mcp.json, .mcp.json (project), .pi/mcp.json (project).
+        ".pi/agent/mcp.json".source = (pkgs.formats.json { }).generate "pi-mcp.json" {
+          mcpServers = {
+            context7 = {
+              url = "https://mcp.context7.com/mcp";
+            };
+          };
+        };
       };
 
     activation.setupDockerCliPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
