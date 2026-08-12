@@ -431,6 +431,15 @@ in
         packages = [
           "npm:pi-mcp-adapter"
           "npm:@gotgenes/pi-permission-system"
+          "npm:@nicknisi/pi-subagents"
+          "npm:@nicknisi/pi-workflows"
+          "npm:pi-oc-style-agent-switcher"
+          "npm:@narumitw/pi-plan-mode"
+          "npm:@narumitw/pi-lsp"
+          "npm:@nicknisi/pi-statusline"
+          "npm:@nicknisi/pi-session-name"
+          "npm:pi-cache-optimizer"
+          "npm:@narumitw/pi-caffeinate"
         ];
         permissionConfig = {
           permission = {
