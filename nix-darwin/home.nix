@@ -153,6 +153,9 @@ in
         # Ponytail: expose full repo so plugin's relative requires resolve
         ".local/share/ponytail".source = inputs.ponytail;
 
+        # Pi LSP server configuration
+        ".pi/agent/pi-lsp.json".source = mkLink "${path}/pi/.pi/agent/pi-lsp.json";
+
       };
 
     activation.setupDockerCliPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -463,10 +466,6 @@ in
           };
         };
       };
-
-      # Pi LSP server configuration (deployed alongside module-managed files)
-      home.file.".pi/agent/pi-lsp.json".source =
-        config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/pi-lsp.json";
 
       opencode = {
         agentsFile = config.lib.file.mkOutOfStoreSymlink "${path}/opencode/.config/opencode/AGENTS.md";
