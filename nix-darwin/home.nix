@@ -421,16 +421,23 @@ in
           ];
         };
         systemPromptFile = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/SYSTEM.md";
-        extensions = map (f: config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/extensions/${f}") [
-          "skill-enforcer.ts"
-          "profile-loader.ts"
-          "guardrails.ts"
-          "beads.ts"
-          "knowledge-base.ts"
-          "ponytail.ts"
-          "conductor.ts"
-          "notification.ts"
-        ];
+        extensions = builtins.listToAttrs (
+          map
+            (f: {
+              name = f;
+              value = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/extensions/${f}";
+            })
+            [
+              "skill-enforcer.ts"
+              "profile-loader.ts"
+              "guardrails.ts"
+              "beads.ts"
+              "knowledge-base.ts"
+              "ponytail.ts"
+              "conductor.ts"
+              "notification.ts"
+            ]
+        );
         packages = [
           "npm:pi-mcp-adapter"
           "npm:@gotgenes/pi-permission-system"
