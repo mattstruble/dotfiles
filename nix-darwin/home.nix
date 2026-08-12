@@ -406,8 +406,8 @@ in
             keepRecentTokens = 20000;
           };
           enabledModels = [
-            "bedrock/us.anthropic.claude-sonnet-4-6-v1"
-            "bedrock/us.anthropic.claude-opus-4-6-v1"
+            "us.anthropic.claude-sonnet-4-6-v1"
+            "us.anthropic.claude-opus-4-6-v1"
           ];
         };
         systemPromptFile = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/SYSTEM.md";
@@ -463,6 +463,10 @@ in
           };
         };
       };
+
+      # Pi LSP server configuration (deployed alongside module-managed files)
+      home.file.".pi/agent/pi-lsp.json".source =
+        config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/pi-lsp.json";
 
       opencode = {
         agentsFile = config.lib.file.mkOutOfStoreSymlink "${path}/opencode/.config/opencode/AGENTS.md";

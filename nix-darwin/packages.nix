@@ -134,6 +134,7 @@ with pkgs;
   universal-ctags
   uv
   viu
+  vtsls
   wget
   write-good
   yaml-language-server

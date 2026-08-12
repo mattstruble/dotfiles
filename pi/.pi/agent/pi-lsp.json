@@ -1,0 +1,32 @@
+{
+  "servers": {
+    "nixd": {
+      "command": ["nixd"],
+      "extensions": [".nix"]
+    },
+    "bash-language-server": {
+      "command": ["bash-language-server", "start"],
+      "extensions": [".sh", ".bash"]
+    },
+    "lua-language-server": {
+      "command": ["lua-language-server"],
+      "extensions": [".lua"]
+    },
+    "yaml-language-server": {
+      "command": ["yaml-language-server", "--stdio"],
+      "extensions": [".yaml", ".yml"]
+    },
+    "ty": {
+      "command": ["ty", "server"],
+      "extensions": [".py", ".pyi"]
+    },
+    "ruff": {
+      "command": ["ruff", "server"],
+      "extensions": [".py", ".pyi"]
+    },
+    "vtsls": {
+      "command": ["vtsls", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx"]
+    }
+  }
+}

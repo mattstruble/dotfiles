@@ -46,13 +46,13 @@ If no task graph exists, direct the user to switch to the planner profile first.
 const profiles: Profile[] = [
   {
     name: "planner",
-    model: process.env.PI_PLANNER_MODEL ?? "bedrock/us.anthropic.claude-opus-4-6-v1",
+    model: process.env.PI_PLANNER_MODEL ?? "us.anthropic.claude-opus-4-6-v1",
     instructions: PLANNER_INSTRUCTIONS,
     planMode: true,
   },
   {
     name: "orchestrator",
-    model: process.env.PI_ORCHESTRATOR_MODEL ?? "bedrock/us.anthropic.claude-opus-4-6-v1",
+    model: process.env.PI_ORCHESTRATOR_MODEL ?? "us.anthropic.claude-opus-4-6-v1",
     instructions: ORCHESTRATOR_INSTRUCTIONS,
     planMode: false,
   },

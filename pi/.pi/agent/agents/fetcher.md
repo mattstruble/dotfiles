@@ -1,6 +1,6 @@
 ---
 name: fetcher
-model: bedrock/us.anthropic.claude-haiku-4-5-v1
+model: us.anthropic.claude-haiku-4-5-v1
 tools: [read, bash, fetch]
 ---
 

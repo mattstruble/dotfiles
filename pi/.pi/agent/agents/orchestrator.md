@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-model: bedrock/us.anthropic.claude-opus-4-6-v1
+model: us.anthropic.claude-opus-4-6-v1
 tools: [read, write, edit, bash, grep, glob, fetch]
 ---
 
