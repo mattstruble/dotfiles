@@ -75,6 +75,20 @@
                   (final: prev: {
                     beads = inputs.beads.packages.${system}.default;
                   })
+                  (final: prev: {
+                    obsidian = prev.obsidian.overrideAttrs (old: {
+                      unpackPhase = ''
+                        runHook preUnpack
+                        unpackFile "$src"
+                        if [ ! -d "Obsidian.app" ]; then
+                          mv Obsidian*/Obsidian.app .
+                        fi
+                        sourceRoot="Obsidian.app"
+                        chmod -R u+r "$sourceRoot"
+                        runHook postUnpack
+                      '';
+                    });
+                  })
                 ];
               };
 
