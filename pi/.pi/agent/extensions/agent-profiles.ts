@@ -63,9 +63,20 @@ export let currentPlanMode: boolean = false;
 
 export default function (pi: ExtensionAPI): void {
   let currentIndex = -1; // -1 = no profile active (default agent behaviour)
+  let sessionCtx: any = null;
 
   function currentProfile(): Profile | null {
     return currentIndex >= 0 ? profiles[currentIndex] : null;
+  }
+
+  function updateStatus(profile: Profile | null): void {
+    const ctx = sessionCtx;
+    if (!ctx) return;
+    if (profile) {
+      ctx.ui.setStatus("profile", `[${profile.name}]`);
+    } else {
+      ctx.ui.setStatus("profile", undefined);
+    }
   }
 
   function cycleProfile(ctx: ExtensionCommandContext): void {
@@ -75,15 +86,13 @@ export default function (pi: ExtensionAPI): void {
     (globalThis as any).__piPlanMode = profile.planMode;
 
     pi.setModel(profile.model);
-    ctx.ui.setStatus("profile", `[${profile.name}]`);
+    updateStatus(profile);
     ctx.ui.notify(`Profile: ${profile.name} (${profile.model})`, "info");
   }
 
   pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
-    const profile = currentProfile();
-    if (profile) {
-      ctx.ui.setStatus("profile", `[${profile.name}]`);
-    }
+    sessionCtx = ctx;
+    updateStatus(currentProfile());
   });
 
   pi.on(
@@ -128,7 +137,7 @@ export default function (pi: ExtensionAPI): void {
       currentPlanMode = profile.planMode;
       (globalThis as any).__piPlanMode = profile.planMode;
       pi.setModel(profile.model);
-      ctx.ui.setStatus("profile", `[${profile.name}]`);
+      updateStatus(profile);
       ctx.ui.notify(`Profile: ${profile.name} (${profile.model})`, "info");
     },
   });
