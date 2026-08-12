@@ -442,6 +442,27 @@ in
           "npm:pi-mcp-adapter"
           "npm:@gotgenes/pi-permission-system"
         ];
+        permissionConfig = {
+          permission = {
+            "*" = "allow";
+            path = {
+              "*" = "allow";
+              "*.direnv" = "deny";
+              "*.direnv.*" = "deny";
+              "*.env" = "deny";
+              "*.env.*" = "deny";
+              "*.env.example" = "allow";
+            };
+            bash = {
+              "*" = "allow";
+            };
+            external_directory = {
+              "*" = "allow";
+              "/tmp/opencode-wt/**" = "allow";
+              "~/llm-wiki/**" = "allow";
+            };
+          };
+        };
       };
 
       opencode = {
