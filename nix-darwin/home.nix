@@ -156,6 +156,9 @@ in
         # Pi LSP server configuration
         ".pi/agent/pi-lsp.json".source = mkLink "${path}/pi/.pi/agent/pi-lsp.json";
 
+        # Pi themes
+        ".pi/agent/themes".source = mkLink "${path}/pi/.pi/agent/themes";
+
       };
 
     activation.setupDockerCliPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -400,7 +403,7 @@ in
           defaultProvider = "bedrock";
           defaultModel = "us.anthropic.claude-sonnet-4-6-v1";
           defaultThinkingLevel = "medium";
-          theme = "dark";
+          theme = "bamboo";
           enableSkillCommands = true;
           defaultProjectTrust = "always";
           hideThinkingBlock = true;
@@ -429,6 +432,15 @@ in
               "ponytail.ts"
               "conductor.ts"
               "notification.ts"
+              "audit.ts"
+              "agent-profiles.ts"
+              "plan-mode-guard.ts"
+              "plan-critic-gate.ts"
+              "wave-progress.ts"
+              "session-bridge.ts"
+              "review-dispatch.ts"
+              "token-ledger.ts"
+              "preflight.ts"
             ]
         );
         packages = [
@@ -436,32 +448,206 @@ in
           "npm:@gotgenes/pi-permission-system"
           "npm:@nicknisi/pi-subagents"
           "npm:@nicknisi/pi-workflows"
-          "npm:pi-oc-style-agent-switcher"
-          "npm:@narumitw/pi-plan-mode"
           "npm:@narumitw/pi-lsp"
           "npm:@nicknisi/pi-statusline"
-          "npm:@nicknisi/pi-session-name"
           "npm:pi-cache-optimizer"
           "npm:@narumitw/pi-caffeinate"
         ];
         permissionConfig = {
+          doublePressToConfirm = false;
+          permissionReviewLog = true;
           permission = {
-            "*" = "allow";
+            "*" = "ask";
+
+            # File tools — allow reads, ask for writes
+            read = "allow";
+            grep = "allow";
+            find = "allow";
+            ls = "allow";
+            write = "ask";
+            edit = "ask";
+
+            # Path-level denials (applies to all file tools)
             path = {
               "*" = "allow";
               "*.direnv" = "deny";
               "*.direnv.*" = "deny";
               "*.env" = "deny";
               "*.env.*" = "deny";
+              "*.env.local" = "deny";
               "*.env.example" = "allow";
+              "*.pem" = "deny";
+              "*.key" = "deny";
+              "*id_rsa*" = "deny";
+              "*id_ed25519*" = "deny";
+              "*.ssh/config" = "allow";
             };
+
+            # Bash — ask by default, allow safe read-only commands
             bash = {
-              "*" = "allow";
+              "*" = "ask";
+
+              # Filesystem read-only
+              "cat *" = "allow";
+              "head *" = "allow";
+              "tail *" = "allow";
+              "less *" = "allow";
+              "wc *" = "allow";
+              "sort *" = "allow";
+              "uniq *" = "allow";
+              "which *" = "allow";
+              "file *" = "allow";
+              "stat *" = "allow";
+              "tree *" = "allow";
+              "rg *" = "allow";
+              "fd *" = "allow";
+              "sed *" = "allow";
+              "awk *" = "allow";
+              "jq *" = "allow";
+              "yq *" = "allow";
+              "echo *" = "allow";
+              "printf *" = "allow";
+              "basename *" = "allow";
+              "dirname *" = "allow";
+              "realpath *" = "allow";
+              "pwd" = "allow";
+              "date *" = "allow";
+              "env" = "allow";
+
+              # Git — read-only operations
+              "git status *" = "allow";
+              "git status" = "allow";
+              "git diff *" = "allow";
+              "git diff" = "allow";
+              "git log *" = "allow";
+              "git log" = "allow";
+              "git show *" = "allow";
+              "git branch *" = "allow";
+              "git branch" = "allow";
+              "git rev-parse *" = "allow";
+              "git ls-files *" = "allow";
+              "git remote -v" = "allow";
+              "git fetch *" = "allow";
+              "git stash list" = "allow";
+              "git config *" = "allow";
+              "git worktree list" = "allow";
+              # Git write — ask
+              "git *" = "ask";
+              # Git dangerous — deny
+              "git push *--force*" = "deny";
+              "git push *-f*" = "deny";
+              "git reset --hard *" = "deny";
+              "git clean -fd *" = "deny";
+
+              # GitHub CLI — read-only
+              "gh pr view *" = "allow";
+              "gh pr list *" = "allow";
+              "gh pr diff *" = "allow";
+              "gh pr checks *" = "allow";
+              "gh repo view *" = "allow";
+              "gh issue list *" = "allow";
+              "gh issue view *" = "allow";
+              "gh *" = "ask";
+
+              # Beads — all commands allowed
+              "bd *" = "allow";
+
+              # Nix — read/build operations
+              "nix build *" = "allow";
+              "nix flake check *" = "allow";
+              "nix flake check" = "allow";
+              "nix flake show *" = "allow";
+              "nix flake show" = "allow";
+              "nix eval *" = "allow";
+              "nix search *" = "allow";
+              "nix profile history *" = "allow";
+              "nix path-info *" = "allow";
+              "nix develop *" = "ask";
+              "nix *" = "ask";
+              "nixos-rebuild build *" = "allow";
+              "darwin-rebuild build *" = "allow";
+              "darwin-rebuild check *" = "allow";
+              "home-manager build *" = "allow";
+
+              # Build/test/lint (common safe patterns)
+              "make *" = "allow";
+              "cargo build *" = "allow";
+              "cargo check *" = "allow";
+              "cargo test *" = "allow";
+              "cargo clippy *" = "allow";
+              "cargo fmt *" = "allow";
+              "npm test *" = "allow";
+              "npm run lint *" = "allow";
+              "npm run check *" = "allow";
+              "pnpm test *" = "allow";
+              "pnpm lint *" = "allow";
+              "pytest *" = "allow";
+              "python -m pytest *" = "allow";
+              "ruff check *" = "allow";
+              "ruff format *" = "allow";
+              "mypy *" = "allow";
+              "eslint *" = "allow";
+              "prettier *" = "allow";
+              "shellcheck *" = "allow";
+              "odin build *" = "allow";
+              "odin check *" = "allow";
+              "odin test *" = "allow";
+
+              # Package managers — read
+              "pip list *" = "allow";
+              "pip show *" = "allow";
+              "npm list *" = "allow";
+              "npm info *" = "allow";
+              # Package managers — install (ask)
+              "pip install *" = "ask";
+              "npm install *" = "ask";
+              "pnpm install *" = "ask";
+              "pnpm add *" = "ask";
+
+              # Kubernetes — read-only
+              "kubectl get *" = "allow";
+              "kubectl describe *" = "allow";
+              "kubectl logs *" = "allow";
+              "kubectl top *" = "allow";
+              "kubectl config *" = "allow";
+              "kubectl explain *" = "allow";
+              "kubectl api-resources *" = "allow";
+              "kubectl *" = "ask";
+              "helm template *" = "allow";
+              "helm show *" = "allow";
+              "helm list *" = "allow";
+              "helm *" = "ask";
+
+              # Dangerous commands — hard deny
+              "rm -rf /*" = "deny";
+              "rm -rf ~*" = "deny";
+              "chmod 777 *" = "deny";
+              "curl * | sh" = "deny";
+              "curl * | bash" = "deny";
+              "wget * | sh" = "deny";
             };
+
+            # External directories — restrictive by default
             external_directory = {
-              "*" = "allow";
+              "*" = "ask";
               "/tmp/opencode-wt/**" = "allow";
               "~/llm-wiki/**" = "allow";
+              "~/.pi/agent/**" = "allow";
+              "~/.config/opencode/**" = "allow";
+              "~/.local/share/ponytail/**" = "allow";
+              "~/.local/share/pi/**" = "allow";
+              "/nix/store/**" = "allow";
+              "/tmp/**" = "allow";
+            };
+
+            # MCP tools
+            mcp = {
+              "*" = "ask";
+            };
+
+            # Skills
+            skill = {
+              "*" = "allow";
             };
           };
         };
@@ -687,6 +873,19 @@ in
         "Thumbs.db"
         ".bundle"
         ".opencode"
+        ".beads.gate.lock"
+        ".beads/embeddeddolt"
+        ".beads/backup"
+        ".beads/last-touched"
+        ".beads/bd.sock"
+        ".beads/bd.sock.startlock"
+        ".beads/daemon.*"
+        ".beads/*.lock"
+        ".beads/sync-state.json"
+        ".beads/push-state.json"
+        ".beads/ephemeral.sqlite3*"
+        ".beads/dolt-server.*"
+        ".beads/.beads-credential-key"
       ];
 
       signing = {
