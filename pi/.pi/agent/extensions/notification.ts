@@ -36,14 +36,6 @@ export default function (pi: ExtensionAPI): void {
     sessionName = pi.getSessionName?.() ?? undefined;
     updateTitle(ctx);
 
-    // Set directory:branch status segment
-    let branch = "";
-    try {
-      const result = await pi.exec("git", ["branch", "--show-current"], { cwd: ctx.cwd, timeout: 3000 });
-      branch = result.stdout?.trim() ?? "";
-    } catch {}
-    const cwdLabel = branch ? `${basename(cwd)}:${branch}` : basename(cwd);
-    ctx.ui.setStatus("cwd", cwdLabel);
 
     // Subscribe to permission UI prompts if the permission system is available
     try {
@@ -80,14 +72,6 @@ export default function (pi: ExtensionAPI): void {
       state = "idle";
       updateTitle(ctx);
     }
-    // Refresh directory:branch status (branch may have changed)
-    let branch = "";
-    try {
-      const result = await pi.exec("git", ["branch", "--show-current"], { cwd: ctx.cwd, timeout: 3000 });
-      branch = result.stdout?.trim() ?? "";
-    } catch {}
-    const cwdLabel = branch ? `${basename(cwd)}:${branch}` : basename(cwd);
-    ctx.ui.setStatus("cwd", cwdLabel);
   });
 
   pi.on("agent_end", async (_event, ctx) => {
