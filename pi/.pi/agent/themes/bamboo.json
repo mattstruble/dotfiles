@@ -17,6 +17,7 @@
 		"red": "#e75a7c",
 		"purple": "#aaaaff",
 		"orange": "#ff9966",
+		"user_fg": "#e2e8f2",
 		"diff_add": "#40531b",
 		"diff_del": "#893f45"
 	},
@@ -36,7 +37,7 @@
 		"selectedBg": "bg2",
 		"scrollbarThumb": "bg3",
 		"userMessageBg": "bg1",
-		"userMessageText": "fg",
+		"userMessageText": "user_fg",
 		"customMessageBg": "bg2",
 		"customMessageText": "fg",
 		"customMessageLabel": "purple",
