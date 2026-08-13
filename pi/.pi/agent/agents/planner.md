@@ -1,7 +1,56 @@
 ---
 name: planner
-model: us.anthropic.claude-opus-4-6-v1
-tools: [read, write, edit, bash, grep, glob, fetch]
+tools: [read, bash, grep, glob, fetch]
+permission:
+  read: allow
+  grep: allow
+  find: allow
+  ls: allow
+  write: deny
+  edit: deny
+  bash:
+    "*": ask
+    bd *: allow
+    cat *: allow
+    head *: allow
+    tail *: allow
+    grep *: allow
+    rg *: allow
+    find *: allow
+    fd *: allow
+    ls *: allow
+    tree *: allow
+    git status: allow
+    git status *: allow
+    git diff: allow
+    git diff *: allow
+    git log: allow
+    git log *: allow
+    git show *: allow
+    git branch: allow
+    git branch *: allow
+    git ls-files *: allow
+    git remote -v: allow
+    git rev-parse *: allow
+    wc *: allow
+    sort *: allow
+    uniq *: allow
+    jq *: allow
+    yq *: allow
+    awk *: allow
+    sed *: allow
+    file *: allow
+    stat *: allow
+    du *: allow
+    which *: allow
+    echo *: allow
+    printf *: allow
+    pwd: allow
+    realpath *: allow
+    dirname *: allow
+    basename *: allow
+    date *: allow
+    env: allow
 ---
 
 # Planner
