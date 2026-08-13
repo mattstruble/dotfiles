@@ -59,8 +59,25 @@ in
       };
 
       services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
+
+
       programs = {
         ai-agents = {
+          pi = {
+            config = {
+              defaultProvider = "opencode-go";
+              defaultModel = "opencode-go/glm-5.2";
+              enabledModels = [
+                "opencode-go/glm-5.2"
+                "opencode-go/deepseek-v4-flash-free"
+              ];
+            };
+            # TODO: API key configuration pending
+            # auth."opencode-go" = {
+            #   type = "api_key";
+            #   env.OPENCODE_GO_API_KEY = "...";
+            # };
+          };
           skills = {
             # Game development skills
             mattstruble-ai = {

@@ -307,7 +307,6 @@ in
       enable = true;
       agents = [
         "opencode"
-        "claude"
         "pi"
       ];
       subagents = [
@@ -400,8 +399,6 @@ in
 
       pi = {
         config = {
-          defaultProvider = "bedrock";
-          defaultModel = "us.anthropic.claude-sonnet-4-6-v1";
           defaultThinkingLevel = "medium";
           theme = "bamboo";
           enableSkillCommands = true;
@@ -411,10 +408,6 @@ in
             enabled = true;
             keepRecentTokens = 20000;
           };
-          enabledModels = [
-            "us.anthropic.claude-sonnet-4-6-v1"
-            "us.anthropic.claude-opus-4-6-v1"
-          ];
         };
         systemPromptFile = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/SYSTEM.md";
         extensions = builtins.listToAttrs (
