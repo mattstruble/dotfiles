@@ -403,7 +403,7 @@ in
           theme = "bamboo";
           enableSkillCommands = true;
           defaultProjectTrust = "always";
-          hideThinkingBlock = true;
+          hideThinkingBlock = false;
           compaction = {
             enabled = true;
             keepRecentTokens = 20000;

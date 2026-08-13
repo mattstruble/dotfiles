@@ -41,8 +41,8 @@
 		"customMessageText": "fg",
 		"customMessageLabel": "purple",
 		"toolPendingBg": "bg1",
-		"toolSuccessBg": "diff_add",
-		"toolErrorBg": "diff_del",
+		"toolSuccessBg": "bg1",
+		"toolErrorBg": "bg2",
 		"toolTitle": "fg",
 		"toolOutput": "light_grey",
 
