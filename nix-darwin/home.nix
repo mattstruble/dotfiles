@@ -501,6 +501,8 @@ in
               "ls" = "allow";
               "ls *" = "allow";
               "find *" = "allow";
+              "xargs *" = "allow";
+              "cd *" = "allow";
               "grep *" = "allow";
               "rg *" = "allow";
               "fd *" = "allow";

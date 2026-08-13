@@ -7,8 +7,10 @@ function isPlanModeActive(): boolean {
 // Commands that are safe for read-only exploration in plan mode.
 const READ_ONLY_COMMANDS = new Set([
   "cat", "head", "tail", "less", "more",
+  "cd",
   "grep", "rg", "ag",
   "find", "fd", "locate",
+  "xargs",
   "ls", "eza", "tree", "exa",
   "pwd", "realpath", "dirname", "basename",
   "echo", "printf",
