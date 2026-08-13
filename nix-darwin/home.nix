@@ -434,6 +434,7 @@ in
               "review-dispatch.ts"
               "token-ledger.ts"
               "preflight.ts"
+              "statusline.ts"
             ]
         ) // {
           # Upstream ponytail pi-extension (directory with index.js)
@@ -445,9 +446,10 @@ in
           "npm:@nicknisi/pi-subagents"
           "npm:@nicknisi/pi-workflows"
           "npm:@narumitw/pi-lsp"
-          "npm:@nicknisi/pi-statusline"
           "npm:pi-cache-optimizer"
           "npm:@narumitw/pi-caffeinate"
+          "npm:pi-web-access"
+          "npm:pi-effort"
         ];
         permissionConfig = {
           doublePressToConfirm = false;
@@ -462,6 +464,7 @@ in
             ls = "allow";
             write = "ask";
             edit = "ask";
+            fetch_content = "allow";
 
             # Path-level denials (applies to all file tools)
             path = {
@@ -495,6 +498,10 @@ in
               "file *" = "allow";
               "stat *" = "allow";
               "tree *" = "allow";
+              "ls" = "allow";
+              "ls *" = "allow";
+              "find *" = "allow";
+              "grep *" = "allow";
               "rg *" = "allow";
               "fd *" = "allow";
               "sed *" = "allow";
