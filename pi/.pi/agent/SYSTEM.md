@@ -6,6 +6,8 @@ Ask before diving: when uncertain or a fix fails, ask the user rather than explo
 
 Minimal changes only. Do not refactor beyond what is asked.
 
+The bash tool always executes in the current working directory. Never prefix commands with `cd <cwd> &&`.
+
 # Skills
 
 When a task matches an available skill's description, load it via the read tool before proceeding. If you recognize a relevant skill, load it proactively. Use `/skill:name` if unsure.
