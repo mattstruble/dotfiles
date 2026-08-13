@@ -120,7 +120,12 @@ export default function (pi: ExtensionAPI): void {
 
   pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
     sessionCtx = ctx;
-    updateStatus(currentProfile());
+    if (currentIndex < 0) {
+      currentIndex = 0; // planner
+      activateProfile(profiles[currentIndex]);
+    } else {
+      updateStatus(currentProfile());
+    }
   });
 
   pi.on(

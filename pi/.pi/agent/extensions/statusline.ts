@@ -26,22 +26,43 @@ export default function (pi: ExtensionAPI): void {
         render(width: number): string[] {
           const segments: string[] = [];
 
-          // Model
+          // Agent mode (from agent-profiles extension)
+          const statuses = footerData.getExtensionStatuses();
+          const profileStatus = statuses.get("profile");
+          if (profileStatus) {
+            const name = profileStatus.replace(/\x1b\[[0-9;]*m/g, "").replace(/[\[\]]/g, "").trim();
+            const modeColors: Record<string, string> = {
+              planner: "mdLink",
+              orchestrator: "customMessageLabel",
+              builder: "accent",
+            };
+            const color = modeColors[name] ?? "muted";
+            segments.push(theme.fg(color as any, name));
+          }
+
+          // Model + thinking level (collapsed: model:effort)
           const model = ctx.model;
           if (model) {
             const id = (model as any).modelId ?? (model as any).id ?? String(model);
-            // Shorten common prefixes
             const short = id
               .replace(/^anthropic\//, "")
               .replace(/^openai\//, "")
               .replace(/-\d{8}$/, "");
-            segments.push(theme.fg("accent", short));
-          }
-
-          // Thinking level
-          const thinking = ctx.thinkingLevel;
-          if (thinking && thinking !== "off") {
-            segments.push(theme.fg("muted", `🧠 ${thinking}`));
+            const thinking = ctx.thinkingLevel;
+            if (thinking && thinking !== "off") {
+              const thinkingColors: Record<string, string> = {
+                minimal: "thinkingMinimal",
+                low: "thinkingLow",
+                medium: "thinkingMedium",
+                high: "thinkingHigh",
+                xhigh: "thinkingXhigh",
+                max: "thinkingMax",
+              };
+              const tColor = thinkingColors[thinking] ?? "muted";
+              segments.push(theme.fg("accent", short) + theme.fg("dim", ":") + theme.fg(tColor as any, thinking));
+            } else {
+              segments.push(theme.fg("accent", short));
+            }
           }
 
           // Directory + branch
@@ -68,12 +89,10 @@ export default function (pi: ExtensionAPI): void {
           }
 
           // Extension statuses (mcp, cache, etc.) — inline them
-          const statuses = footerData.getExtensionStatuses();
           for (const [key, value] of statuses) {
             if (!value?.trim()) continue;
-            // Skip our own key and the narumitw key if somehow still present
-            if (key === "statusline" || key === "pi-statusline") continue;
-            // Strip ANSI from value for clean re-theming
+            // Skip our own key, profile (rendered above), and legacy key
+            if (key === "statusline" || key === "pi-statusline" || key === "profile" || key === "ponytail") continue;
             const clean = value.replace(/\x1b\[[0-9;]*m/g, "").trim();
             if (clean) {
               segments.push(theme.fg("dim", clean));
