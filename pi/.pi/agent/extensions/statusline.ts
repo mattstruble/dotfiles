@@ -55,14 +55,15 @@ export default function (pi: ExtensionAPI): void {
           // Context usage
           const usage = ctx.getContextUsage?.();
           if (usage) {
-            const pct = usage.percent != null ? `${usage.percent.toFixed(1)}%` : "?";
-            const window = usage.contextWindow >= 1000
-              ? `${Math.round(usage.contextWindow / 1000)}k`
-              : String(usage.contextWindow);
+            const toK = (n: number) => n >= 1000 ? `${Math.round(n / 1000)}k` : String(n);
+            const used = usage.percent != null
+              ? toK(Math.round(usage.contextWindow * usage.percent / 100))
+              : "?";
+            const window = toK(usage.contextWindow);
             const color = (usage.percent ?? 0) >= 90 ? "error"
               : (usage.percent ?? 0) >= 70 ? "warning"
               : "muted";
-            segments.push(theme.fg(color as any, `ctx ${pct}/${window}`));
+            segments.push(theme.fg(color as any, `ctx ${used}/${window}`));
           }
 
           // Extension statuses (mcp, cache, etc.) — inline them
