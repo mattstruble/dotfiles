@@ -645,7 +645,7 @@ in
 
             # MCP tools
             mcp = {
-              "*" = "ask";
+              "*" = "allow";
             };
 
             # Skills

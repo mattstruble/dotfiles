@@ -2,6 +2,7 @@
 // Replaces @narumitw/pi-statusline with a simple, theme-aware one-liner.
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { visibleWidth, truncateToWidth } from "@earendil-works/pi-tui";
 import { basename } from "node:path";
 
 export default function (pi: ExtensionAPI): void {
@@ -86,21 +87,20 @@ export default function (pi: ExtensionAPI): void {
 
           const line = segments.join(theme.fg("dim", "  ·  "));
 
-          // Truncate if wider than terminal (strip ANSI for measurement)
-          const plain = line.replace(/\x1b\[[0-9;]*m/g, "");
-          if (plain.length > width) {
+          // Truncate if wider than terminal
+          if (visibleWidth(line) > width) {
             // Just render what fits — segments are priority-ordered
             let built = "";
             let builtLen = 0;
             for (let i = 0; i < segments.length; i++) {
               const sep = i > 0 ? theme.fg("dim", "  ·  ") : "";
               const sepLen = i > 0 ? 5 : 0;
-              const segPlain = segments[i].replace(/\x1b\[[0-9;]*m/g, "");
-              if (builtLen + sepLen + segPlain.length > width) break;
+              const segWidth = visibleWidth(segments[i]);
+              if (builtLen + sepLen + segWidth > width) break;
               built += sep + segments[i];
-              builtLen += sepLen + segPlain.length;
+              builtLen += sepLen + segWidth;
             }
-            return [built];
+            return [truncateToWidth(built, width)];
           }
 
           return [line];
