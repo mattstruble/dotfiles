@@ -55,6 +55,8 @@ const skillPatterns: Array<{ pattern: RegExp; skill: string; directive: string }
 ];
 
 export default function (pi: ExtensionAPI) {
+  const loadedSkills = new Set<string>();
+
   // Inject skill directives into system prompt when prompt matches patterns
   pi.on("before_agent_start", async (event) => {
     const matches = skillPatterns.filter((sp) => sp.pattern.test(event.prompt));
@@ -66,11 +68,21 @@ export default function (pi: ExtensionAPI) {
     };
   });
 
+  // Track skill file reads
+  pi.on("tool_call", async (event) => {
+    if (event.toolName !== "read") return;
+    const path = (event.input as any)?.path ?? "";
+    const match = path.match(/skills\/([^/]+)\/SKILL\.md/);
+    if (match) loadedSkills.add(match[1]);
+  });
+
   // Block git commit if skill:git-commit hasn't been loaded
   pi.on("tool_call", async (event, ctx) => {
     if (event.toolName !== "bash") return;
     const cmd = (event.input as { command?: string }).command ?? "";
     if (!/git\s+commit/.test(cmd)) return;
+
+    if (loadedSkills.has("git-commit")) return;
 
     const sysPrompt = await ctx.getSystemPrompt();
     if (!sysPrompt.includes("skill:git-commit")) {
