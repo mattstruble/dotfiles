@@ -635,7 +635,7 @@ in
               "*" = "ask";
               "/tmp/opencode-wt/**" = "allow";
               "~/llm-wiki/**" = "allow";
-              "~/.pi/agent/**" = "allow";
+              "~/.pi/**" = "allow";
               "~/.config/opencode/**" = "allow";
               "~/.local/share/ponytail/**" = "allow";
               "~/.local/share/pi/**" = "allow";
