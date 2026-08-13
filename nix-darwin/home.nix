@@ -429,7 +429,7 @@ in
               "guardrails.ts"
               "beads.ts"
               "knowledge-base.ts"
-              "ponytail.ts"
+              "ponytail-skills.ts"
               "conductor.ts"
               "notification.ts"
               "audit.ts"
@@ -442,7 +442,10 @@ in
               "token-ledger.ts"
               "preflight.ts"
             ]
-        );
+        ) // {
+          # Upstream ponytail pi-extension (directory with index.js)
+          ponytail = config.lib.file.mkOutOfStoreSymlink "${home}/.local/share/ponytail/pi-extension";
+        };
         packages = [
           "npm:pi-mcp-adapter"
           "npm:@gotgenes/pi-permission-system"
