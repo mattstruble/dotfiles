@@ -1,7 +1,13 @@
 ---
 name: orchestrator
-model: us.anthropic.claude-opus-4-6-v1
 tools: [read, write, edit, bash, grep, glob, fetch]
+permission:
+  read: allow
+  write: allow
+  edit: allow
+  grep: allow
+  find: allow
+  ls: allow
 ---
 
 # Orchestrator
