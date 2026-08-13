@@ -3,66 +3,68 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 /**
  * plan-critic-gate extension
  *
- * Auto-dispatches the plan-critic agent after a planning session creates ≥2 beads tasks.
- * When globalThis.__piPlanMode is true, triggers automatically.
- * Otherwise, use /critique to trigger manually.
+ * Auto-triggers plan-critic dispatch after a planning session creates ≥2 beads tasks.
+ * Injects a directive telling the planner to dispatch plan-critic with read-only tools
+ * and iterate up to 3 rounds until the critic returns "No further suggestions."
  */
 export default function (pi: ExtensionAPI): void {
   let createdThisTurn: string[] = [];
   let pendingCritique = false;
-  let critiqueTaskIds: string[] = [];
 
   // Track `bd create` commands in tool_call events
   pi.on("tool_call", async (event) => {
     if (event.toolName !== "bash") return;
     const cmd = (event.input as any)?.command ?? "";
     if (/bd\s+create/.test(cmd)) {
-      // Extract a rough task identifier from the command (best-effort)
       createdThisTurn.push(cmd);
     }
   });
 
   // After agent settles, check if we should trigger critique
   pi.on("agent_settled", async () => {
-    const count = createdThisTurn.length;
-
-    if (count >= 2) {
+    if (createdThisTurn.length >= 2) {
       const autoTrigger = (globalThis as any).__piPlanMode === true;
-
       if (autoTrigger) {
         pendingCritique = true;
-        critiqueTaskIds = [...createdThisTurn];
       }
     }
-
-    // Reset per-turn counter
     createdThisTurn = [];
   });
 
   // Inject critique directive before next agent start
-  pi.on("before_agent_start", async (event, _ctx) => {
+  pi.on("before_agent_start", async (event) => {
     if (!pendingCritique) return;
-
     pendingCritique = false;
-    const taskList = critiqueTaskIds
-      .map((cmd, i) => `  ${i + 1}. \`${cmd}\``)
-      .join("\n");
-    critiqueTaskIds = [];
 
     const directive = [
       "## PLAN CRITIC DIRECTIVE",
       "",
-      "A plan was just created with the following tasks:",
-      taskList,
+      "A task graph was just created. You MUST now run the plan→critique→refine loop:",
       "",
-      "Dispatch the plan-critic reviewer before proceeding.",
-      "Run `bd show <id>` for each newly created task, then evaluate:",
-      "- Are tasks well-scoped and independently completable?",
-      "- Are there missing steps or implicit dependencies?",
-      "- Is ordering correct?",
-      "- Are acceptance criteria clear?",
+      "### Instructions",
       "",
-      "Summarize findings and suggest edits if needed. Then continue with the user's intent.",
+      "1. Dispatch a plan-critic agent with read-only tools to review the task graph:",
+      "   ```",
+      '   dispatch([{',
+      '     task: "Run plan-critic: evaluate the current beads task graph. Use `bd list --json`, `bd show <id> --json`, `bd dep tree`, and `bd dep cycles` to assess. Return structured findings per the plan-critic methodology (missing-dep, unclear-criteria, scope-gap, oversized, duplicate, ordering). Return \\"No further suggestions.\\" if the plan is sound.",',
+      '     agent: "plan-critic",',
+      '     tools: ["read", "grep", "find", "ls", "bash"]',
+      "   }])",
+      "   ```",
+      "",
+      "2. Read the critic's response.",
+      '   - If "No further suggestions." → the plan is ready. Present it to the user.',
+      "   - If findings exist → apply them using `bd update`, `bd create`, `bd dep add` as needed.",
+      "",
+      "3. After applying fixes, re-dispatch the plan-critic (same dispatch call).",
+      "",
+      "4. Repeat until the critic returns 'No further suggestions.' OR you reach 3 rounds.",
+      "   After 3 rounds, present the plan with any remaining suggestions noted.",
+      "",
+      "### Rules",
+      "- Do NOT skip the dispatch. The critic must run as a separate agent.",
+      "- Do NOT self-critique instead of dispatching.",
+      "- The dispatch uses read-only tools only — this is allowed in plan mode.",
     ].join("\n");
 
     const base = event.systemPrompt ?? "";
@@ -71,28 +73,10 @@ export default function (pi: ExtensionAPI): void {
 
   // Manual /critique command
   pi.registerCommand("critique", {
-    description: "Manually trigger plan-critic review of recently created tasks",
+    description: "Manually trigger plan-critic review of the task graph",
     handler: async (_args, ctx) => {
-      if (critiqueTaskIds.length === 0 && createdThisTurn.length === 0) {
-        ctx.ui.notify(
-          "No recently created tasks to critique. Create tasks with `bd create` first.",
-          "warn"
-        );
-        return;
-      }
-
       pendingCritique = true;
-      if (critiqueTaskIds.length === 0) {
-        critiqueTaskIds = [...createdThisTurn];
-      }
       ctx.ui.notify("Plan critique will run on next agent turn.", "info");
     },
-  });
-
-  // Clear status after critique completes
-  pi.on("agent_end", async (_event, ctx) => {
-    if (!pendingCritique && ctx.hasUI) {
-      try { ctx.ui.setStatus("plan-critic", undefined); } catch { /* */ }
-    }
   });
 }
