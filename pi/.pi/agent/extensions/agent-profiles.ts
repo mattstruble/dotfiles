@@ -1,6 +1,6 @@
 // agent-profiles — Pi extension
 // Cycles between planner, orchestrator, and builder profiles via Tab shortcut.
-// Each profile carries a model, system prompt injection, and permission identity.
+// Each profile carries a model and system prompt injection.
 // Publishes `active_agent` session entries so pi-permission-system resolves
 // per-agent frontmatter overrides.
 
@@ -15,7 +15,6 @@ interface Profile {
   name: string;
   model: string;
   instructions: string;
-  planMode: boolean;
 }
 
 const PLANNER_INSTRUCTIONS = `\
@@ -63,24 +62,18 @@ const profiles: Profile[] = [
     name: "planner",
     model: process.env.PI_PLANNER_MODEL ?? process.env.PI_DEFAULT_MODEL ?? "us.anthropic.claude-opus-4-6-v1",
     instructions: PLANNER_INSTRUCTIONS,
-    planMode: true,
   },
   {
     name: "orchestrator",
     model: process.env.PI_ORCHESTRATOR_MODEL ?? process.env.PI_DEFAULT_MODEL ?? "us.anthropic.claude-opus-4-6-v1",
     instructions: ORCHESTRATOR_INSTRUCTIONS,
-    planMode: false,
   },
   {
     name: "builder",
     model: process.env.PI_BUILDER_MODEL ?? process.env.PI_DEFAULT_SMALL_MODEL ?? process.env.PI_DEFAULT_MODEL ?? "us.anthropic.claude-sonnet-4-6-v1",
     instructions: BUILDER_INSTRUCTIONS,
-    planMode: false,
   },
 ];
-
-// Exported so plan-mode extension can read it without a custom event bus.
-export let currentPlanMode: boolean = false;
 
 export default function (pi: ExtensionAPI): void {
   let currentIndex = -1; // -1 = no profile active (default agent behaviour)
@@ -101,12 +94,8 @@ export default function (pi: ExtensionAPI): void {
   }
 
   function activateProfile(profile: Profile): void {
-    currentPlanMode = profile.planMode;
-    (globalThis as any).__piPlanMode = profile.planMode;
-
     // Publish active_agent entry so pi-permission-system resolves per-agent overrides
     pi.appendEntry("active_agent", { name: profile.name });
-
     pi.setModel(profile.model);
     updateStatus(profile);
   }
