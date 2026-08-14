@@ -410,36 +410,38 @@ in
           };
         };
         systemPromptFile = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/SYSTEM.md";
-        extensions = builtins.listToAttrs (
-          map
-            (f: {
-              name = f;
-              value = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/extensions/${f}";
-            })
-            [
-              "skill-enforcer.ts"
-              "profile-loader.ts"
-              "guardrails.ts"
-              "beads.ts"
-              "knowledge-base.ts"
-              "ponytail-skills.ts"
-              "conductor.ts"
-              "notification.ts"
-              "audit.ts"
-              "agent-profiles.ts"
-              "plan-mode-guard.ts"
-              "plan-critic-gate.ts"
-              "wave-progress.ts"
-              "session-bridge.ts"
-              "review-dispatch.ts"
-              "token-ledger.ts"
-              "preflight.ts"
-              "statusline.ts"
-            ]
-        ) // {
-          # Upstream ponytail pi-extension (directory with index.js)
-          ponytail = config.lib.file.mkOutOfStoreSymlink "${home}/.local/share/ponytail/pi-extension";
-        };
+        extensions =
+          builtins.listToAttrs (
+            map
+              (f: {
+                name = f;
+                value = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/extensions/${f}";
+              })
+              [
+                "skill-enforcer.ts"
+                "profile-loader.ts"
+                "guardrails.ts"
+                "beads.ts"
+                "knowledge-base.ts"
+                "ponytail-skills.ts"
+                "conductor.ts"
+                "notification.ts"
+                "audit.ts"
+                "agent-profiles.ts"
+                "plan-mode-guard.ts"
+                "plan-critic-gate.ts"
+                "wave-progress.ts"
+                "session-bridge.ts"
+                "review-dispatch.ts"
+                "token-ledger.ts"
+                "preflight.ts"
+                "statusline.ts"
+              ]
+          )
+          // {
+            # Upstream ponytail pi-extension (directory with index.js)
+            ponytail = config.lib.file.mkOutOfStoreSymlink "${home}/.local/share/ponytail/pi-extension";
+          };
         packages = [
           "npm:pi-mcp-adapter"
           "npm:@gotgenes/pi-permission-system"
