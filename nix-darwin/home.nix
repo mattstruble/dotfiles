@@ -185,13 +185,6 @@ in
       fi
     '';
 
-    activation.seedFortuneCow = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      FORTUNE_COW_CACHE="''${XDG_CACHE_HOME:-$HOME/.cache}/fortune-cow"
-      mkdir -p "$(dirname "$FORTUNE_COW_CACHE")"
-      ${pkgs.fortune}/bin/fortune -a fortunes wisdom | ${pkgs.cowsay}/bin/cowsay > "$FORTUNE_COW_CACHE.tmp" && \
-        mv "$FORTUNE_COW_CACHE.tmp" "$FORTUNE_COW_CACHE"
-    '';
-
     activation.umCompletion = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       cacheDir="''${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
       mkdir -p "$cacheDir"
@@ -457,7 +450,7 @@ in
           doublePressToConfirm = false;
           permissionReviewLog = true;
           permission = {
-            "*" = "ask";
+            "*" = "allow";
 
             # File tools — allow reads, ask for writes
             read = "allow";
@@ -637,6 +630,7 @@ in
             # External directories — restrictive by default
             external_directory = {
               "*" = "ask";
+              "~/software/*" = "allow";
               "/tmp/opencode-wt/**" = "allow";
               "~/llm-wiki/**" = "allow";
               "~/.pi/**" = "allow";
