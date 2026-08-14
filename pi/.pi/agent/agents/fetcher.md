@@ -1,6 +1,5 @@
 ---
 name: fetcher
-model: us.anthropic.claude-haiku-4-5-v1
 tools: [read, bash, fetch]
 ---
 

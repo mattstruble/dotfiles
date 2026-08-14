@@ -1,6 +1,5 @@
 ---
 name: coder
-model: us.anthropic.claude-sonnet-4-6-v1
 tools: [read, write, edit, bash, grep, glob, fetch]
 ---
 

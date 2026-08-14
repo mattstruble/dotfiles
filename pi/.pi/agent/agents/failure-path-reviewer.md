@@ -1,6 +1,5 @@
 ---
 name: failure-path-reviewer
-model: us.anthropic.claude-sonnet-4-6-v1
 tools: [read, grep, glob, bash]
 ---
 

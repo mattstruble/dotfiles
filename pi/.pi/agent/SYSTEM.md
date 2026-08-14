@@ -31,6 +31,8 @@ If `.beads/` exists in the project root, run `bd prime` at session start.
 
 Use Context7 MCP docs before general web search for any library, framework, SDK, or API question — even well-known ones. Your training data may be stale.
 
+For research involving multiple pages or broad searches, dispatch a fetcher. Single doc lookups are fine in-session.
+
 # Workflow Commands
 
 Available commands for the plan→critique→execute→review lifecycle:

@@ -304,7 +304,6 @@ in
       ];
       subagents = [
         "${path}/opencode/.config/opencode/agents/"
-        "${path}/pi/.pi/agent/agents/"
       ];
       opencode.profiles = {
         software = {

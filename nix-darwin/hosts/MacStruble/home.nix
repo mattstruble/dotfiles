@@ -72,6 +72,20 @@ in
                 "opencode-go/deepseek-v4-flash-free"
               ];
             };
+            modelMap = {
+              default = "opencode-go/glm-5.2";
+              small_model = "opencode-go/deepseek-v4-flash-free";
+              planner = "opencode-go/glm-5.2";
+              orchestrator = "opencode-go/glm-5.2";
+              builder = "opencode/deepseek-v4-flash";
+              coder = "opencode/deepseek-v4-flash";
+              fetcher = "opencode-go/deepseek-v4-flash-free";
+              plan-critic = "opencode-go/glm-5.2";
+              correctness-reviewer = "opencode/deepseek-v4-flash";
+              failure-path-reviewer = "opencode/deepseek-v4-flash";
+              readability-reviewer = "opencode/deepseek-v4-flash";
+              security-reviewer = "opencode/deepseek-v4-flash";
+            };
             # TODO: API key configuration pending
             # auth."opencode-go" = {
             #   type = "api_key";
