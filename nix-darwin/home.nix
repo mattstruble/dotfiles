@@ -411,7 +411,7 @@ in
               })
               [
                 "skill-enforcer.ts"
-                "profile-loader.ts"
+                "skills-picker.ts"
                 "guardrails.ts"
                 "beads.ts"
                 "knowledge-base.ts"

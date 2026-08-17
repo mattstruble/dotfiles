@@ -10,7 +10,7 @@ lib.mkIf (config.programs.ai-agents.enable && builtins.elem "pi" config.programs
       fi
 
       for _profile in "$@"; do
-        local _profile_dir="$HOME/.config/opencode/skill-profiles/$_profile"
+        local _profile_dir="$HOME/.pi/agent/skill-profiles/$_profile"
         if [ -d "$_profile_dir" ]; then
           # Accumulate across source_up calls.
           # ponytail: colon delimiter assumes paths without ':'; matches opencode convention
