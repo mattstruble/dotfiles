@@ -444,6 +444,7 @@ in
           "npm:@narumitw/pi-caffeinate"
           "npm:pi-web-access"
           "npm:pi-effort"
+          "npm:pi-vim"
         ];
         permissionConfig = {
           doublePressToConfirm = false;
