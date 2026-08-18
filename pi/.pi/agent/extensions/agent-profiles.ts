@@ -108,7 +108,7 @@ Do not ask what to do next. Do not wait for user input between batches.
 
 ## Dispatch Format for Coders
 
-Note: The `systemPrompt` field is authoritative for dispatched coders. `coder.md` is reference only for direct invocations.
+Note: The \`systemPrompt\` field is authoritative for dispatched coders. \`coder.md\` is reference only for direct invocations.
 
 \`\`\`
 dispatch({tasks: [{
