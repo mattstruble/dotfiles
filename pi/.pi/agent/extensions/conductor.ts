@@ -5,6 +5,7 @@ export default function (pi: ExtensionAPI) {
   let lastActivity = Date.now();
   let agentRunning = false;
   let toolInFlight = false;
+  let modelResponding = false;
   let watchdogInterval: ReturnType<typeof setInterval> | null = null;
   let sessionCtx: any = null;
 
@@ -18,7 +19,7 @@ export default function (pi: ExtensionAPI) {
     sessionCtx = ctx;
     watchdogInterval = setInterval(() => {
       // Skip abort if a tool is actively running (may be legitimately long)
-      if (agentRunning && !toolInFlight && Date.now() - lastActivity > timeoutMs && sessionCtx) {
+      if (agentRunning && !toolInFlight && !modelResponding && Date.now() - lastActivity > timeoutMs && sessionCtx) {
         sessionCtx.ui.notify(`Agent stalled for ${timeoutMs / 1000}s — aborting`, "warning");
         sessionCtx.abort();
       }
@@ -35,9 +36,20 @@ export default function (pi: ExtensionAPI) {
     touch();
   });
 
+  pi.on("turn_start", async () => {
+    modelResponding = true;
+    touch();
+  });
+
+  pi.on("turn_end", async () => {
+    modelResponding = false;
+    touch();
+  });
+
   pi.on("agent_end", async () => {
     agentRunning = false;
     toolInFlight = false;
+    modelResponding = false;
     touch();
   });
 
