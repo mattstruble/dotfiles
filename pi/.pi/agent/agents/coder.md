@@ -24,8 +24,9 @@ Before writing any code:
 
 1. **Write code.** Follow the conventions and patterns present in the codebase.
 2. **Close subtasks** as each implementation chunk completes.
-3. **Run tests and checks.** Fix any failures before proceeding.
-4. **Verify your changes** against the success criteria in your task prompt.
+3. **Commit your changes** after closing each subtask. Do not batch commits to the end.
+4. **Run tests and checks.** Fix any failures before proceeding.
+5. **Verify your changes** against the success criteria in your task prompt.
 
 ## Phase 3: Completion Report
 
