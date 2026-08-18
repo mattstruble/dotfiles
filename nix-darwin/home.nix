@@ -305,6 +305,7 @@ in
       subagents = [
         "${path}/opencode/.config/opencode/agents/"
       ];
+      pi.subagents = [ "${path}/pi/.pi/agent/agents/" ];
       opencode.profiles = {
         software = {
           dirs = [ "~/software" ];
