@@ -3,18 +3,6 @@ name: planner
 description: Receives specifications, refines through clarifying questions, decomposes into beads task graphs, stress-tests via plan-critic, and presents plans for approval
 mode: primary
 temperature: 0.5
-tools:
-  write: false
-  edit: false
-  bash: true
-  read: true
-  glob: true
-  grep: true
-  webfetch: true
-  websearch: true
-  codesearch: true
-  context7_query-docs: true
-  context7_resolve-library-id: true
 permission:
   write: ask
   edit: ask

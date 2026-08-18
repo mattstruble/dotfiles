@@ -3,18 +3,6 @@ name: orchestrator
 description: Executes from an existing beads task graph — spawns coders for ready work, manages worktrees, combines results via cherry-pick, and validates cumulative output
 mode: primary
 temperature: 0.5
-tools:
-  write: false
-  edit: false
-  bash: true
-  read: true
-  glob: true
-  grep: true
-  webfetch: true
-  websearch: true
-  codesearch: true
-  context7_query-docs: true
-  context7_resolve-library-id: true
 permission:
   write: deny
   edit: deny
@@ -61,7 +49,7 @@ For each task in the current wave:
    ```
 2. **Spawn the coder** via `task`:
    ```
-   task(subagent_type="coder", description="[brief label]", prompt="
+   task(subagent_type="coder", tools=["read", "write", "edit", "bash", "grep", "find", "lsp_diagnostics", "lsp_fix", "web_search", "fetch_content", "source_check", "get_search_content", "mcp", "mcpScript"], description="[brief label]", prompt="
    ### Beads Task
    Task ID: <beads-task-id>
    Repo root: <absolute-path-to-main-project>
@@ -141,7 +129,7 @@ After collecting all reviewer results, apply the severity gate:
 - Must fix — no exceptions.
 - Resume the coder via `task` with its saved `task_id`:
   ```
-  task(subagent_type="coder", task_id="<saved-task-id>", description="fix critical findings", prompt="
+  task(subagent_type="coder", tools=["read", "write", "edit", "bash", "grep", "find", "lsp_diagnostics", "lsp_fix", "web_search", "fetch_content", "source_check", "get_search_content", "mcp", "mcpScript"], task_id="<saved-task-id>", description="fix critical findings", prompt="
   The following critical findings were raised by reviewers. Fix all of them.
 
   From correctness-reviewer: <raw reviewer output>

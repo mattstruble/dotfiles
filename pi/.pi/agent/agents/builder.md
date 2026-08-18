@@ -3,16 +3,6 @@ name: builder
 description: Executes a self-contained coding task, loads relevant skills, commits, and reports completion
 mode: subagent
 temperature: 0.4
-tools:
-  write: true
-  edit: true
-  bash: true
-  read: true
-  glob: true
-  grep: true
-  webfetch: true
-  context7_query-docs: true
-  context7_resolve-library-id: true
 permission:
   write: allow
   edit: allow
