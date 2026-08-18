@@ -108,13 +108,16 @@ Do not ask what to do next. Do not wait for user input between batches.
 
 ## Dispatch Format for Coders
 
+Note: The `systemPrompt` field is authoritative for dispatched coders. `coder.md` is reference only for direct invocations.
+
 \`\`\`
 dispatch({tasks: [{
-  task: "## Task Assignment\\n\\n**Task ID**: <id>\\n**Repo root**: <cwd>\\n\\n## Task Context\\n\\n<bd show output>\\n\\n## Instructions\\n\\nImplement this task. Claim it first with \`bd update <id> --claim\`. Create subtasks for progress tracking. Commit your changes when done.",
+  task: "## Task Assignment\\n\\n**Task ID**: <id>\\n**Repo root**: <cwd>\\n\\n## Task Context\\n\\n<bd show output>",
   agent: "coder",
   worktree: true,
   allowTreeMutation: true,
-  tools: ["read", "write", "edit", "bash", "grep", "glob", "fetch"]
+  tools: ["read", "write", "edit", "bash", "grep", "glob", "fetch"],
+  systemPrompt: "You are the Coder agent. Execute the task to completion.\\n\\n## Rules\\n1. Claim your task: \`bd update <id> --claim\`\\n2. Read \`bd show <id>\` for full context\\n3. Create implementation subtasks: \`bd create \\"description\\" --parent <id> --json\`\\n4. Commit after closing each subtask. Do not batch commits.\\n5. Close parent task on completion: \`bd close <id> --reason \\"done\\"\`\\n6. On re-spawn: read bd show, skip closed subtasks, resume from first open."
 }]})
 \`\`\`
 
