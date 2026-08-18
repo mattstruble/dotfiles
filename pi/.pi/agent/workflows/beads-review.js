@@ -169,7 +169,7 @@ ${diff.slice(0, 15000)}
           .replace('{REVIEW_ID}', correctnessReviewId ?? 'none'),
         {
           label: `correctness-review:${taskId}`,
-          model: args?.model ?? 'bedrock/us.anthropic.claude-sonnet-4-6-v1',
+          model: args?.model ?? 'amazon-bedrock/us.anthropic.claude-sonnet-4-6',
           tools: ['read', 'bash', 'grep', 'find', 'ls'],
           systemPrompt: correctnessPrompt,
           maxTurns: 12,
@@ -182,7 +182,7 @@ ${diff.slice(0, 15000)}
           .replace('{REVIEW_ID}', failurePathReviewId ?? 'none'),
         {
           label: `failure-path-review:${taskId}`,
-          model: args?.model ?? 'bedrock/us.anthropic.claude-sonnet-4-6-v1',
+          model: args?.model ?? 'amazon-bedrock/us.anthropic.claude-sonnet-4-6',
           tools: ['read', 'bash', 'grep', 'find', 'ls'],
           systemPrompt: failurePathPrompt,
           maxTurns: 12,

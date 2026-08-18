@@ -4,6 +4,7 @@
 // Publishes `active_agent` session entries so pi-permission-system resolves
 // per-agent frontmatter overrides.
 // Intercepts dispatch tool calls to inject per-agent models from the map.
+// Blocks write/edit/bash-mutation tools in orchestrator mode.
 
 import type {
   ExtensionAPI,
@@ -17,6 +18,7 @@ import { join } from "node:path";
 interface Profile {
   name: string;
   instructions: string;
+  blockMutation?: boolean;
 }
 
 interface ModelMap {
@@ -39,7 +41,7 @@ function loadModelMap(): ModelMap {
 }
 
 function resolveModel(modelMap: ModelMap, agentName: string): string {
-  return modelMap[agentName] ?? modelMap.default ?? "us.anthropic.claude-sonnet-4-6-v1";
+  return modelMap[agentName] ?? modelMap.default ?? "amazon-bedrock/us.anthropic.claude-sonnet-4-6";
 }
 
 const PLANNER_INSTRUCTIONS = `\
@@ -55,20 +57,71 @@ You decompose work into beads tasks. Your workflow:
 
 You are READ-ONLY. Do not modify files. Only use bd commands and read tools.
 Never start implementing. Your job ends when the user approves the plan.
-Tell the user to switch to the orchestrator (or builder for simple tasks) to execute.`;
+Tell the user to use \`/orchestrate <epic-id>\` (or switch to builder for simple tasks) to execute.`;
 
 const ORCHESTRATOR_INSTRUCTIONS = `\
 # Orchestrator Agent
 
-You execute from the beads task graph. Your workflow:
-1. \`bd ready\` — find unblocked tasks
-2. Decide grouping and parallelism
-3. Invoke /workflow beads-dispatch with task IDs to spawn coder agents
-4. Track completion, handle failures, re-spawn as needed
-5. When all tasks are done, validate cumulative output against acceptance criteria
+You execute the beads task graph by dispatching subagents. You NEVER implement code directly.
 
-You have full tool access. You coordinate — you do not implement directly.
-If no task graph exists, direct the user to switch to the planner profile first.`;
+## Available Tools
+- \`dispatch\` — spawn coder and reviewer subagents (your primary tool)
+- \`read\`, \`grep\`, \`find\`, \`ls\` — inspect files and task state
+- \`bash\` — ONLY for \`bd\` commands (read task state, close tasks)
+
+## Blocked Tools
+- \`write\`, \`edit\` — BLOCKED. You cannot modify files. You coordinate, not implement.
+
+## Workflow
+
+1. Run \`bd ready --parent <epic-id>\` to find unblocked tasks
+2. Dispatch up to 3 coder subagents in parallel using the \`dispatch\` tool:
+   - Set \`worktree: true\` on each task (Pi manages lifecycle + cleanup)
+   - Set \`agent: "coder"\` (model auto-injected from model-map)
+   - Set \`allowTreeMutation: true\`
+   - Include full task context from \`bd show <id>\` in the task prompt
+3. When coders complete, dispatch all 4 reviewers for each completed task:
+   - agents: correctness-reviewer, failure-path-reviewer, readability-reviewer, security-reviewer
+   - tools: ["read", "bash", "grep", "find", "ls"]
+   - Include the coder's output/diff in the review prompt
+4. Review loop (per task):
+   - If ALL 4 reviewers say LGTM → task passes, close it with \`bd close\`
+   - If any reviewer has findings → re-dispatch the coder with findings (up to 2 retries)
+   - On retry: only re-run the reviewers that had findings
+   - After targeted retries pass: run all 4 reviewers one final time
+   - If final validation has findings: 1 more coder retry, then mark stuck
+5. After each batch completes: run \`bd ready --parent <epic-id>\` again for newly unblocked tasks
+6. Continue until no ready tasks remain
+
+## Dispatch Format for Coders
+
+\`\`\`
+dispatch({tasks: [{
+  task: "## Task Assignment\\n\\n**Task ID**: <id>\\n**Repo root**: <cwd>\\n\\n## Task Context\\n\\n<bd show output>\\n\\n## Instructions\\n\\nImplement this task. Claim it first with \`bd update <id> --claim\`. Create subtasks for progress tracking. Commit your changes when done.",
+  agent: "coder",
+  worktree: true,
+  allowTreeMutation: true,
+  tools: ["read", "write", "edit", "bash", "grep", "glob", "fetch"]
+}]})
+\`\`\`
+
+## Dispatch Format for Reviewers
+
+\`\`\`
+dispatch({tasks: [{
+  task: "## Review Request\\n\\n**Task**: <id>\\n**Focus**: correctness\\n\\n## Diff\\n\`\`\`diff\\n<diff>\\n\`\`\`\\n\\nRespond LGTM if code passes. Otherwise list findings.",
+  agent: "correctness-reviewer",
+  tools: ["read", "bash", "grep", "find", "ls"]
+}]})
+\`\`\`
+
+## Rules
+- NEVER use write or edit tools — they are blocked
+- NEVER implement code yourself — always dispatch a coder
+- Max 3 coders in parallel per batch
+- Close tasks with \`bd close <id>\` after all reviewers LGTM
+- If a task fails 3 review cycles: skip it, report to user at the end
+- Report final summary: passed tasks, stuck tasks, and why`;
 
 const BUILDER_INSTRUCTIONS = `\
 # Builder Agent
@@ -79,7 +132,7 @@ Read the request, understand the codebase, make the change, verify it works.
 Use the full tool set: read, write, edit, bash, grep, find, ls.
 Run tests/checks after changes when applicable.
 
-For complex multi-task work, suggest the user switch to planner → orchestrator.
+For complex multi-task work, suggest the user switch to planner then use \`/orchestrate\`.
 For everything else, just build it.`;
 
 const profiles: Profile[] = [
@@ -90,6 +143,7 @@ const profiles: Profile[] = [
   {
     name: "orchestrator",
     instructions: ORCHESTRATOR_INSTRUCTIONS,
+    blockMutation: true,
   },
   {
     name: "builder",
@@ -119,7 +173,6 @@ export default function (pi: ExtensionAPI): void {
 
   function activateProfile(profile: Profile): void {
     const model = resolveModel(modelMap, profile.name);
-    // Publish active_agent entry so pi-permission-system resolves per-agent overrides
     pi.appendEntry("active_agent", { name: profile.name });
     pi.setModel(model);
     updateStatus(profile);
@@ -135,7 +188,6 @@ export default function (pi: ExtensionAPI): void {
 
   pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
     sessionCtx = ctx;
-    // Reload model map on each session start (picks up Nix rebuilds)
     modelMap = loadModelMap();
     if (currentIndex < 0) {
       currentIndex = 0; // planner
@@ -145,8 +197,20 @@ export default function (pi: ExtensionAPI): void {
     }
   });
 
-  // Intercept dispatch tool calls to inject per-agent models from model-map
+  // Block mutation tools in orchestrator mode + inject models on dispatch
   pi.on("tool_call", async (event) => {
+    const profile = currentProfile();
+
+    // Block write/edit in orchestrator mode
+    if (profile?.blockMutation) {
+      if (event.toolName === "write" || event.toolName === "edit") {
+        throw new Error(
+          `[orchestrator] ${event.toolName} is blocked. You coordinate via dispatch, not implement directly.`,
+        );
+      }
+    }
+
+    // Inject per-agent models from model-map into dispatch calls
     if (event.toolName === "dispatch" && event.input?.tasks) {
       for (const task of event.input.tasks) {
         if (task.agent && !task.model) {
@@ -158,15 +222,42 @@ export default function (pi: ExtensionAPI): void {
     }
   });
 
+  let pendingOrchestrate: string | null = null;
+
   pi.on(
     "before_agent_start",
     async (event: BeforeAgentStartEvent, _ctx): Promise<{ systemPrompt: string } | void> => {
+      let base = event.systemPrompt ? `${event.systemPrompt}\n\n` : "";
+
+      // Inject profile identity
       const profile = currentProfile();
-      if (!profile) return;
-      const base = event.systemPrompt ? `${event.systemPrompt}\n\n` : "";
-      // Include active_agent tag so permission system can resolve agent identity from prompt
-      const agentTag = `<active_agent name="${profile.name}" />`;
-      return { systemPrompt: `${base}${agentTag}\n\n${profile.instructions}` };
+      if (profile) {
+        const agentTag = `<active_agent name="${profile.name}" />`;
+        base = `${base}${agentTag}\n\n${profile.instructions}\n\n`;
+      }
+
+      // Inject orchestrate directive if pending
+      if (pendingOrchestrate) {
+        const epicId = pendingOrchestrate;
+        pendingOrchestrate = null;
+        const directive = [
+          "## ORCHESTRATE NOW",
+          "",
+          `Epic: \`${epicId}\``,
+          "",
+          "Begin the orchestration loop immediately:",
+          `1. Run \`bd ready --parent ${epicId}\` to find unblocked tasks`,
+          "2. For each ready task, run `bd show <id>` to get context",
+          "3. Dispatch up to 3 coders in parallel",
+          "4. After coders complete, dispatch reviewers",
+          "5. Handle the review loop as specified in your instructions",
+          "",
+          "Start now. Do not ask for confirmation.",
+        ].join("\n");
+        base = `${base}${directive}\n\n`;
+      }
+
+      if (base.trim()) return { systemPrompt: base.trimEnd() };
     },
   );
 
@@ -202,6 +293,27 @@ export default function (pi: ExtensionAPI): void {
       activateProfile(profile);
       const model = resolveModel(modelMap, profile.name);
       ctx.ui.notify(`Profile: ${profile.name} (${model})`, "info");
+    },
+  });
+
+  pi.registerCommand("orchestrate", {
+    description: "Switch to orchestrator and begin executing an epic: /orchestrate <epic-id>",
+    handler: async (args: string, ctx: ExtensionCommandContext) => {
+      const epicId = args.trim();
+      if (!epicId) {
+        ctx.ui.notify("Usage: /orchestrate <epic-id>", "warning");
+        return;
+      }
+
+      // Switch to orchestrator profile
+      const orchIdx = profiles.findIndex((p) => p.name === "orchestrator");
+      if (orchIdx >= 0) {
+        currentIndex = orchIdx;
+        activateProfile(profiles[currentIndex]);
+      }
+
+      pendingOrchestrate = epicId;
+      ctx.ui.notify(`Orchestrating ${epicId} — dispatching on next turn.`, "info");
     },
   });
 }

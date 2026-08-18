@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-tools: [read, grep, glob, bash]
+tools: [read, grep, find, ls]
 ---
 
 # Security Reviewer

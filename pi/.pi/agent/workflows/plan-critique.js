@@ -85,7 +85,7 @@ while (round <= MAX_ROUNDS) {
 
   const result = await safeAgent(critiquePrompt, {
     label: `plan-critic:round-${round}`,
-    model: args?.model ?? 'bedrock/us.anthropic.claude-sonnet-4-6-v1',
+    model: args?.model ?? 'amazon-bedrock/us.anthropic.claude-sonnet-4-6',
     tools: ['read', 'bash', 'grep', 'find', 'ls'],
     systemPrompt: criticSystemPrompt,
     maxTurns: 15,

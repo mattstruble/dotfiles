@@ -1,6 +1,6 @@
 ---
 name: correctness-reviewer
-tools: [read, grep, glob, bash]
+tools: [read, grep, find, ls]
 ---
 
 # Correctness Reviewer

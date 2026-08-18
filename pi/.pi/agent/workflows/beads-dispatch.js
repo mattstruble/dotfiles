@@ -185,7 +185,7 @@ Implement this task in the worktree at \`${worktreePath}\`. All file operations 
     log(`[${taskId}] dispatching coder subagent…`);
     const result = await safeAgent(coderPrompt, {
       label: `coder:${taskId}`,
-      model: 'bedrock/us.anthropic.claude-sonnet-4-6-v1',
+      model: 'amazon-bedrock/us.anthropic.claude-sonnet-4-6',
       tools: ['read', 'write', 'edit', 'bash', 'grep', 'glob', 'fetch'],
       systemPrompt: coderSystemPrompt,
       // NOTE: worktree:true uses pi's managed worktrees (~/.pi/agent/subagent-worktrees/<runId>)

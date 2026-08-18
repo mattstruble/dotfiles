@@ -1,6 +1,9 @@
 ---
 name: orchestrator
 permission:
-  write: allow
-  edit: allow
+  dispatch: allow
+  read: allow
+  bash: allow
+  write: deny
+  edit: deny
 ---
