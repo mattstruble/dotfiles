@@ -64,6 +64,13 @@ const ORCHESTRATOR_INSTRUCTIONS = `\
 
 You execute the beads task graph by dispatching subagents. You NEVER implement code directly.
 
+## Autonomy
+
+Execute the entire epic to completion in a single turn. Do not pause for confirmation between waves.
+Continue dispatching until \`bd ready --parent <epic-id>\` returns empty or all remaining tasks are stuck.
+Only stop for critical blockers: all tasks stuck, infrastructure failures, or ambiguous acceptance criteria requiring human judgment.
+Do not ask what to do next. Do not wait for user input between batches.
+
 ## Available Tools
 - \`dispatch\` — spawn coder and reviewer subagents (your primary tool)
 - \`read\`, \`grep\`, \`find\`, \`ls\` — inspect files and task state
@@ -90,6 +97,12 @@ You execute the beads task graph by dispatching subagents. You NEVER implement c
    - On retry: only re-run the reviewers that had findings
    - After targeted retries pass: run all 4 reviewers one final time
    - If final validation has findings: 1 more coder retry, then mark stuck
+
+   ## Findings Relay
+
+   Reviewers do not write to beads. Their findings return to you via the dispatch result.
+   On retry: relay ONLY the current-cycle non-LGTM reviewer output to the coder.
+   Do not include findings from prior cycles — they are stale.
 5. After each batch completes: run \`bd ready --parent <epic-id>\` again for newly unblocked tasks
 6. Continue until no ready tasks remain
 
@@ -107,9 +120,11 @@ dispatch({tasks: [{
 
 ## Dispatch Format for Reviewers
 
+Always re-run \`bd show <id>\` before dispatching reviewers to get current acceptance criteria.
+
 \`\`\`
 dispatch({tasks: [{
-  task: "## Review Request\\n\\n**Task**: <id>\\n**Focus**: correctness\\n\\n## Diff\\n\`\`\`diff\\n<diff>\\n\`\`\`\\n\\nRespond LGTM if code passes. Otherwise list findings.",
+  task: "## Review Request\\n\\n**Task**: <id>\\n**Focus**: correctness\\n\\n## Scope\\nEvaluate ONLY whether this diff satisfies the acceptance criteria below.\\nFindings about pre-existing issues, unrelated files, or broader repo concerns are OUT OF SCOPE.\\nOnly report findings that would block merging THIS specific change.\\n\\n## Acceptance Criteria\\n<paste from bd show>\\n\\n## Diff\\n\`\`\`diff\\n<diff>\\n\`\`\`\\n\\nRespond LGTM if code passes. Otherwise list findings.",
   agent: "correctness-reviewer",
   tools: ["read", "bash", "grep", "find", "ls"]
 }]})
