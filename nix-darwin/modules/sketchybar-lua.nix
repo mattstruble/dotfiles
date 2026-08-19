@@ -18,7 +18,6 @@ let
     buildPhase = ''
       clang \
         -std=c99 -O3 -shared -fPIC \
-        -arch arm64 \
         -I${pkgs.lua5_4}/include \
         src/sketchybar.c src/cJSON.c src/parsing.c \
         -L${pkgs.lua5_4}/lib -llua \
