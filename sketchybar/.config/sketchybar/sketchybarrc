@@ -1,4 +1,4 @@
-#!/usr/bin/env lua
+#!/Users/mstruble/.nix-profile/bin/lua
 
 -- Load the sketchybar-package and prepare the helper binaries
 require("helpers")
