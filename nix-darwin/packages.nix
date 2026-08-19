@@ -63,7 +63,7 @@ with pkgs;
   libevent
   libfido2
   libtiff
-  (pkgs.lib.lowPrio lua)
+  (pkgs.lib.lowPrio lua5_4)
   lua-language-server
   luarocks
   markdownlint-cli
