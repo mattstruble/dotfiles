@@ -69,16 +69,16 @@ in
               enabledModels = [
                 "opencode-go/glm-5.2"
                 "opencode-go/deepseek-v4-flash-free"
-                "mjolnir-vllm/Twu31/Qwen3.8-27B-AWQ-INT4-MTP-LowLatency"
+                "mjolnir-qwen38/qwen3.8-27b"
                 "mjolnir-llama/Qwen3.6-35B-A3B-UD-Q4_K_XL"
               ];
             };
             auth = {
-              "mjolnir-vllm" = {
+              "mjolnir-qwen38" = {
                 type = "api_key";
-                key = "dummy";
+                key = "foo";
                 env = {
-                  OPENAI_BASE_URL = "http://mjolnir:8000/v1";
+                  OPENAI_BASE_URL = "http://mjolnir:8556/v1";
                 };
               };
               "mjolnir-llama" = {
@@ -211,18 +211,18 @@ in
             };
             config = {
               provider = {
-                "mjolnir-vllm" = {
+                "mjolnir-qwen38" = {
                   npm = "@ai-sdk/openai-compatible";
-                  name = "Mjolnir vLLM (Qwen3.8-27B)";
+                  name = "Mjolnir llama.cpp (Qwen3.8-27B Q4 + MTP)";
                   options = {
-                    baseURL = "http://mjolnir:8000/v1";
-                    apiKey = "dummy";
+                    baseURL = "http://mjolnir:8556/v1";
+                    apiKey = "foo";
                   };
-                  models."Twu31/Qwen3.8-27B-AWQ-INT4-MTP-LowLatency" = {
-                    name = "Qwen3.8-27B-AWQ-INT4";
+                  models."qwen3.8-27b" = {
+                    name = "Qwen3.8-27B (llama.cpp UD-Q4_K_XL)";
                     limit = {
-                      context = 32768;
-                      output = 32768;
+                      context = 16384;
+                      output = 8192;
                     };
                   };
                 };
