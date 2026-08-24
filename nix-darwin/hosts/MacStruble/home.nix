@@ -60,7 +60,6 @@ in
 
       services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
 
-
       programs = {
         ai-agents = {
           pi = {
@@ -70,7 +69,25 @@ in
               enabledModels = [
                 "opencode-go/glm-5.2"
                 "opencode-go/deepseek-v4-flash-free"
+                "mjolnir-vllm/Twu31/Qwen3.8-27B-AWQ-INT4-MTP-LowLatency"
+                "mjolnir-llama/Qwen3.6-35B-A3B-UD-Q4_K_XL"
               ];
+            };
+            auth = {
+              "mjolnir-vllm" = {
+                type = "api_key";
+                key = "dummy";
+                env = {
+                  OPENAI_BASE_URL = "http://mjolnir:8000/v1";
+                };
+              };
+              "mjolnir-llama" = {
+                type = "api_key";
+                key = "foo";
+                env = {
+                  OPENAI_BASE_URL = "http://mjolnir:8555/v1";
+                };
+              };
             };
             modelMap = {
               default = "opencode-go/glm-5.2";
@@ -86,11 +103,6 @@ in
               readability-reviewer = "opencode/deepseek-v4-flash";
               security-reviewer = "opencode/deepseek-v4-flash";
             };
-            # TODO: API key configuration pending
-            # auth."opencode-go" = {
-            #   type = "api_key";
-            #   env.OPENCODE_GO_API_KEY = "...";
-            # };
           };
           skills = {
             # Game development skills
@@ -198,6 +210,38 @@ in
               ai.dirs = [ "~/software/ai" ];
             };
             config = {
+              provider = {
+                "mjolnir-vllm" = {
+                  npm = "@ai-sdk/openai-compatible";
+                  name = "Mjolnir vLLM (Qwen3.8-27B)";
+                  options = {
+                    baseURL = "http://mjolnir:8000/v1";
+                    apiKey = "dummy";
+                  };
+                  models."Twu31/Qwen3.8-27B-AWQ-INT4-MTP-LowLatency" = {
+                    name = "Qwen3.8-27B-AWQ-INT4";
+                    limit = {
+                      context = 32768;
+                      output = 32768;
+                    };
+                  };
+                };
+                "mjolnir-llama" = {
+                  npm = "@ai-sdk/openai-compatible";
+                  name = "Mjolnir llama.cpp (Qwen3.6-35B-A3B)";
+                  options = {
+                    baseURL = "http://mjolnir:8555/v1";
+                    apiKey = "foo";
+                  };
+                  models."Qwen3.6-35B-A3B-UD-Q4_K_XL" = {
+                    name = "Qwen3.6-35B-A3B MoE";
+                    limit = {
+                      context = 32768;
+                      output = 32768;
+                    };
+                  };
+                };
+              };
               model = "opencode-go/glm-5.2";
               small_model = "opencode-go/deepseek-v4-flash-free";
               agent = {
