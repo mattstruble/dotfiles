@@ -70,7 +70,7 @@ in
                 "opencode-go/glm-5.2"
                 "opencode-go/deepseek-v4-flash-free"
                 "mjolnir-qwen38/qwen3.8-27b"
-                "mjolnir-llama/Qwen3.6-35B-A3B-UD-Q4_K_XL"
+                "mjolnir-llama/Qwen3.6-35B-A3B"
               ];
             };
             auth = {
@@ -221,7 +221,7 @@ in
                   models."qwen3.8-27b" = {
                     name = "Qwen3.8-27B (llama.cpp UD-Q4_K_XL)";
                     limit = {
-                      context = 16384;
+                      context = 131072;
                       output = 8192;
                     };
                   };
@@ -233,11 +233,11 @@ in
                     baseURL = "http://mjolnir:8555/v1";
                     apiKey = "foo";
                   };
-                  models."Qwen3.6-35B-A3B-UD-Q4_K_XL" = {
-                    name = "Qwen3.6-35B-A3B MoE";
+                  models."Qwen3.6-35B-A3B" = {
+                    name = "Qwen3.6-35B-A3B MoE (IQ4_XS-MTP)";
                     limit = {
-                      context = 32768;
-                      output = 32768;
+                      context = 262144;
+                      output = 8192;
                     };
                   };
                 };
