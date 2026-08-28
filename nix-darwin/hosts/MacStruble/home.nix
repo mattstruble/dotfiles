@@ -70,6 +70,7 @@ in
               compat = {
                 supportsDeveloperRole = false;
                 supportsReasoningEffort = false;
+                sendSessionAffinityHeaders = true;
               };
               models = [
                 {
@@ -86,6 +87,7 @@ in
               compat = {
                 supportsDeveloperRole = false;
                 supportsReasoningEffort = false;
+                sendSessionAffinityHeaders = true;
               };
               models = [
                 {
@@ -96,6 +98,13 @@ in
               ];
             };
           };
+        }
+      );
+
+      home.file.".pi/agent/web-search.json".source = pkgs.writeText "pi-web-search.json" (
+        builtins.toJSON {
+          provider = "mjolnir-36";
+          model = "Qwen3.6-35B-A3B";
         }
       );
 
