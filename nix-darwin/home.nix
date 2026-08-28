@@ -437,16 +437,17 @@ in
             ponytail = config.lib.file.mkOutOfStoreSymlink "${home}/.local/share/ponytail/pi-extension";
           };
         packages = [
-          "npm:pi-mcp-adapter"
           "npm:@gotgenes/pi-permission-system"
+          "npm:@narumitw/pi-caffeinate"
+          "npm:@narumitw/pi-lsp"
           "npm:@nicknisi/pi-subagents"
           "npm:@nicknisi/pi-workflows"
-          "npm:@narumitw/pi-lsp"
           "npm:pi-cache-optimizer"
-          "npm:@narumitw/pi-caffeinate"
-          "npm:pi-web-access"
           "npm:pi-effort"
+          "npm:pi-mcp-adapter"
+          "npm:pi-rtk-optimizer"
           "npm:pi-vim"
+          "npm:pi-web-access"
         ];
         permissionConfig = {
           doublePressToConfirm = false;

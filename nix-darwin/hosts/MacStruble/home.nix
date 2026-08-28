@@ -60,48 +60,69 @@ in
 
       services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
 
+      home.file.".pi/agent/models.json".source = pkgs.writeText "pi-models.json" (
+        builtins.toJSON {
+          providers = {
+            "mjolnir-38" = {
+              baseUrl = "http://mjolnir:8556/v1";
+              api = "openai-completions";
+              apiKey = "foo";
+              compat = {
+                supportsDeveloperRole = false;
+                supportsReasoningEffort = false;
+              };
+              models = [
+                {
+                  id = "qwen3.8-27b";
+                  reasoning = true;
+                  contextWindow = 131072;
+                }
+              ];
+            };
+            "mjolnir-36" = {
+              baseUrl = "http://mjolnir:8555/v1";
+              api = "openai-completions";
+              apiKey = "foo";
+              compat = {
+                supportsDeveloperRole = false;
+                supportsReasoningEffort = false;
+              };
+              models = [
+                {
+                  id = "Qwen3.6-35B-A3B";
+                  reasoning = true;
+                  contextWindow = 131072;
+                }
+              ];
+            };
+          };
+        }
+      );
+
       programs = {
         ai-agents = {
           pi = {
             config = {
-              defaultProvider = "opencode-go";
-              defaultModel = "opencode-go/glm-5.2";
+              defaultProvider = "mjolnir-38";
+              defaultModel = "mjolnir-38/qwen3.8-27b";
               enabledModels = [
-                "opencode-go/glm-5.2"
-                "opencode-go/deepseek-v4-flash-free"
-                "mjolnir-qwen38/qwen3.8-27b"
-                "mjolnir-llama/Qwen3.6-35B-A3B"
+                "mjolnir-38/qwen3.8-27b"
+                "mjolnir-36/Qwen3.6-35B-A3B"
               ];
             };
-            auth = {
-              "mjolnir-qwen38" = {
-                type = "api_key";
-                key = "foo";
-                env = {
-                  OPENAI_BASE_URL = "http://mjolnir:8556/v1";
-                };
-              };
-              "mjolnir-llama" = {
-                type = "api_key";
-                key = "foo";
-                env = {
-                  OPENAI_BASE_URL = "http://mjolnir:8555/v1";
-                };
-              };
-            };
             modelMap = {
-              default = "opencode-go/glm-5.2";
-              small_model = "opencode-go/deepseek-v4-flash-free";
-              planner = "opencode-go/glm-5.2";
-              orchestrator = "opencode-go/glm-5.2";
-              builder = "opencode/deepseek-v4-flash";
-              coder = "opencode/deepseek-v4-flash";
-              fetcher = "opencode-go/deepseek-v4-flash-free";
-              plan-critic = "opencode-go/glm-5.2";
-              correctness-reviewer = "opencode/deepseek-v4-flash";
-              failure-path-reviewer = "opencode/deepseek-v4-flash";
-              readability-reviewer = "opencode/deepseek-v4-flash";
-              security-reviewer = "opencode/deepseek-v4-flash";
+              default = "mjolnir-38/qwen3.8-27b";
+              small_model = "mjolnir-36/Qwen3.6-35B-A3B";
+              planner = "mjolnir-38/qwen3.8-27b";
+              orchestrator = "mjolnir-38/qwen3.8-27b";
+              builder = "mjolnir-36/Qwen3.6-35B-A3B";
+              coder = "mjolnir-36/Qwen3.6-35B-A3B";
+              fetcher = "mjolnir-36/Qwen3.6-35B-A3B";
+              plan-critic = "mjolnir-38/qwen3.8-27b";
+              correctness-reviewer = "mjolnir-36/Qwen3.6-35B-A3B";
+              failure-path-reviewer = "mjolnir-36/Qwen3.6-35B-A3B";
+              readability-reviewer = "mjolnir-36/Qwen3.6-35B-A3B";
+              security-reviewer = "mjolnir-36/Qwen3.6-35B-A3B";
             };
           };
           skills = {
@@ -211,7 +232,7 @@ in
             };
             config = {
               provider = {
-                "mjolnir-qwen38" = {
+                "mjolnir-38" = {
                   npm = "@ai-sdk/openai-compatible";
                   name = "Mjolnir llama.cpp (Qwen3.8-27B Q4 + MTP)";
                   options = {
@@ -226,7 +247,7 @@ in
                     };
                   };
                 };
-                "mjolnir-llama" = {
+                "mjolnir-36" = {
                   npm = "@ai-sdk/openai-compatible";
                   name = "Mjolnir llama.cpp (Qwen3.6-35B-A3B)";
                   options = {
@@ -242,35 +263,35 @@ in
                   };
                 };
               };
-              model = "opencode-go/glm-5.2";
-              small_model = "opencode-go/deepseek-v4-flash-free";
+              model = "mjolnir-38/qwen3.8-27b";
+              small_model = "mjolnir-36/Qwen3.6-35B-A3B";
               agent = {
                 planner = {
-                  model = "opencode-go/glm-5.2";
+                  model = "mjolnir-38/qwen3.8-27b";
                 };
                 orchestrator = {
-                  model = "opencode/deepseek-v4-flash";
+                  model = "mjolnir-36/Qwen3.6-35B-A3B";
                 };
                 coder = {
-                  model = "opencode/deepseek-v4-flash";
+                  model = "mjolnir-36/Qwen3.6-35B-A3B";
                 };
                 plan-critic = {
-                  model = "opencode-go/glm-5.2";
+                  model = "mjolnir-38/qwen3.8-27b";
                 };
                 correctness-reviewer = {
-                  model = "opencode/deepseek-v4-flash";
+                  model = "mjolnir-36/Qwen3.6-35B-A3B";
                 };
                 failure-path-reviewer = {
-                  model = "opencode/deepseek-v4-flash";
+                  model = "mjolnir-36/Qwen3.6-35B-A3B";
                 };
                 readability-reviewer = {
-                  model = "opencode/deepseek-v4-flash";
+                  model = "mjolnir-36/Qwen3.6-35B-A3B";
                 };
                 security-reviewer = {
-                  model = "opencode/deepseek-v4-flash";
+                  model = "mjolnir-36/Qwen3.6-35B-A3B";
                 };
                 fetcher = {
-                  model = "opencode/deepseek-v4-flash-free";
+                  model = "mjolnir-36/Qwen3.6-35B-A3B";
                 };
               };
             };
