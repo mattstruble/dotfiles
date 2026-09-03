@@ -3,33 +3,12 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 /**
  * plan-critic-gate extension
  *
- * Auto-triggers plan-critic dispatch after a planning session creates ≥2 beads tasks.
- * Injects a directive telling the planner to dispatch plan-critic with read-only tools
- * and iterate up to 3 rounds until the critic returns "No further suggestions."
+ * Registers the /critique command for manual plan-critic dispatch.
+ * When triggered, injects a directive on the next agent turn forcing dispatch
+ * of the plan-critic agent with read-only tools.
  */
 export default function (pi: ExtensionAPI): void {
-  let createdThisTurn: string[] = [];
   let pendingCritique = false;
-
-  // Track `bd create` commands in tool_call events
-  pi.on("tool_call", async (event) => {
-    if (event.toolName !== "bash") return;
-    const cmd = (event.input as any)?.command ?? "";
-    if (/bd\s+create/.test(cmd)) {
-      createdThisTurn.push(cmd);
-    }
-  });
-
-  // After agent settles, check if we should trigger critique
-  pi.on("agent_settled", async () => {
-    if (createdThisTurn.length >= 2) {
-      const autoTrigger = (globalThis as any).__piPlanMode === true;
-      if (autoTrigger) {
-        pendingCritique = true;
-      }
-    }
-    createdThisTurn = [];
-  });
 
   // Inject critique directive before next agent start
   pi.on("before_agent_start", async (event) => {
@@ -39,7 +18,7 @@ export default function (pi: ExtensionAPI): void {
     const directive = [
       "## PLAN CRITIC DIRECTIVE",
       "",
-      "A task graph was just created. You MUST now run the plan→critique→refine loop:",
+      "You MUST dispatch plan-critic on this turn. No exceptions.",
       "",
       "### Instructions",
       "",
@@ -62,9 +41,9 @@ export default function (pi: ExtensionAPI): void {
       "   After 3 rounds, present the plan with any remaining suggestions noted.",
       "",
       "### Rules",
-      "- Do NOT skip the dispatch. The critic must run as a separate agent.",
+      "- Do NOT skip the dispatch. The critic MUST run as a separate agent.",
       "- Do NOT self-critique instead of dispatching.",
-      "- The dispatch uses read-only tools only — this is allowed in plan mode.",
+      "- The dispatch uses read-only tools only.",
     ].join("\n");
 
     const base = event.systemPrompt ?? "";
