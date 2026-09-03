@@ -331,6 +331,8 @@ in
             "git-commit"
             "git-pr"
             "knowledge-base"
+            "orchestrator"
+            "planner"
             "pr-reviewer"
             "prd-to-stories"
             "prd-writing"
