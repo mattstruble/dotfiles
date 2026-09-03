@@ -128,7 +128,7 @@ The planner decomposes work into beads tasks:
    suggestions.
 5. Present refined plan to user for approval. Stop — do not execute.
 
-To execute, the user switches to the orchestrator agent.
+To execute, the user invokes the orchestrator skill (`/skill:orchestrator`).
 
 ## Orchestrator Lifecycle
 
@@ -138,11 +138,11 @@ The orchestrator executes from the existing task graph:
 3. Create review subtasks before spawning reviewers.
 4. Track completion, repeat until no ready tasks remain.
 
-If no task graph exists, directs the user to switch to the planner.
+If no task graph exists, directs the user to invoke the planner skill (`/skill:planner`).
 
 **Resume detection** — on session start, if `bd prime` reveals existing work:
-- **Planner**: surfaces task graph state, offers to revise or directs to orchestrator.
-- **Orchestrator**: surfaces ready/in-progress tasks, offers to execute or directs to planner.
+- **Planner**: surfaces task graph state, offers to revise or directs user to invoke the orchestrator skill (`/skill:orchestrator`).
+- **Orchestrator**: surfaces ready/in-progress tasks, offers to execute or directs user to invoke the planner skill (`/skill:planner`).
 
 ## Coder Lifecycle
 
