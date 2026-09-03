@@ -39,7 +39,6 @@ Available commands for the plan→critique→execute→review lifecycle:
 
 - `/critique` — dispatch plan-critic to review the current task graph
 - `/preflight` — validate repo + task graph before dispatching work
-- `/handoff` — show planning context summary for orchestrator transition
 - `/wave` — show live dispatch progress (dispatched/completed/failed)
 - `/review [task-id]` — queue a completed task for review
 - `/reviews` — show pending/completed review status
