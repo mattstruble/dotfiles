@@ -145,8 +145,7 @@ export default function (pi: ExtensionAPI): void {
   pi.on("before_agent_start", async (event, _ctx) => {
     const prompt = (event.prompt ?? "").toLowerCase();
     const shouldTrigger =
-      !(globalThis as any).__piPlanMode &&
-      (prompt.includes("dispatch") || prompt.includes("workflow") || prompt.includes("execute"));
+      prompt.includes("dispatch") || prompt.includes("workflow") || prompt.includes("execute");
 
     if (!shouldTrigger) return;
 
