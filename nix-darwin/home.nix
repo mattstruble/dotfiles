@@ -664,11 +664,6 @@ in
           lsp = true;
           provider = visionProviders;
           agent = {
-            orchestrator = {
-              tools = {
-                "github*" = true;
-              };
-            };
             fetcher = {
               tools = {
                 "context7*" = true;
