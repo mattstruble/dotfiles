@@ -26,19 +26,7 @@ export default function (pi: ExtensionAPI): void {
         render(width: number): string[] {
           const segments: string[] = [];
 
-          // Agent mode (from agent-profiles extension)
           const statuses = footerData.getExtensionStatuses();
-          const profileStatus = statuses.get("profile");
-          if (profileStatus) {
-            const name = profileStatus.replace(/\x1b\[[0-9;]*m/g, "").replace(/[\[\]]/g, "").trim();
-            const modeColors: Record<string, string> = {
-              planner: "mdLink",
-              orchestrator: "customMessageLabel",
-              builder: "accent",
-            };
-            const color = modeColors[name] ?? "muted";
-            segments.push(theme.fg(color as any, name));
-          }
 
           // Model + thinking level (collapsed: model:effort)
           const model = ctx.model;
@@ -91,7 +79,7 @@ export default function (pi: ExtensionAPI): void {
           // Extension statuses (mcp, cache, etc.) — inline them
           for (const [key, value] of statuses) {
             if (!value?.trim()) continue;
-            // Skip our own key, profile (rendered above), and legacy key
+            // Skip our own key, profile (reserved/unused), and legacy key
             if (key === "statusline" || key === "pi-statusline" || key === "profile" || key === "ponytail") continue;
             const clean = value.replace(/\x1b\[[0-9;]*m/g, "").trim();
             if (clean) {
