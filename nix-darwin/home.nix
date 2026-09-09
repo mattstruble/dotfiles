@@ -870,19 +870,9 @@ in
         "Thumbs.db"
         ".bundle"
         ".opencode"
-        ".beads.gate.lock"
-        ".beads/embeddeddolt"
-        ".beads/backup"
-        ".beads/last-touched"
-        ".beads/bd.sock"
-        ".beads/bd.sock.startlock"
-        ".beads/daemon.*"
-        ".beads/*.lock"
-        ".beads/sync-state.json"
-        ".beads/push-state.json"
-        ".beads/ephemeral.sqlite3*"
-        ".beads/dolt-server.*"
-        ".beads/.beads-credential-key"
+        ".beads*"
+        ".beads/*"
+        ".beads"
       ];
 
       signing = {
