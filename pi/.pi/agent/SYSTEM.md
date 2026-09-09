@@ -20,12 +20,16 @@ Mid-conversation: if the user references something as if you should know it and 
 
 # Beads Task Tracking
 
-If `.beads/` exists in the project root, run `bd prime` at session start.
-
 - Track work with `bd create`, `bd ready`, `bd close` — not TodoWrite or markdown files.
+- Create beads issue BEFORE writing code, mark in_progress when starting.
 - Claim tasks before starting: `bd update <id> --claim`.
-- Store persistent cross-session knowledge: `bd remember "insight"`.
+- Store persistent cross-session knowledge: `bd remember "insight"`. Search with `bd memories <keyword>`.
+- Do NOT use MEMORY.md files — they fragment across accounts.
+- No git operations — beads runs in stealth mode.
 - Never store secrets or credentials in beads.
+- Use `bd --help` or `bd <command> --help` for full command syntax.
+
+**Before saying "done" or "complete"**: `bd close <id1> <id2> ...` for all completed issues.
 
 # Context7-First Research
 

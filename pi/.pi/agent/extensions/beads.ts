@@ -11,40 +11,17 @@ import type {
   SessionBeforeCompactEvent,
   SessionCompactEvent,
 } from "@earendil-works/pi-coding-agent";
-import { statSync } from "node:fs";
-import { join } from "node:path";
+
 
 // ── Prime output filtering ────────────────────────────────────────────────
 
-// Sections to KEEP (dynamic, per-session content)
-const KEEP_SECTIONS = [
-  "Persistent Memories",
-  "SESSION CLOSE PROTOCOL",
-  "Core Rules",
-];
-
-// Sections to STRIP (static command reference — model can use `bd --help`)
-const STRIP_SECTIONS = [
-  "Essential Commands",
-  "Common Workflows",
-  "Finding Work",
-  "Creating & Updating",
-  "Dependencies & Blocking",
-  "Sync & Collaboration",
-  "Project Health",
-  "Quality Tools",
-  "Lifecycle & Hygiene",
-  "Structured Workflows",
-];
-
 /**
- * Filter bd prime output to keep only dynamic content.
- * Preserves: memories, core rules, session close protocol, context recovery note.
- * Strips: full command reference, common workflows, quality tools.
- * Appends a slim reference hint so the model knows commands exist.
+ * Extract only dynamic content from bd prime output.
+ * Static behavioral rules live in SYSTEM.md; only memories are injected.
+ * Returns empty string when there are no memories.
  */
 function slimPrime(raw: string): string {
-  // Parse the JSON envelope if present (codex-hook wraps in JSON)
+  // Parse the JSON envelope (codex-hook wraps in JSON)
   let content = raw;
   try {
     const parsed = JSON.parse(raw);
@@ -53,56 +30,20 @@ function slimPrime(raw: string): string {
     // Not JSON — use raw content directly
   }
 
-  const lines = content.split("\n");
-  const kept: string[] = [];
-  let inStrippedSection = false;
-  let currentHeadingLevel = 0;
-  let inCodeFence = false;
+  // Extract the Persistent Memories section
+  const memStart = content.indexOf("## Persistent Memories");
+  if (memStart === -1) return "";
 
-  for (const line of lines) {
-    // Track code fences to avoid treating # comments as headings
-    if (line.trimStart().startsWith("```")) {
-      inCodeFence = !inCodeFence;
-      if (!inStrippedSection) kept.push(line);
-      continue;
-    }
+  // Find the end: next h1 or h2 that isn't a h3 memory entry
+  const afterHeader = content.indexOf("\n", memStart);
+  const rest = content.slice(afterHeader);
+  const endMatch = rest.match(/\n#{1,2}\s+(?!#)/);
+  const memories = endMatch
+    ? rest.slice(0, endMatch.index).trim()
+    : rest.trim();
 
-    // Only parse headings outside code fences
-    const headingMatch = !inCodeFence ? line.match(/^(#{1,4})\s+(.+)/) : null;
-
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      const title = headingMatch[2].trim();
-
-      // Check if this heading starts a stripped section
-      const shouldStrip = STRIP_SECTIONS.some(
-        (s) => title.includes(s) || title.replace(/[^a-zA-Z ]/g, "").includes(s)
-      );
-
-      if (shouldStrip) {
-        inStrippedSection = true;
-        currentHeadingLevel = level;
-        continue;
-      }
-
-      // If we hit a heading at the same or higher level, stop stripping
-      if (inStrippedSection && level <= currentHeadingLevel) {
-        inStrippedSection = false;
-      }
-    }
-
-    if (!inStrippedSection) {
-      kept.push(line);
-    }
-  }
-
-  // Clean up excessive blank lines
-  let result = kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
-
-  // Append a slim hint so the model knows bd commands exist without the full reference
-  result += `\n\n## Quick Reference\nUse \`bd --help\` or \`bd <command> --help\` for full command syntax.\nKey commands: \`bd ready\`, \`bd show <id>\`, \`bd create\`, \`bd close\`, \`bd update --claim\`, \`bd dep add\`.`;
-
-  return result;
+  if (!memories) return "";
+  return `## Persistent Memories\n${memories}`;
 }
 
 // ── Extension ─────────────────────────────────────────────────────────────
@@ -125,10 +66,14 @@ export default function (pi: ExtensionAPI): void {
 
   pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
     try {
-      statSync(join(ctx.cwd, ".beads"));
+      await pi.exec("bd", ["init", "--stealth", "--non-interactive", "--init-if-missing"], {
+        cwd: ctx.cwd,
+        timeout: 15000,
+      });
       hasBeads = true;
       await runPrime(ctx.cwd);
     } catch {
+      // bd not installed or init failed
       hasBeads = false;
     }
   });
