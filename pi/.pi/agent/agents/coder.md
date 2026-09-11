@@ -26,6 +26,7 @@ Before writing any code:
 2. **Close subtasks** as each implementation chunk completes.
 3. **Commit your changes** after closing each subtask. Do not batch commits to the end.
 4. **Run tests and checks.** Fix any failures before proceeding.
+   - **Action Fusion:** When the follow-up command is predictable (tests, type-check, lint), pass `then_run: { command: "<cmd>" }` on the edit/write call to fuse both into one turn and save tokens.
 5. **Verify your changes** against the success criteria in your task prompt.
 
 ## Phase 3: Completion Report
