@@ -381,7 +381,7 @@ export default function (pi: ExtensionAPI): void {
 			positiveContextDeltaTotal: state.positiveContextDeltaTotal + Math.max(0, delta),
 			positiveContextDeltaCount: state.positiveContextDeltaCount + (delta > 0 ? 1 : 0),
 			cacheDebtTokens,
-			cacheDebtRepaymentTokens: cacheDebtTokens === 0 ? 0 : state.cacheDebtRepaymentTokens,
+			cacheDebtRepaymentTokens: 0,  // consumed
 		};
 		saveState();
 	});
@@ -472,6 +472,7 @@ export default function (pi: ExtensionAPI): void {
 
 		try {
 			compactionInFlight = true;
+			let compactionErrored = false;
 			await new Promise<void>((resolve) => {
 				let finished = false;
 				const finish = () => {
@@ -482,16 +483,22 @@ export default function (pi: ExtensionAPI): void {
 				(ctx as any).compact({
 					customInstructions: BOUNDARY_COMPACTION_INSTRUCTIONS,
 					onComplete: () => finish(),
-					onError: () => finish(),
+					onError: () => {
+						compactionErrored = true;
+						activeDebt = null;
+						finish();
+					},
 				});
 			});
 			compactionInFlight = false;
 
-			// Trigger a continuation turn so the agent resumes work
-			pi.sendMessage(
-				{ content: POST_COMPACTION_MESSAGE, display: false },
-				{ triggerTurn: true },
-			);
+			if (!compactionErrored) {
+				// Trigger a continuation turn so the agent resumes work
+				pi.sendMessage(
+					{ content: POST_COMPACTION_MESSAGE, display: false },
+					{ triggerTurn: true },
+				);
+			}
 		} catch {
 			compactionInFlight = false;
 			activeDebt = null;
