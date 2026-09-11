@@ -5,8 +5,10 @@ let
   piEnabled = config.programs.ai-agents.enable && builtins.elem "pi" config.programs.ai-agents.agents;
 
   # builtins.toJSON produces compact JSON; reformat with jq for 2-space indent
-  prettyJson = pkgs.runCommand "sol-pi.json" { nativeBuildInputs = [ pkgs.jq ]; } ''
-    echo '${builtins.toJSON cfg.config}' | jq --indent 2 '.' > $out
+  prettyJson = let
+    rawJson = pkgs.writeText "sol-pi-raw.json" (builtins.toJSON cfg.config);
+  in pkgs.runCommand "sol-pi.json" { nativeBuildInputs = [ pkgs.jq ]; } ''
+    jq --indent 2 '.' ${rawJson} > $out
   '';
 in
 {
