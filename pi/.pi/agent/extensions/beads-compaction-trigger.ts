@@ -381,7 +381,7 @@ export default function (pi: ExtensionAPI): void {
 			positiveContextDeltaTotal: state.positiveContextDeltaTotal + Math.max(0, delta),
 			positiveContextDeltaCount: state.positiveContextDeltaCount + (delta > 0 ? 1 : 0),
 			cacheDebtTokens,
-			cacheDebtRepaymentTokens: 0,  // consumed
+			cacheDebtRepaymentTokens: cacheDebtTokens === 0 ? 0 : state.cacheDebtRepaymentTokens,
 		};
 		saveState();
 	});
