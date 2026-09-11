@@ -78,9 +78,17 @@ export default function (pi: ExtensionAPI) {
 
   // Block git commit if skill:git-commit hasn't been loaded
   pi.on("tool_call", async (event, ctx) => {
-    if (event.toolName !== "bash") return;
-    const cmd = (event.input as { command?: string }).command ?? "";
-    if (!/git\s+commit/.test(cmd)) return;
+    let cmd: string | null = null;
+
+    if (event.toolName === "bash") {
+      cmd = (event.input as { command?: string }).command ?? "";
+    } else if (event.toolName === "edit" || event.toolName === "write") {
+      // Action Fusion: fused bash command in then_run.command
+      const fused = (event.input as any)?.then_run?.command;
+      if (typeof fused === "string") cmd = fused;
+    }
+
+    if (!cmd || !/git\s+commit/.test(cmd)) return;
 
     if (loadedSkills.has("git-commit")) return;
 

@@ -19,6 +19,21 @@ export default function (pi: ExtensionAPI): void {
         session: event.sessionId,
       };
       appendFileSync(LOG_PATH, JSON.stringify(entry) + "\n");
+
+      // Action Fusion: log fused bash command as a separate audit entry
+      if (event.toolName === "edit" || event.toolName === "write") {
+        const fusedCmd = (event.input as any)?.then_run?.command;
+        if (typeof fusedCmd === "string") {
+          const fusedEntry = {
+            ts: Date.now(),
+            tool: "bash (fused via then_run)",
+            args: { command: fusedCmd },
+            session: event.sessionId,
+            fusedFrom: event.toolName,
+          };
+          appendFileSync(LOG_PATH, JSON.stringify(fusedEntry) + "\n");
+        }
+      }
     } catch {
       // never throw, never crash
     }

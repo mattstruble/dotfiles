@@ -28,6 +28,83 @@ function scanSecrets(text: string): string | null {
 // Process-scoped doom loop history (not persisted across restarts)
 const recentCommands: string[] = [];
 
+type GuardResult = { block: true; reason: string; terminate?: boolean } | undefined;
+
+/** Shared bash-command guards: force-push, doom loop, conventional commit, staged diff secrets, bd remember secrets. */
+async function checkBashCommand(cmd: string, pi: ExtensionAPI): Promise<GuardResult> {
+  // ── Doom loop breaker ──────────────────────────────────────────────────
+  if (recentCommands.length === 3 && recentCommands.every((c) => c === cmd)) {
+    return {
+      block: true,
+      terminate: true,
+      reason: "Doom loop detected: same bash command repeated 3 times in a row. Try a different approach.",
+    };
+  }
+  if (recentCommands.length === 3) recentCommands.shift();
+  recentCommands.push(cmd);
+
+  // ── Force-push block ───────────────────────────────────────────────────
+  if (/git\s+push\s+.*(-f|--force|--force-with-lease)/.test(cmd) || /\+refs\//.test(cmd)) {
+    return { block: true, reason: "Force-push is blocked. Use a regular push or open a PR." };
+  }
+
+  // ── Conventional commit format enforcement ─────────────────────────────
+  const commitMsgMatch = cmd.match(/git\s+commit\s+.*-m\s+["'](.+?)["']/);
+  if (commitMsgMatch) {
+    const msg = commitMsgMatch[1];
+    if (!msg.startsWith("Merge")) {
+      const CONVENTIONAL =
+        /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: .{1,72}$/;
+      if (!CONVENTIONAL.test(msg)) {
+        return {
+          block: true,
+          reason:
+            `Commit message does not follow conventional commits format.\n` +
+            `Expected: ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\(.+\\))?!?: .{1,72}$\n` +
+            `Actual:   ${msg}`,
+        };
+      }
+    }
+  }
+
+  // ── Secret scan: staged diff before git commit ─────────────────────────
+  if (/git\s+commit/.test(cmd)) {
+    let diff = "";
+    try {
+      const result = await pi.exec("git", ["diff", "--cached"]);
+      diff = result.stdout ?? "";
+    } catch {
+      // Not a repo or no staged changes — skip
+    }
+    const hit = scanSecrets(diff);
+    if (hit) {
+      return {
+        block: true,
+        reason: `Secret detected in staged changes (${hit}). Unstage the file before committing.`,
+      };
+    }
+  }
+
+  // ── bd remember secret guard ───────────────────────────────────────────
+  if (/bd\s+remember/.test(cmd)) {
+    const hit = scanSecrets(cmd);
+    if (hit) {
+      return {
+        block: true,
+        reason: `Secret detected in bd remember command (${hit}). Do not store secrets in beads memory.`,
+      };
+    }
+  }
+
+  return undefined;
+}
+
+/** Extract then_run.command from an edit/write tool_call input, if present. */
+function getThenRunCommand(input: unknown): string | null {
+  const cmd = (input as any)?.then_run?.command;
+  return typeof cmd === "string" ? cmd : null;
+}
+
 export default function (pi: ExtensionAPI) {
   pi.on("tool_call", async (event) => {
     const tool = event.toolName;
@@ -48,71 +125,16 @@ export default function (pi: ExtensionAPI) {
       }
     }
 
-    if (tool !== "bash") return;
-
-    const cmd = input.command ?? "";
-
-    // ── Doom loop breaker ──────────────────────────────────────────────────
-    if (recentCommands.length === 3 && recentCommands.every((c) => c === cmd)) {
-      return {
-        block: true,
-        terminate: true,
-        reason: "Doom loop detected: same bash command repeated 3 times in a row. Try a different approach.",
-      };
-    }
-    if (recentCommands.length === 3) recentCommands.shift();
-    recentCommands.push(cmd);
-
-    // ── Force-push block ───────────────────────────────────────────────────
-    if (/git\s+push\s+.*(-f|--force|--force-with-lease)/.test(cmd) || /\+refs\//.test(cmd)) {
-      return { block: true, reason: "Force-push is blocked. Use a regular push or open a PR." };
+    // ── Bash guards: direct bash calls ─────────────────────────────────────
+    if (tool === "bash") {
+      return checkBashCommand(input.command ?? "", pi);
     }
 
-    // ── Conventional commit format enforcement ─────────────────────────────
-    const commitMsgMatch = cmd.match(/git\s+commit\s+.*-m\s+["'](.+?)["']/);
-    if (commitMsgMatch) {
-      const msg = commitMsgMatch[1];
-      if (!msg.startsWith("Merge")) {
-        const CONVENTIONAL =
-          /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: .{1,72}$/;
-        if (!CONVENTIONAL.test(msg)) {
-          return {
-            block: true,
-            reason:
-              `Commit message does not follow conventional commits format.\n` +
-              `Expected: ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\(.+\\))?!?: .{1,72}$\n` +
-              `Actual:   ${msg}`,
-          };
-        }
-      }
-    }
-
-    // ── Secret scan: staged diff before git commit ─────────────────────────
-    if (/git\s+commit/.test(cmd)) {
-      let diff = "";
-      try {
-        const result = await pi.exec("git", ["diff", "--cached"]);
-        diff = result.stdout ?? "";
-      } catch {
-        // Not a repo or no staged changes — skip
-      }
-      const hit = scanSecrets(diff);
-      if (hit) {
-        return {
-          block: true,
-          reason: `Secret detected in staged changes (${hit}). Unstage the file before committing.`,
-        };
-      }
-    }
-
-    // ── bd remember secret guard ───────────────────────────────────────────
-    if (/bd\s+remember/.test(cmd)) {
-      const hit = scanSecrets(cmd);
-      if (hit) {
-        return {
-          block: true,
-          reason: `Secret detected in bd remember command (${hit}). Do not store secrets in beads memory.`,
-        };
+    // ── Bash guards: fused then_run.command on edit/write (Action Fusion) ─
+    if (tool === "edit" || tool === "write") {
+      const fusedCmd = getThenRunCommand(event.input);
+      if (fusedCmd) {
+        return checkBashCommand(fusedCmd, pi);
       }
     }
   });
