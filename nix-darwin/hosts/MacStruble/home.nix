@@ -297,6 +297,17 @@ in
             };
           };
         };
+        sol-pi = {
+          enable = true;
+          config = {
+            version = 1;
+            actionFusion = true;
+            observationPack = true;
+            evidencePreservingReducer = false;
+            onlineContextCompact = false;
+            cacheWriteReadRatio = 0;
+          };
+        };
         zen-browser.profiles.default.liveFolders = {
           "Pull requests" = {
             id = "6007b674-05a3-4264-93ec-5d0d8572a14b";
