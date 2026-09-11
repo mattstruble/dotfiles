@@ -303,6 +303,7 @@ in
             version = 1;
             actionFusion = true;
             observationPack = true;
+            # TODO: enable EPR once local reducer model provider is configured
             evidencePreservingReducer = false;
             onlineContextCompact = false;
             cacheWriteReadRatio = 0;

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "actionFusion": true,
+  "observationPack": false,
+  "evidencePreservingReducer": true,
+  "evidencePreservingReducerProvider": "bedrock",
+  "evidencePreservingReducerModel": "us.anthropic.claude-3-5-haiku-20241022-v1:0",
+  "onlineContextCompact": false
+}
