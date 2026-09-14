@@ -156,6 +156,9 @@ in
         # Pi LSP server configuration
         ".pi/agent/pi-lsp.json".source = mkLink "${path}/pi/.pi/agent/pi-lsp.json";
 
+        # Pi web-search: disable curator browser popup
+        ".pi/agent/web-search.json".source = mkLink "${path}/pi/.pi/agent/web-search.json";
+
         # Pi themes
         ".pi/agent/themes".source = mkLink "${path}/pi/.pi/agent/themes";
 
