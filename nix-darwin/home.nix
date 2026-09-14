@@ -446,6 +446,7 @@ in
           "npm:pi-effort"
           "npm:pi-mcp-adapter"
           "npm:pi-rtk-optimizer"
+          "npm:@sting8k/pi-vcc"
           "npm:pi-vim"
           "npm:pi-web-access"
         ];
