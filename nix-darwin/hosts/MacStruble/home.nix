@@ -101,12 +101,13 @@ in
         }
       );
 
-      home.file.".pi/agent/web-search.json".source = pkgs.writeText "pi-web-search.json" (
+      home.file.".pi/agent/web-search.json".source = lib.mkForce (pkgs.writeText "pi-web-search.json" (
         builtins.toJSON {
           provider = "mjolnir-36";
           model = "Qwen3.6-35B-A3B";
+          curator = "none";
         }
-      );
+      ));
 
       programs = {
         ai-agents = {
