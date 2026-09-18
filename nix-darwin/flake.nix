@@ -73,7 +73,21 @@
                 };
                 overlays = [
                   (final: prev: {
-                    beads = inputs.beads.packages.${system}.default;
+                    # ponytail: beads' postPatch bumps the go directive to the toolchain
+                    # version, which breaks module resolution on some commits. The Nix
+                    # toolchain (1.26.7) already satisfies go.mod (1.26.5), so drop it.
+                    beads = (import nixpkgs {
+                      inherit system;
+                      overlays = [
+                        inputs.beads.overlays.default
+                        (f: p: {
+                          beads-unwrapped = p.beads-unwrapped.override (prevArgs: {
+                            buildGoModule = args:
+                              prevArgs.buildGoModule (args // { postPatch = ""; });
+                          });
+                        })
+                      ];
+                    }).beads;
                   })
                   (final: prev: {
                     obsidian = prev.obsidian.overrideAttrs (old: {
