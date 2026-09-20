@@ -63,8 +63,13 @@ in
       home.file.".pi/agent/models.json".source = pkgs.writeText "pi-models.json" (
         builtins.toJSON {
           providers = {
-            "mjolnir-38" = {
-              baseUrl = "http://mjolnir:8556/v1";
+            # One provider -> the LiteLLM gateway (:8000). modelName = real running
+            # name (pod --alias = gateway model_name). compat is provider-level, with a
+            # per-model override for gemma (supportsReasoningEffort -> thinking levels
+            # from the API). mergeCompat = {...provider, ...model}, so gemma inherits
+            # sendSessionAffinityHeaders + supportsDeveloperRole from the provider.
+            "mjolnir" = {
+              baseUrl = "http://mjolnir:8000/v1";
               api = "openai-completions";
               apiKey = "foo";
               compat = {
@@ -74,26 +79,17 @@ in
               };
               models = [
                 {
-                  id = "qwen3.8-27b";
+                  id = "swift-qwen3.8-27b";
                   reasoning = true;
                   contextWindow = 131072;
                 }
-              ];
-            };
-            "mjolnir-36" = {
-              baseUrl = "http://mjolnir:8555/v1";
-              api = "openai-completions";
-              apiKey = "foo";
-              compat = {
-                supportsDeveloperRole = false;
-                supportsReasoningEffort = false;
-                sendSessionAffinityHeaders = true;
-              };
-              models = [
                 {
-                  id = "Qwen3.6-35B-A3B";
+                  id = "gemma-4-26b-a4b";
                   reasoning = true;
                   contextWindow = 131072;
+                  compat = {
+                    supportsReasoningEffort = true;
+                  };
                 }
               ];
             };
@@ -103,8 +99,8 @@ in
 
       home.file.".pi/agent/web-search.json".source = lib.mkForce (pkgs.writeText "pi-web-search.json" (
         builtins.toJSON {
-          provider = "mjolnir-36";
-          model = "Qwen3.6-35B-A3B";
+          provider = "mjolnir";
+          model = "gemma-4-26b-a4b";
           curator = "none";
         }
       ));
@@ -113,26 +109,26 @@ in
         ai-agents = {
           pi = {
             config = {
-              defaultProvider = "mjolnir-38";
-              defaultModel = "mjolnir-38/qwen3.8-27b";
+              defaultProvider = "mjolnir";
+              defaultModel = "mjolnir/swift-qwen3.8-27b";
               enabledModels = [
-                "mjolnir-38/qwen3.8-27b"
-                "mjolnir-36/Qwen3.6-35B-A3B"
+                "mjolnir/swift-qwen3.8-27b"
+                "mjolnir/gemma-4-26b-a4b"
               ];
             };
             modelMap = {
-              default = "mjolnir-38/qwen3.8-27b";
-              small_model = "mjolnir-36/Qwen3.6-35B-A3B";
-              planner = "mjolnir-38/qwen3.8-27b";
-              orchestrator = "mjolnir-38/qwen3.8-27b";
-              builder = "mjolnir-36/Qwen3.6-35B-A3B";
-              coder = "mjolnir-36/Qwen3.6-35B-A3B";
-              fetcher = "mjolnir-36/Qwen3.6-35B-A3B";
-              plan-critic = "mjolnir-38/qwen3.8-27b";
-              correctness-reviewer = "mjolnir-36/Qwen3.6-35B-A3B";
-              failure-path-reviewer = "mjolnir-36/Qwen3.6-35B-A3B";
-              readability-reviewer = "mjolnir-36/Qwen3.6-35B-A3B";
-              security-reviewer = "mjolnir-36/Qwen3.6-35B-A3B";
+              default = "mjolnir/swift-qwen3.8-27b";
+              small_model = "mjolnir/gemma-4-26b-a4b";
+              planner = "mjolnir/swift-qwen3.8-27b";
+              orchestrator = "mjolnir/swift-qwen3.8-27b";
+              builder = "mjolnir/gemma-4-26b-a4b";
+              coder = "mjolnir/gemma-4-26b-a4b";
+              fetcher = "mjolnir/gemma-4-26b-a4b";
+              plan-critic = "mjolnir/swift-qwen3.8-27b";
+              correctness-reviewer = "mjolnir/gemma-4-26b-a4b";
+              failure-path-reviewer = "mjolnir/gemma-4-26b-a4b";
+              readability-reviewer = "mjolnir/gemma-4-26b-a4b";
+              security-reviewer = "mjolnir/gemma-4-26b-a4b";
             };
           };
           skills = {
@@ -242,66 +238,58 @@ in
             };
             config = {
               provider = {
-                "mjolnir-38" = {
+                "mjolnir" = {
                   npm = "@ai-sdk/openai-compatible";
-                  name = "Mjolnir llama.cpp (Qwen3.8-27B Q4 + MTP)";
+                  name = "Mjolnir llama.cpp (gateway :8000)";
                   options = {
-                    baseURL = "http://mjolnir:8556/v1";
+                    baseURL = "http://mjolnir:8000/v1";
                     apiKey = "foo";
                   };
-                  models."qwen3.8-27b" = {
-                    name = "Qwen3.8-27B (llama.cpp UD-Q4_K_XL)";
+                  models."swift-qwen3.8-27b" = {
+                    name = "Swift Qwen3.8-27B (llama.cpp Q4_K_M + MTP)";
+                    limit = {
+                      context = 131072;
+                      output = 8192;
+                    };
+                  };
+                  models."gemma-4-26b-a4b" = {
+                    name = "Gemma 4 26B-A4B (llama.cpp UD-Q4_K_XL + MTP)";
                     limit = {
                       context = 131072;
                       output = 8192;
                     };
                   };
                 };
-                "mjolnir-36" = {
-                  npm = "@ai-sdk/openai-compatible";
-                  name = "Mjolnir llama.cpp (Qwen3.6-35B-A3B)";
-                  options = {
-                    baseURL = "http://mjolnir:8555/v1";
-                    apiKey = "foo";
-                  };
-                  models."Qwen3.6-35B-A3B" = {
-                    name = "Qwen3.6-35B-A3B MoE (IQ4_XS-MTP)";
-                    limit = {
-                      context = 262144;
-                      output = 8192;
-                    };
-                  };
-                };
               };
-              model = "mjolnir-38/qwen3.8-27b";
-              small_model = "mjolnir-36/Qwen3.6-35B-A3B";
+              model = "mjolnir/swift-qwen3.8-27b";
+              small_model = "mjolnir/gemma-4-26b-a4b";
               agent = {
                 planner = {
-                  model = "mjolnir-38/qwen3.8-27b";
+                  model = "mjolnir/swift-qwen3.8-27b";
                 };
                 orchestrator = {
-                  model = "mjolnir-36/Qwen3.6-35B-A3B";
+                  model = "mjolnir/gemma-4-26b-a4b";
                 };
                 coder = {
-                  model = "mjolnir-36/Qwen3.6-35B-A3B";
+                  model = "mjolnir/gemma-4-26b-a4b";
                 };
                 plan-critic = {
-                  model = "mjolnir-38/qwen3.8-27b";
+                  model = "mjolnir/swift-qwen3.8-27b";
                 };
                 correctness-reviewer = {
-                  model = "mjolnir-36/Qwen3.6-35B-A3B";
+                  model = "mjolnir/gemma-4-26b-a4b";
                 };
                 failure-path-reviewer = {
-                  model = "mjolnir-36/Qwen3.6-35B-A3B";
+                  model = "mjolnir/gemma-4-26b-a4b";
                 };
                 readability-reviewer = {
-                  model = "mjolnir-36/Qwen3.6-35B-A3B";
+                  model = "mjolnir/gemma-4-26b-a4b";
                 };
                 security-reviewer = {
-                  model = "mjolnir-36/Qwen3.6-35B-A3B";
+                  model = "mjolnir/gemma-4-26b-a4b";
                 };
                 fetcher = {
-                  model = "mjolnir-36/Qwen3.6-35B-A3B";
+                  model = "mjolnir/gemma-4-26b-a4b";
                 };
               };
             };
