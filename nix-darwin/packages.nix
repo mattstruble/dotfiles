@@ -31,6 +31,7 @@ with pkgs;
   curl
   darwin.cctools
   diffstat
+  dolt
   diffutils
   docutils
   eza

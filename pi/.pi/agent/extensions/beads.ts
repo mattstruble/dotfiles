@@ -1,8 +1,8 @@
 // beads — Pi extension
 // Automatic bd prime context injection on session start and after compaction.
-// Reuses bd codex-hook subcommands for consistent behavior across agents.
-// Filters the prime output to inject only dynamic/essential content, stripping
-// the static command reference that the model can access via `bd --help`.
+// Uses --global to target the shared beads_global database. BEADS_DIR and
+// BEADS_DOLT_SHARED_SERVER are set via nix-darwin session variables.
+// No per-project init needed — shared server runs as a launchd agent.
 
 import type {
   ExtensionAPI,
@@ -47,33 +47,35 @@ function slimPrime(raw: string): string {
 }
 
 // ── Extension ─────────────────────────────────────────────────────────────
+// Shared-server mode: BEADS_DIR and BEADS_DOLT_SHARED_SERVER are set via
+// nix-darwin session variables. All commands use --global to target the
+// beads_global database. No per-project init needed.
 
 export default function (pi: ExtensionAPI): void {
   let primeCache = "";
   let hasBeads = false;
 
+  function bd(args: string[]) {
+    return ["--global", ...args];
+  }
+
   async function runPrime(cwd: string): Promise<void> {
     try {
-      const result = await pi.exec("bd", ["codex-hook", "SessionStart"], {
+      const result = await pi.exec("bd", bd(["codex-hook", "SessionStart"]), {
         cwd,
         timeout: 15000,
       });
       if (result.stdout) primeCache = slimPrime(result.stdout.trim());
     } catch {
-      // bd not available or no beads workspace
+      // bd not available or shared server not running
     }
   }
 
   pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
     try {
-      await pi.exec("bd", ["init", "--stealth", "--non-interactive", "--init-if-missing"], {
-        cwd: ctx.cwd,
-        timeout: 15000,
-      });
-      hasBeads = true;
       await runPrime(ctx.cwd);
+      hasBeads = primeCache.length > 0;
     } catch {
-      // bd not installed or init failed
       hasBeads = false;
     }
   });
@@ -90,10 +92,9 @@ export default function (pi: ExtensionAPI): void {
     "session_before_compact",
     async (event: SessionBeforeCompactEvent, ctx) => {
       if (!hasBeads) return;
-      // Call PreCompact hook for fresh context (mirrors opencode behavior)
       let compactCtx = primeCache;
       try {
-        const result = await pi.exec("bd", ["codex-hook", "PreCompact"], {
+        const result = await pi.exec("bd", bd(["codex-hook", "PreCompact"]), {
           cwd: ctx.cwd,
           timeout: 10000,
         });
@@ -117,9 +118,8 @@ export default function (pi: ExtensionAPI): void {
 
   pi.on("session_compact", async (_event: SessionCompactEvent, ctx) => {
     if (!hasBeads) return;
-    // Call PostCompact then refresh (mirrors opencode behavior)
     try {
-      await pi.exec("bd", ["codex-hook", "PostCompact"], {
+      await pi.exec("bd", bd(["codex-hook", "PostCompact"]), {
         cwd: ctx.cwd,
         timeout: 10000,
       });

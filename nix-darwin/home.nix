@@ -286,6 +286,7 @@ in
     inputs.ai-agents.homeManagerModules.default
     inputs.agent-sandbox.homeManagerModules.default
     ./modules/aws.nix
+    ./modules/beads-server.nix
     ./modules/ebook-mcp.nix
     ./modules/llm-wiki.nix
     ./modules/neovim-treesitter.nix
@@ -336,6 +337,7 @@ in
             "git-pr"
             "knowledge-base"
             "orchestrator"
+            "wiki-hygiene"
             "planner"
             "pr-reviewer"
             "prd-to-stories"
@@ -1106,6 +1108,9 @@ in
         SSH_AUTH_SOCK = "${onePassPath}";
         TINC_USE_NIX = "yes";
         WORDCHARS = "";
+        BEADS_SKIP_IDENTITY_CHECK = "1";
+        BEADS_DIR = "~/.beads";
+        BEADS_DOLT_SHARED_SERVER = "1";
       };
 
       shellAliases = {
