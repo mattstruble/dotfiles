@@ -342,6 +342,10 @@ in
             "pr-reviewer"
             "prd-to-stories"
             "prd-writing"
+            "software-design"
+            "skill-creator"
+            "test-design"
+            "test-driven-development"
           ];
         };
 
@@ -356,10 +360,6 @@ in
             "docker"
             "logging"
             "python-design"
-            "software-design"
-            "skill-creator"
-            "test-design"
-            "test-driven-development"
           ];
         };
 
