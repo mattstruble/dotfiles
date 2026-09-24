@@ -1109,7 +1109,7 @@ in
         TINC_USE_NIX = "yes";
         WORDCHARS = "";
         BEADS_SKIP_IDENTITY_CHECK = "1";
-        BEADS_DIR = "~/.beads";
+        BEADS_DIR = "${home}/.beads";
         BEADS_DOLT_SHARED_SERVER = "1";
       };
 
