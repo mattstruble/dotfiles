@@ -97,15 +97,13 @@ in
         }
       );
 
-      home.file.".pi/agent/web-search.json".source = lib.mkForce (
-        pkgs.writeText "pi-web-search.json" (
-          builtins.toJSON {
-            provider = "mjolnir";
-            model = "gemma-4-26b-a4b";
-            curator = "none";
-          }
-        )
-      );
+      home.file.".pi/agent/web-search.json".source = lib.mkForce (pkgs.writeText "pi-web-search.json" (
+        builtins.toJSON {
+          provider = "mjolnir";
+          model = "gemma-4-26b-a4b";
+          curator = "none";
+        }
+      ));
 
       programs = {
         ai-agents = {
@@ -134,7 +132,7 @@ in
             };
           };
           skills = {
-            # ai skills
+            # Game development skills
             mattstruble-ai = {
               source = inputs.skills-mattstruble;
               priority = 200;
@@ -152,7 +150,6 @@ in
                 "rag-design"
               ];
             };
-            # Game development skills
             mattstruble-gamedev = {
               source = inputs.skills-mattstruble;
               priority = 200;
@@ -212,7 +209,6 @@ in
                 "k8s-workloads"
                 "logql"
                 "promql"
-                "docker"
               ];
             };
           };
