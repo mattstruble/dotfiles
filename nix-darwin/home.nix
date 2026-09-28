@@ -156,6 +156,9 @@ in
         # Pi LSP server configuration
         ".pi/agent/pi-lsp.json".source = mkLink "${path}/pi/.pi/agent/pi-lsp.json";
 
+        # Skill router configuration (mode: inject)
+        ".pi/agent/skill-router.json".source = mkLink "${path}/pi/.pi/agent/skill-router.json";
+
         # Pi web-search: disable curator browser popup
         ".pi/agent/web-search.json".source = mkLink "${path}/pi/.pi/agent/web-search.json";
 
@@ -421,7 +424,7 @@ in
                 value = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/extensions/${f}";
               })
               [
-                "skill-enforcer.ts"
+                "skill-router.ts"
                 "skills-picker.ts"
                 "guardrails.ts"
                 "beads.ts"
