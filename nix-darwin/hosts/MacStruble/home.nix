@@ -105,6 +105,13 @@ in
         }
       ));
 
+      # 64 GB host: Kev-4B instead of the shared 0.8B default (~9 GB weights, ~17 GB load peak).
+      services.kev-server = {
+        model = "jaredpalmer/kev-4b@139fdd94f1b6a6ad80cc15e08fcb99cac885a101";
+        memoryLimitBytes = 20 * 1024 * 1024 * 1024;
+        cacheLimitBytes = 1024 * 1024 * 1024;
+      };
+
       programs = {
         ai-agents = {
           pi = {
