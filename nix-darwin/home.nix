@@ -288,6 +288,7 @@ in
     ./modules/aws.nix
     ./modules/beads-server.nix
     ./modules/ebook-mcp.nix
+    ./modules/kev-server.nix
     ./modules/llm-wiki.nix
     ./modules/neovim-treesitter.nix
     ./modules/opencode-profiles.nix
@@ -1262,6 +1263,8 @@ in
     };
 
   };
+
+  services.kev-server.enable = true;
 
   targets.darwin = {
     defaults = {
