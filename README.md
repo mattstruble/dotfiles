@@ -48,64 +48,15 @@ and their own dotfile repositories.
 
 ## Skill Router
 
-Automatic skill injection for Pi sessions and dispatched sub-agents.
-Replaces `skill-enforcer.ts`.
-
-**Per turn (`before_agent_start`):**
-1. Score the prompt against named-skill rules (exact catalog name → 1.0) and
-   enforcer patterns (regex → 0.75).
-2. If there are hits and the decider is reachable, query it to keep or drop
-   each hit (threshold 0.30). A *noul* is the decider's yes/no probability
-   for a question — skills below the threshold are dropped.
-3. Select top 2 skills (by score desc, name desc) not already in context.
-4. Inject their bodies as `custom_message` entries and replace the verbose
-   `<available_skills>` block with a names-only list.
-5. Block `git commit` until `git-commit` is in context.
-
-**Per dispatch (`tool_call` on `dispatch`):**
-Each sub-agent task is scored and injected independently (same rules + decider
-filter). `shadow` mode logs `wouldInject` without mutating.
-
-**What leaves the Pi process:** the router sends the working directory and the
-first 2 000 characters of each user prompt (and of each dispatched task's text)
-to the configured decider. The default decider is the local
-[Kev Decision Server](#kev-decision-server) on `127.0.0.1:8008`. Plain `http://`
-is refused for non-loopback hosts. `https://` to a remote host is allowed with
-a one-time warning that prompts leave the machine. A hosted decider's API key
-comes from the env var named by `apiKeyEnv` — never from the JSON file.
-
-**Configuration** (`pi/.pi/agent/skill-router.json`, linked to `~/.pi/agent/`):
-
-| Key | Default | Description |
-|-----|---------|-------------|
-| `mode` | `"inject"` | `inject` (live), `shadow` (log only), `off` (disabled) |
-| `decider.url` | `"http://127.0.0.1:8008"` | Kev server URL |
-| `decider.model` | `"kev-latest"` | Model name sent to `/v1/systemone` |
-| `decider.timeoutMs` | `1500` | Per-query timeout; fallback to rules on failure |
-| `decider.threshold` | `0.30` | Minimum noul probability to keep a hit |
-| `decider.apiKeyEnv` | `null` | Env var name for bearer auth |
-| `catalog` | `"~/.pi/agent/skill-profiles/all"` | Skill catalog directory |
-| `maxSkillsPerTurn` | `2` | Max skills injected per turn/task |
-
-**Rollback:** set `"mode": "off"` in `pi/.pi/agent/skill-router.json` (an
-out-of-store symlink, so no rebuild is needed) and restart Pi sessions — the
-config is read when the extension loads. `"shadow"` logs decisions without
-injecting.
-
-### Tests
-
-```bash
-# Unit + parity (no server needed)
-npx tsx --test pi/.pi/agent/extensions/skill-router.test.ts \
-  pi/.pi/agent/extensions/skill-router-parity.test.ts
-
-# Kev parity (requires running Kev server on :8008)
-npx tsx --test pi/.pi/agent/extensions/skill-router-kev-parity.test.ts
-```
+`pi/.pi/agent/extensions/skill-router.ts` injects the skills each Pi turn and each dispatched subagent task needs,
+filtered by the local [Kev Decision Server](#kev-decision-server), and replaces `skill-enforcer.ts`. How it chooses
+skills, every configuration option, and the tests are in
+[`pi/.pi/agent/extensions/skill-router.md`](pi/.pi/agent/extensions/skill-router.md). To roll back, set
+`"mode": "off"` in `pi/.pi/agent/skill-router.json` and restart Pi.
 
 ## Kev Decision Server
 
-A local 0.8B model server that answers noul (yes/no probability) questions for
+A local Kev model server that answers noul (yes/no probability) questions for
 the [Skill Router](#skill-router). Loopback only, `127.0.0.1:8008`. Managed as
 a launchd user agent via nix-darwin — enabled on every host from the shared
 `nix-darwin/home.nix`.
@@ -121,9 +72,11 @@ launchctl kickstart -k gui/$(id -u)/com.user.kev-server
 
 **Logs:** `~/Library/Logs/kev-server.log` (auto-truncated at ~10 MiB on restart).
 
-**Memory:** MLX advisory limits are set to 4 GiB / 256 MiB cache, but MLX may
-exceed them under pressure. Idle ~2.1 GB after warm-up, warm latency ~31–35 ms
-for 1–2 questions (measured 2026-09-25).
+**Model per host:** `services.kev-server.model` defaults to `jaredpalmer/kev-0.8b` (idle ~2.0 GB, ~2.3 GB after
+warm-up, ~31-35 ms for 1-2 questions, measured 2026-09-25). MacStruble (64 GB) overrides it with
+`jaredpalmer/kev-4b` and raises the MLX limits to 20 GiB / 1 GiB cache in `nix-darwin/hosts/MacStruble/home.nix`;
+Kev-4B needs ~9 GB of weights and peaks around 17 GB while loading. MLX limits are advisory: MLX may exceed them
+under pressure.
 
 **Interpreter:** Nix's `python312` (store path in the venv's `pyvenv.cfg`);
 `UV_PYTHON_DOWNLOADS=never` prevents uv from downloading its own CPython.
@@ -132,9 +85,8 @@ for 1–2 questions (measured 2026-09-25).
 query it. `kev.serve` supports bearer auth via `KEV_API_KEY`, but the
 nix-darwin module does not set it.
 
-**Updating the model revision:** edit the `rev` and `hash` in
-`nix-darwin/modules/kev-server.nix`, then rebuild. The `model` field in the
-module controls the HF revision passed to `kev.serve --run`.
+**Updating:** the Kev code is pinned by `rev` and `hash` in `nix-darwin/modules/kev-server.nix`; the model is
+pinned by the `@<revision>` suffix of `services.kev-server.model`. Change either and rebuild.
 
 **Corporate-host constraints:** the venv is created with `uv --no-config`
 because the global `uv.toml` adds a corporate index that doesn't carry MLX
@@ -142,10 +94,10 @@ packages. PyPI and Hugging Face Hub access is needed on first rebuild.
 
 ### Activate
 
-1. `git add` any untracked files, then rebuild:
+1. Rebuild with `make rebuild` (stage any new files first: the flake only sees tracked files), or without git:
    ```bash
    sudo darwin-rebuild switch \
-     --flake "path:$HOME/dotfiles/nix-darwin#$(hostname)" --impure
+     --flake "path:$HOME/dotfiles/nix-darwin#$(hostname -s)" --impure
    ```
 2. The rebuild syncs a Python env (torch, MLX, transformers and
    dependencies) from PyPI via `uv --no-config` and prefetches the pinned
