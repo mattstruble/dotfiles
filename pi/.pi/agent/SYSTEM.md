@@ -26,6 +26,7 @@ Mid-conversation: if the user references something as if you should know it and 
 - Store persistent cross-session knowledge: `bd remember "insight"`. Search with `bd memories <keyword>`.
 - Do NOT use MEMORY.md files — they fragment across accounts.
 - No git operations — beads runs in stealth mode.
+- Never reference beads IDs in code, comments, docstrings or commit messages; describe the substance instead. Strip them from task text handed to subagents too.
 - Never store secrets or credentials in beads.
 - Use `bd --help` or `bd <command> --help` for full command syntax.
 

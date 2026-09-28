@@ -180,6 +180,9 @@ The coder re-spawns only reviewers whose subtasks remain open.
 
 - Always use `--stealth` when initializing (`bd init --stealth`). This
   keeps beads local and does not commit files to the project repo.
+- Never reference beads IDs in code, comments, docstrings or commit
+  messages; describe the substance instead. Strip them from task text
+  handed to subagents too.
 - When initializing, also run `bd setup opencode` to inject beads' own
   command reference into the project's AGENTS.md.
 
