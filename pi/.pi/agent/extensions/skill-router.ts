@@ -13,7 +13,7 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { readdirSync, readFileSync, existsSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 // ── Config ──────────────────────────────────────────────────────────
@@ -31,6 +31,7 @@ interface RouterConfig {
   decider: DeciderConfig;
   catalog: string;
   maxSkillsPerTurn: number;
+  maxSkillsPerTask: number;
 }
 
 const DEFAULT_CONFIG: RouterConfig = {
@@ -44,6 +45,7 @@ const DEFAULT_CONFIG: RouterConfig = {
   },
   catalog: "~/.pi/agent/skill-profiles/all",
   maxSkillsPerTurn: 2,
+  maxSkillsPerTask: 3,
 };
 
 function expandTilde(p: string): string {
@@ -105,6 +107,13 @@ function loadConfig(): RouterConfig {
       cfg.maxSkillsPerTurn = raw.maxSkillsPerTurn;
     } else if (raw.maxSkillsPerTurn !== undefined) {
       badFields.push("maxSkillsPerTurn");
+    }
+
+    // maxSkillsPerTask
+    if (typeof raw.maxSkillsPerTask === "number" && raw.maxSkillsPerTask > 0) {
+      cfg.maxSkillsPerTask = raw.maxSkillsPerTask;
+    } else if (raw.maxSkillsPerTask !== undefined) {
+      badFields.push("maxSkillsPerTask");
     }
 
     // catalog
@@ -344,6 +353,78 @@ const ENFORCER: Array<{ pattern: RegExp; skill: string }> = [
   { pattern: /\b(api design|rest api|grpc|openapi|swagger|resource model|endpoint design|api spec)\b/i, skill: "api-design" },
   { pattern: /\b(code review|review.*pr|review.*diff|review.*changes|lgtm)\b/i, skill: "code-reviewer" },
 ];
+
+// ── Language-to-skill map for coding task detection (extensions, filenames, and marker files) ──
+const LANGUAGE_MAP: Array<{ patterns: RegExp[]; markers: string[]; skill: string }> = [
+  { patterns: [/\.py\b/], markers: ["pyproject.toml", "setup.py", "requirements.txt"], skill: "python-design" },
+  { patterns: [/\.nix\b/], markers: ["flake.nix"], skill: "nix" },
+  { patterns: [/Dockerfile\b/, /docker-compose\.yml\b/, /compose\.yaml\b/], markers: ["Dockerfile", "docker-compose.yml", "compose.yaml"], skill: "docker" },
+  { patterns: [/Chart\.yaml\b/], markers: ["Chart.yaml"], skill: "helm" },
+  { patterns: [/\.odin\b/], markers: [], skill: "odin-design" },
+  { patterns: [/\.gd\b/, /\.tscn\b/, /project\.godot\b/], markers: ["project.godot"], skill: "godot" },
+  { patterns: [/\.gdshader\b/], markers: [], skill: "godot-shader" },
+  { patterns: [/\.fnl\b/], markers: [], skill: "love2d-fennel" },
+  { patterns: [/conf\.lua\b/, /main\.lua\b/], markers: ["conf.lua", "main.lua"], skill: "love2d" },
+];
+
+/** A task is a coding task when it has write/edit tools or sets worktree/allowTreeMutation. */
+function isCodingTask(task: any): boolean {
+  if (Array.isArray(task.tools)) {
+    for (const t of task.tools) {
+      const name = typeof t === "string" ? t : t?.name;
+      if (name === "write" || name === "edit") return true;
+    }
+  }
+  if (task.worktree === true || task.allowTreeMutation === true) return true;
+  return false;
+}
+
+/** Extract the repo root from "Repo root: <path>" in task text, or fall back to dir. */
+function resolveRepoRoot(taskText: string, fallbackDir: string): string {
+  const m = taskText.match(/Repo root:\s*(.+)/m);
+  if (m) {
+    const candidate = m[1].trim();
+    try {
+      if (statSync(candidate).isDirectory()) return candidate;
+    } catch { /* fall through */ }
+  }
+  return fallbackDir;
+}
+
+/** Detect language skills from file references in text and marker files at repo top level. */
+function detectLanguages(
+  taskText: string,
+  repoRoot: string,
+  catalogNameSet: Set<string>,
+): string[] {
+  const detected = new Set<string>();
+
+  // Check text for file patterns
+  for (const entry of LANGUAGE_MAP) {
+    for (const pat of entry.patterns) {
+      if (pat.test(taskText)) {
+        if (catalogNameSet.has(entry.skill)) detected.add(entry.skill);
+        break;
+      }
+    }
+  }
+
+  // Check marker files at repo top level (single readdir, no recursion)
+  try {
+    const topFiles = new Set(readdirSync(repoRoot));
+    for (const entry of LANGUAGE_MAP) {
+      if (detected.has(entry.skill)) continue;
+      for (const marker of entry.markers) {
+        if (topFiles.has(marker)) {
+          if (catalogNameSet.has(entry.skill)) detected.add(entry.skill);
+          break;
+        }
+      }
+    }
+  } catch { /* repo dir unreadable — skip marker detection */ }
+
+  return [...detected];
+}
 
 // ── Catalog ─────────────────────────────────────────────────────────
 
@@ -820,7 +901,8 @@ async function routeDispatchTasks(
   pi: ExtensionAPI,
   ctx: any,
 ): Promise<void> {
-  const cwd = (ctx?.cwd ?? process.cwd()).replace(process.env.HOME ?? "", "~");
+  const cwdRaw = ctx?.cwd ?? process.cwd();
+  const cwd = cwdRaw.replace(process.env.HOME ?? "", "~");
 
   // Phase 1: score all tasks synchronously
   interface ScoredTask {
@@ -829,6 +911,8 @@ async function routeDispatchTasks(
     hits: Map<string, number>;
     alreadyPresent: Set<string>;
     state: string;
+    coding: boolean;
+    languages: string[];
   }
   const scored: ScoredTask[] = [];
 
@@ -842,8 +926,18 @@ async function routeDispatchTasks(
 
       if (isExplicitTurn(truncated, catalogNameSet)) continue;
 
+      const coding = isCodingTask(task);
+      let languages: string[] = [];
+
+      if (coding) {
+        const repoRoot = resolveRepoRoot(taskText, cwdRaw);
+        languages = detectLanguages(taskText, repoRoot, catalogNameSet);
+      }
+
       const hits = scorePrompt(taskText, catalogNames, catalogNameSet);
-      if (hits.size === 0) continue;
+
+      // Non-coding tasks with no hits can be skipped entirely
+      if (!coding && hits.size === 0) continue;
 
       const alreadyPresent = new Set<string>();
       const combined = (task.systemPrompt ?? "") + "\n" + taskText;
@@ -852,7 +946,7 @@ async function routeDispatchTasks(
       }
 
       const state = `Working directory: ${cwd}\nUser request:\n${truncated}`;
-      scored.push({ index: i, task, hits, alreadyPresent, state });
+      scored.push({ index: i, task, hits, alreadyPresent, state, coding, languages });
     } catch {
       continue;
     }
@@ -860,9 +954,13 @@ async function routeDispatchTasks(
 
   if (scored.length === 0) return;
 
-  // Phase 2: query Kev concurrently for all scored tasks
+  // Phase 2: query Kev concurrently for all scored tasks (only for tasks with rule hits)
   const results = await Promise.allSettled(
-    scored.map((s) => kevThenRules(s.hits, catalog, s.state, s.alreadyPresent, _config)),
+    scored.map((s) =>
+      s.hits.size > 0
+        ? kevThenRules(s.hits, catalog, s.state, s.alreadyPresent, _config)
+        : Promise.resolve({ toInject: [], kevStatus: "skipped" as const, probs: {} } as KevFallbackResult)
+    ),
   );
 
   // Phase 3: apply results
@@ -873,6 +971,36 @@ async function routeDispatchTasks(
       ? settled.value
       : { toInject: selectSkills(s.hits, s.alreadyPresent), kevStatus: "failed" as const, probs: {} };
 
+    // Build final injection list
+    let toInject: Array<{ name: string; score: number }>;
+
+    if (s.coding) {
+      // Coding tasks: language skills + software-design first (skip Kev), then Kev/rules picks
+      const langSkills: Array<{ name: string; score: number }> = [];
+      for (const lang of s.languages) {
+        if (!s.alreadyPresent.has(lang)) {
+          langSkills.push({ name: lang, score: 2.0 }); // high score to sort first
+        }
+      }
+      if (catalogNameSet.has("software-design") && !s.alreadyPresent.has("software-design")) {
+        langSkills.push({ name: "software-design", score: 1.99 });
+      }
+
+      // Merge: language+software-design first, then Kev/rules picks, dedup
+      const seen = new Set(langSkills.map((sk) => sk.name));
+      const merged = [...langSkills];
+      for (const sk of fb.toInject) {
+        if (!seen.has(sk.name) && !s.alreadyPresent.has(sk.name)) {
+          seen.add(sk.name);
+          merged.push(sk);
+        }
+      }
+      toInject = merged.slice(0, _config.maxSkillsPerTask);
+    } else {
+      // Non-coding tasks: same as before
+      toInject = fb.toInject;
+    }
+
     // Shadow mode: log but don't mutate
     if (_config.mode === "shadow") {
       try {
@@ -880,9 +1008,11 @@ async function routeDispatchTasks(
           dispatch: true,
           taskIndex: s.index,
           mode: "shadow" as const,
+          coding: s.coding,
+          languages: s.languages,
           kev: fb.kevStatus,
           probs: fb.probs,
-          wouldInject: fb.toInject.map((sk) => sk.name),
+          wouldInject: toInject.map((sk) => sk.name),
           hits: Object.fromEntries(s.hits),
         });
       } catch { /* never fail for logging */ }
@@ -890,9 +1020,9 @@ async function routeDispatchTasks(
     }
 
     // Inject mode: append skill bodies to task.systemPrompt
-    if (fb.toInject.length === 0) continue;
+    if (toInject.length === 0) continue;
 
-    const bodies = fb.toInject
+    const bodies = toInject
       .map((sk) => catalog.get(sk.name))
       .filter((e): e is CatalogEntry => !!e)
       .map(formatSkillMessage);
@@ -910,10 +1040,12 @@ async function routeDispatchTasks(
         dispatch: true,
         taskIndex: s.index,
         mode: "inject" as const,
+        coding: s.coding,
+        languages: s.languages,
         kev: fb.kevStatus,
         probs: fb.probs,
         hits: Object.fromEntries(s.hits),
-        injected: fb.toInject.map((sk) => sk.name),
+        injected: toInject.map((sk) => sk.name),
       });
     } catch { /* never fail for logging */ }
   }
@@ -1121,7 +1253,12 @@ export {
   routeDispatchTasks,
   stripShellNonCommands,
   isRealGitCommit,
+
+  isCodingTask,
+  detectLanguages,
+  resolveRepoRoot,
   ENFORCER,
+  LANGUAGE_MAP,
   _setConfig,
   _getConfig,
   validateDeciderUrl,

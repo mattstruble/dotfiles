@@ -52,7 +52,11 @@ import skillRouter, {
   stripShellNonCommands,
   isRealGitCommit,
   validateDeciderUrl,
+  isCodingTask,
+  detectLanguages,
+  resolveRepoRoot,
   ENFORCER,
+  LANGUAGE_MAP,
   _setConfig,
   _getConfig,
   SCORE_NAMED,
@@ -2197,6 +2201,387 @@ describe("dispatch routing: concurrent Kev queries bounded by ~1x timeoutMs", ()
     } finally {
       _setConfig(saved);
       server.close();
+    }
+  });
+});
+
+// ── Coding task detection ───────────────────────────────────────────
+
+describe("isCodingTask", () => {
+  it("detects write tool", () => {
+    assert.ok(isCodingTask({ task: "x", tools: ["read", "write", "bash"] }));
+  });
+
+  it("detects edit tool", () => {
+    assert.ok(isCodingTask({ task: "x", tools: ["edit"] }));
+  });
+
+  it("detects tool objects with name", () => {
+    assert.ok(isCodingTask({ task: "x", tools: [{ name: "write" }] }));
+  });
+
+  it("detects worktree flag", () => {
+    assert.ok(isCodingTask({ task: "x", worktree: true }));
+  });
+
+  it("detects allowTreeMutation flag", () => {
+    assert.ok(isCodingTask({ task: "x", allowTreeMutation: true }));
+  });
+
+  it("read-only task is not coding", () => {
+    assert.ok(!isCodingTask({ task: "x", tools: ["read", "grep", "bash"] }));
+  });
+
+  it("no tools is not coding", () => {
+    assert.ok(!isCodingTask({ task: "x" }));
+  });
+});
+
+// ── Language detection ──────────────────────────────────────────────
+
+describe("detectLanguages", () => {
+  it("detects .py extension in text", () => {
+    const nameSet = new Set(["python-design", "software-design", "nix"]);
+    const langs = detectLanguages("Edit the file src/main.py to fix the bug", "/tmp/nonexistent", nameSet);
+    assert.deepEqual(langs, ["python-design"]);
+  });
+
+  it("detects .nix extension in text", () => {
+    const nameSet = new Set(["python-design", "software-design", "nix"]);
+    const langs = detectLanguages("Update foo.nix with the new config", "/tmp/nonexistent", nameSet);
+    assert.deepEqual(langs, ["nix"]);
+  });
+
+  it("detects marker files at repo root", () => {
+    const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
+    writeFileSync(pathJoin(tmpDir, "pyproject.toml"), "[tool.pytest]");
+    try {
+      const nameSet = new Set(["python-design", "software-design", "nix"]);
+      const langs = detectLanguages("Fix the parsing bug", tmpDir, nameSet);
+      assert.deepEqual(langs, ["python-design"]);
+    } finally {
+      rmSync(tmpDir, { recursive: true });
+    }
+  });
+
+  it("skips skills not in catalog", () => {
+    const nameSet = new Set(["python-design"]); // no odin-design
+    const langs = detectLanguages("Edit main.odin", "/tmp/nonexistent", nameSet);
+    assert.deepEqual(langs, []);
+  });
+
+  it("detects multiple languages", () => {
+    const nameSet = new Set(["python-design", "docker", "nix"]);
+    const langs = detectLanguages("Edit app.py and Dockerfile", "/tmp/nonexistent", nameSet);
+    assert.ok(langs.includes("python-design"));
+    assert.ok(langs.includes("docker"));
+  });
+});
+
+// ── resolveRepoRoot ─────────────────────────────────────────────────
+
+describe("resolveRepoRoot", () => {
+  it("extracts Repo root from task text", () => {
+    const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
+    try {
+      const text = `### Worktree\nRepo root: ${tmpDir}\n\nDo stuff`;
+      assert.equal(resolveRepoRoot(text, "/fallback"), tmpDir);
+    } finally {
+      rmSync(tmpDir, { recursive: true });
+    }
+  });
+
+  it("falls back when Repo root path doesn't exist", () => {
+    const text = "Repo root: /nonexistent/path\nDo stuff";
+    assert.equal(resolveRepoRoot(text, "/fallback"), "/fallback");
+  });
+
+  it("falls back when Repo root path is a regular file", () => {
+    const tmpFile = pathJoin(mkdtempSync(pathJoin(tmpdir(), "skill-router-test-")), "afile.txt");
+    writeFileSync(tmpFile, "not a directory");
+    const text = `Repo root: ${tmpFile}\nDo stuff`;
+    assert.equal(resolveRepoRoot(text, "/fallback"), "/fallback");
+    rmSync(tmpFile);
+  });
+
+  it("falls back when no Repo root in text", () => {
+    assert.equal(resolveRepoRoot("Just do stuff", "/fallback"), "/fallback");
+  });
+});
+
+// ── Coding task dispatch integration ────────────────────────────────
+
+describe("dispatch routing: coding task with pyproject.toml gets python-design + software-design", () => {
+  it("injects python-design and software-design even when text never mentions Python", async () => {
+    const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
+    writeFileSync(pathJoin(tmpDir, "pyproject.toml"), "[tool.pytest]");
+
+    const saved = _getConfig();
+    // Use unreachable Kev so we get rules-only fallback; language skills bypass Kev anyway
+    _setConfig({
+      ...saved,
+      mode: "inject",
+      maxSkillsPerTask: 3,
+      decider: { ...saved.decider, url: "http://127.0.0.1:1", timeoutMs: 50 },
+    });
+    const appendedEntries: any[] = [];
+    const mockPi = {
+      on() {},
+      appendEntry(type: string, data: any) { appendedEntries.push({ type, data }); },
+    };
+
+    try {
+      const catalog = loadCatalog();
+      const catalogNames = [...catalog.keys()];
+      const catalogNameSet = new Set(catalogNames);
+      const tasks = [{
+        task: `Repo root: ${tmpDir}\n\nFix the parsing bug in the tokenizer module`,
+        tools: ["read", "edit", "bash"],
+        worktree: true,
+      }];
+
+      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, { cwd: tmpDir });
+
+      const sp = (tasks[0] as any).systemPrompt ?? "";
+      assert.ok(sp.includes('<skill name="python-design"'), "should have python-design");
+      assert.ok(sp.includes('<skill name="software-design"'), "should have software-design");
+
+      const decision = appendedEntries.find(e => e.type === DECISION_ENTRY);
+      assert.ok(decision, "decision entry logged");
+      assert.equal(decision.data.coding, true);
+      assert.ok(decision.data.languages.includes("python-design"));
+    } finally {
+      _setConfig(saved);
+      rmSync(tmpDir, { recursive: true });
+    }
+  });
+});
+
+describe("dispatch routing: text with foo.nix gets nix skill", () => {
+  it("detects nix from file extension in task text", async () => {
+    const saved = _getConfig();
+    _setConfig({
+      ...saved,
+      mode: "inject",
+      maxSkillsPerTask: 3,
+      decider: { ...saved.decider, url: "http://127.0.0.1:1", timeoutMs: 50 },
+    });
+
+    try {
+      const catalog = loadCatalog();
+      const catalogNames = [...catalog.keys()];
+      const catalogNameSet = new Set(catalogNames);
+      const tasks = [{
+        task: "Edit foo.nix to add the new package",
+        tools: ["write", "bash"],
+      }];
+
+      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
+
+      const sp = (tasks[0] as any).systemPrompt ?? "";
+      assert.ok(sp.includes('<skill name="nix"'), "should have nix");
+    } finally {
+      _setConfig(saved);
+    }
+  });
+});
+
+describe("dispatch routing: Repo root from task text", () => {
+  it("uses Repo root path for marker file detection", async () => {
+    const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
+    writeFileSync(pathJoin(tmpDir, "flake.nix"), "{}");
+
+    const saved = _getConfig();
+    _setConfig({
+      ...saved,
+      mode: "inject",
+      maxSkillsPerTask: 3,
+      decider: { ...saved.decider, url: "http://127.0.0.1:1", timeoutMs: 50 },
+    });
+
+    try {
+      const catalog = loadCatalog();
+      const catalogNames = [...catalog.keys()];
+      const catalogNameSet = new Set(catalogNames);
+      const tasks = [{
+        task: `Repo root: ${tmpDir}\n\nFix the build configuration`,
+        tools: ["edit"],
+      }];
+
+      // cwd is something else entirely
+      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, { cwd: "/tmp/elsewhere" });
+
+      const sp = (tasks[0] as any).systemPrompt ?? "";
+      assert.ok(sp.includes('<skill name="nix"'), "should detect nix from flake.nix in Repo root");
+    } finally {
+      _setConfig(saved);
+      rmSync(tmpDir, { recursive: true });
+    }
+  });
+});
+
+describe("dispatch routing: read-only task unchanged from today", () => {
+  it("task with read/grep tools is not a coding task", async () => {
+    const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
+    writeFileSync(pathJoin(tmpDir, "pyproject.toml"), "[tool.pytest]");
+
+    const saved = _getConfig();
+    _setConfig({
+      ...saved,
+      mode: "inject",
+      maxSkillsPerTask: 3,
+      decider: { ...saved.decider, url: "http://127.0.0.1:1", timeoutMs: 50 },
+    });
+    const appendedEntries: any[] = [];
+    const mockPi = {
+      on() {},
+      appendEntry(type: string, data: any) { appendedEntries.push({ type, data }); },
+    };
+
+    try {
+      const catalog = loadCatalog();
+      const catalogNames = [...catalog.keys()];
+      const catalogNameSet = new Set(catalogNames);
+      // Text doesn't mention python — a read-only task should NOT get python-design from markers
+      const tasks = [{
+        task: `Repo root: ${tmpDir}\n\nSearch for the error message in the codebase`,
+        tools: ["read", "grep", "bash"],
+      }];
+
+      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, { cwd: tmpDir });
+
+      // No hits from rules → no systemPrompt
+      assert.equal((tasks[0] as any).systemPrompt, undefined, "read-only task should not get skills injected from markers");
+    } finally {
+      _setConfig(saved);
+      rmSync(tmpDir, { recursive: true });
+    }
+  });
+});
+
+describe("dispatch routing: skills absent from catalog are skipped", () => {
+  it("odin-design absent from catalog is not injected", async () => {
+    const saved = _getConfig();
+    _setConfig({
+      ...saved,
+      mode: "inject",
+      maxSkillsPerTask: 3,
+      decider: { ...saved.decider, url: "http://127.0.0.1:1", timeoutMs: 50 },
+    });
+
+    try {
+      const catalog = loadCatalog();
+      const catalogNames = [...catalog.keys()];
+      const catalogNameSet = new Set(catalogNames);
+      // odin-design is not in the catalog
+      assert.ok(!catalogNameSet.has("odin-design"), "precondition: odin-design not in catalog");
+      const tasks = [{
+        task: "Edit game.odin to fix the rendering",
+        tools: ["edit"],
+      }];
+
+      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
+
+      const sp = (tasks[0] as any).systemPrompt ?? "";
+      // Should get software-design (coding task) but not odin-design
+      assert.ok(!sp.includes("odin-design"), "odin-design absent from catalog, should not appear");
+      // But software-design should still be injected for coding tasks
+      assert.ok(sp.includes('<skill name="software-design"'), "software-design should be injected");
+    } finally {
+      _setConfig(saved);
+    }
+  });
+});
+
+describe("dispatch routing: maxSkillsPerTask cap holds", () => {
+  it("caps at maxSkillsPerTask with language + software-design + Kev pick", async () => {
+    const { server, port } = await startKevServer((_req, res, body) => {
+      const parsed = JSON.parse(body);
+      const answers: Record<string, any> = {};
+      for (const name of Object.keys(parsed.questions)) {
+        answers[name] = { type: "noul", noul: 0.9 };
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ answers }));
+    });
+
+    const saved = _getConfig();
+    _setConfig({
+      ...saved,
+      mode: "inject",
+      maxSkillsPerTask: 2, // cap at 2
+      decider: { ...saved.decider, url: `http://127.0.0.1:${port}`, timeoutMs: 2000, threshold: 0.30 },
+    });
+
+    const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
+    writeFileSync(pathJoin(tmpDir, "pyproject.toml"), "[tool.pytest]");
+
+    try {
+      const catalog = loadCatalog();
+      const catalogNames = [...catalog.keys()];
+      const catalogNameSet = new Set(catalogNames);
+      // This text triggers python-design (from marker) + software-design (coding) + test-design (from enforcer "test")
+      const tasks = [{
+        task: `Repo root: ${tmpDir}\n\nWrite a unit test for the parser`,
+        tools: ["edit", "bash"],
+      }];
+
+      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, { cwd: tmpDir });
+
+      const sp = (tasks[0] as any).systemPrompt ?? "";
+      const skillMatches = [...sp.matchAll(/<skill name="([^"]+)"/g)].map(m => m[1]);
+      assert.ok(skillMatches.length <= 2, `should have at most 2 skills, got ${skillMatches.length}: ${skillMatches.join(", ")}`);
+      // Language skills come first: python-design should be there
+      assert.ok(skillMatches.includes("python-design"), "python-design should be first (language skill)");
+    } finally {
+      _setConfig(saved);
+      rmSync(tmpDir, { recursive: true });
+      server.close();
+    }
+  });
+});
+
+describe("dispatch routing: shadow mode logs coding/languages without mutating", () => {
+  it("logs coding and languages in shadow mode", async () => {
+    const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
+    writeFileSync(pathJoin(tmpDir, "pyproject.toml"), "[tool.pytest]");
+
+    const saved = _getConfig();
+    _setConfig({
+      ...saved,
+      mode: "shadow",
+      maxSkillsPerTask: 3,
+      decider: { ...saved.decider, url: "http://127.0.0.1:1", timeoutMs: 50 },
+    });
+    const appendedEntries: any[] = [];
+    const mockPi = {
+      on() {},
+      appendEntry(type: string, data: any) { appendedEntries.push({ type, data }); },
+    };
+
+    try {
+      const catalog = loadCatalog();
+      const catalogNames = [...catalog.keys()];
+      const catalogNameSet = new Set(catalogNames);
+      const tasks = [{
+        task: `Repo root: ${tmpDir}\n\nRefactor the tokenizer module`,
+        tools: ["edit"],
+      }];
+
+      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, { cwd: tmpDir });
+
+      // Should NOT mutate
+      assert.equal((tasks[0] as any).systemPrompt, undefined, "shadow mode does not mutate");
+
+      const decision = appendedEntries.find(e => e.type === DECISION_ENTRY);
+      assert.ok(decision, "decision logged");
+      assert.equal(decision.data.coding, true, "coding flag logged");
+      assert.ok(decision.data.languages.includes("python-design"), "languages logged");
+      assert.equal(decision.data.mode, "shadow");
+      assert.ok(decision.data.wouldInject.length > 0, "wouldInject populated");
+    } finally {
+      _setConfig(saved);
+      rmSync(tmpDir, { recursive: true });
     }
   });
 });
