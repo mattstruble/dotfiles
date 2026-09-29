@@ -49,6 +49,8 @@ import skillRouter, {
   queryKevWithState,
   kevThenRules,
   routeDispatchTasks,
+  stripShellNonCommands,
+  isRealGitCommit,
   validateDeciderUrl,
   ENFORCER,
   _setConfig,
@@ -57,6 +59,7 @@ import skillRouter, {
   SCORE_ENFORCER,
   CUSTOM_TYPE,
   DECISION_ENTRY,
+  GIT_COMMIT_SKILL_MARKER,
   type CatalogEntry,
   type RouterConfig,
 } from "./skill-router.ts";
@@ -782,7 +785,9 @@ describe("commit gate integration", () => {
     };
     const result = await toolHandler(event, ctx);
     assert.ok(result?.block, "commit should be blocked");
-    assert.ok(result.reason.includes("Load skill:git-commit"), `reason: ${result.reason}`);
+    assert.ok(result.reason.startsWith(GIT_COMMIT_SKILL_MARKER), "reason starts with marker");
+    assert.ok(result.reason.includes("Apply the skill instructions below"), `reason: ${result.reason}`);
+    assert.ok(result.reason.includes('<skill name="git-commit"'), "reason includes skill body");
   });
 
   it("blocks commit when session manager throws", async () => {
@@ -818,7 +823,7 @@ describe("commit gate integration", () => {
     const ctx = {};
     const result = await toolHandler(event, ctx);
     assert.ok(result?.block, "commit should be blocked");
-    assert.ok(result.reason.includes("Load skill:git-commit"), `reason: ${result.reason}`);
+    assert.ok(result.reason.includes("Apply the skill instructions below"), `reason: ${result.reason}`);
   });
 });
 
@@ -852,9 +857,292 @@ describe("getContextEntries", () => {
   });
 });
 
+// ── isRealGitCommit (commit gate command introspection) ─────────────
+
+describe("isRealGitCommit", () => {
+  // Positive cases: should detect real git commit invocations
+  it("detects simple git commit", () => {
+    assert.ok(isRealGitCommit("git commit -m x"));
+  });
+
+  it("detects git commit after cd &&", () => {
+    assert.ok(isRealGitCommit("cd a && git commit -m x"));
+  });
+
+  it("detects git -C repo commit", () => {
+    assert.ok(isRealGitCommit("git -C repo commit"));
+  });
+
+  it("detects git -c user.name=x commit", () => {
+    assert.ok(isRealGitCommit("git -c user.name=x commit"));
+  });
+
+  it("detects FOO=1 git commit", () => {
+    assert.ok(isRealGitCommit("FOO=1 git commit"));
+  });
+
+  it("detects multi-line script ending with git commit", () => {
+    const cmd = "#!/bin/bash\nset -e\ncd /tmp/repo\ngit add .\ngit commit -F /tmp/msg";
+    assert.ok(isRealGitCommit(cmd));
+  });
+
+  it("detects git commit after pipe", () => {
+    assert.ok(isRealGitCommit("echo y | git commit -m x"));
+  });
+
+  it("detects git commit after semicolon", () => {
+    assert.ok(isRealGitCommit("echo hello; git commit -m x"));
+  });
+
+  it("detects git commit in subshell", () => {
+    assert.ok(isRealGitCommit("(git commit -m x)"));
+  });
+
+  it("detects git --no-pager commit", () => {
+    assert.ok(isRealGitCommit("git --no-pager commit -m x"));
+  });
+
+  it("detects git --bare commit", () => {
+    assert.ok(isRealGitCommit("git --bare commit -m x"));
+  });
+
+  it("detects sudo git commit", () => {
+    assert.ok(isRealGitCommit("sudo git commit -m x"));
+  });
+
+  // Negative cases: should NOT detect these
+  it("passes bd update with git commit in notes", () => {
+    assert.ok(!isRealGitCommit("bd update --append-notes='git commit later'"));
+  });
+
+  it("passes echo with git commit in double quotes", () => {
+    assert.ok(!isRealGitCommit('echo "git commit"'));
+  });
+
+  it("passes grep for git commit", () => {
+    assert.ok(!isRealGitCommit('grep -n "git commit" f'));
+  });
+
+  it("passes heredoc body containing git commit", () => {
+    const cmd = "cat > m <<'EOF'\ngit commit -m test\nEOF";
+    assert.ok(!isRealGitCommit(cmd));
+  });
+
+  it("passes comment containing git commit", () => {
+    assert.ok(!isRealGitCommit("# git commit later"));
+  });
+
+  it("passes git log --grep commit", () => {
+    assert.ok(!isRealGitCommit("git log --grep commit"));
+  });
+
+  it("passes git show HEAD:commit.txt", () => {
+    assert.ok(!isRealGitCommit("git show HEAD:commit.txt"));
+  });
+
+  it("passes echo in single quotes", () => {
+    assert.ok(!isRealGitCommit("echo 'git commit -m test'"));
+  });
+
+  it("passes bd update with ANSI-C $'...' string containing git commit", () => {
+    assert.ok(!isRealGitCommit("bd update --append-notes=$'git commit\nlater'"));
+  });
+});
+
+// ── Commit gate: marker-based retry and skillsInContext ─────────────
+
+/** toolResult message as persisted by Pi 0.84.2 after a blocked tool call */
+function makeToolResultMessage(text: string, parentId?: string): any {
+  const id = nextId();
+  return {
+    type: "message",
+    id,
+    parentId: parentId ?? nextId(),
+    timestamp: new Date().toISOString(),
+    message: {
+      role: "toolResult",
+      toolCallId: `tooluse_${nextId()}`,
+      toolName: "bash",
+      isError: true,
+      content: [{ type: "text", text }],
+    },
+  };
+}
+
+describe("commit gate marker in skillsInContext", () => {
+  it("marker-prefixed toolResult counts git-commit as in context", () => {
+    const entries = [
+      makeToolResultMessage(GIT_COMMIT_SKILL_MARKER + '\n<skill name="git-commit">...</skill>'),
+    ];
+    const result = skillsInContext(entries);
+    assert.ok(result.has("git-commit"), "marker should count");
+  });
+
+  it("marker text inside an unrelated read result does not count", () => {
+    const entries = [
+      makeToolResultMessage("Some file content\n" + GIT_COMMIT_SKILL_MARKER + "\nmore stuff"),
+    ];
+    const result = skillsInContext(entries);
+    assert.ok(!result.has("git-commit"), "embedded marker should not count");
+  });
+
+  it("isError: false toolResult with marker does not count", () => {
+    // A model could echo the marker in a successful tool result; only error results count.
+    const entry = {
+      type: "message",
+      id: nextId(),
+      parentId: nextId(),
+      timestamp: new Date().toISOString(),
+      message: {
+        role: "toolResult",
+        toolCallId: `tooluse_${nextId()}`,
+        toolName: "bash",
+        isError: false,
+        content: [{ type: "text", text: GIT_COMMIT_SKILL_MARKER + '\n<skill name="git-commit">...</skill>' }],
+      },
+    };
+    const result = skillsInContext([entry]);
+    assert.ok(!result.has("git-commit"), "non-error toolResult with marker should not count");
+  });
+});
+
+describe("commit gate integration: block-then-retry", () => {
+  it("blocks, then the exact block reason in a toolResult makes retry pass", async () => {
+    const handlers: Record<string, Function> = {};
+    const mockPi = {
+      on(event: string, handler: Function) { handlers[event] = handler; },
+      appendEntry() {},
+    };
+    skillRouter(mockPi as any);
+
+    const toolHandler = handlers["tool_call"];
+    const event = { toolName: "bash", input: { command: "git commit -m 'test'" } };
+
+    // First attempt: no git-commit in context → blocked
+    const ctx1 = {
+      sessionManager: {
+        buildContextEntries() { return []; },
+      },
+    };
+    const result1 = await toolHandler(event, ctx1);
+    assert.ok(result1?.block, "first attempt blocked");
+    assert.ok(result1.reason.startsWith(GIT_COMMIT_SKILL_MARKER), "block reason starts with marker");
+
+    // Second attempt: Pi stores the block reason as a toolResult (isError: true).
+    // Build that entry from the exact reason the handler returned.
+    const blockedEntry = {
+      type: "message" as const,
+      message: {
+        role: "toolResult" as const,
+        toolName: "bash",
+        isError: true,
+        content: [{ type: "text" as const, text: result1.reason }],
+      },
+    };
+    const ctx2 = {
+      sessionManager: {
+        buildContextEntries() { return [blockedEntry]; },
+      },
+    };
+    const result2 = await toolHandler(event, ctx2);
+    assert.equal(result2, undefined, "retry should be allowed");
+  });
+});
+
+describe("commit gate integration: catalog missing git-commit allows commit", () => {
+  it("allows git commit when catalog has no git-commit skill", async () => {
+    // Point the config at a temp catalog that lacks git-commit
+    const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-empty-catalog-"));
+    const dummyDir = pathJoin(tmpDir, "nix");
+    require("node:fs").mkdirSync(dummyDir, { recursive: true });
+    writeFileSync(pathJoin(dummyDir, "SKILL.md"), "---\nname: nix\ndescription: Nix\n---\n# Nix");
+
+    const saved = _getConfig();
+    _setConfig({ ...saved, catalog: tmpDir });
+
+    try {
+      const handlers: Record<string, Function> = {};
+      const mockPi = {
+        on(event: string, handler: Function) { handlers[event] = handler; },
+        appendEntry() {},
+      };
+      skillRouter(mockPi as any);
+
+      const toolHandler = handlers["tool_call"];
+      const event = { toolName: "bash", input: { command: "git commit -m x" } };
+      const ctx = {
+        sessionManager: {
+          buildContextEntries() { return []; },
+        },
+      };
+      const result = await toolHandler(event, ctx);
+      assert.equal(result, undefined, "commit should be allowed when catalog lacks git-commit");
+    } finally {
+      _setConfig(saved);
+      rmSync(tmpDir, { recursive: true });
+    }
+  });
+});
+
+describe("commit gate integration: does not block non-commit commands", () => {
+  it("allows bd update with git commit in notes", async () => {
+    const handlers: Record<string, Function> = {};
+    const mockPi = {
+      on(event: string, handler: Function) { handlers[event] = handler; },
+      appendEntry() {},
+    };
+    skillRouter(mockPi as any);
+
+    const toolHandler = handlers["tool_call"];
+    const event = { toolName: "bash", input: { command: "bd update --append-notes='git commit later'" } };
+    const ctx = {
+      sessionManager: { buildContextEntries() { return []; } },
+    };
+    const result = await toolHandler(event, ctx);
+    assert.equal(result, undefined, "should not be blocked");
+  });
+
+  it("allows echo with quoted git commit", async () => {
+    const handlers: Record<string, Function> = {};
+    const mockPi = {
+      on(event: string, handler: Function) { handlers[event] = handler; },
+      appendEntry() {},
+    };
+    skillRouter(mockPi as any);
+
+    const toolHandler = handlers["tool_call"];
+    const event = { toolName: "bash", input: { command: 'echo "git commit"' } };
+    const ctx = {
+      sessionManager: { buildContextEntries() { return []; } },
+    };
+    const result = await toolHandler(event, ctx);
+    assert.equal(result, undefined, "should not be blocked");
+  });
+
+  it("allows git log --grep commit", async () => {
+    const handlers: Record<string, Function> = {};
+    const mockPi = {
+      on(event: string, handler: Function) { handlers[event] = handler; },
+      appendEntry() {},
+    };
+    skillRouter(mockPi as any);
+
+    const toolHandler = handlers["tool_call"];
+    const event = { toolName: "bash", input: { command: "git log --grep commit" } };
+    const ctx = {
+      sessionManager: { buildContextEntries() { return []; } },
+    };
+    const result = await toolHandler(event, ctx);
+    assert.equal(result, undefined, "should not be blocked");
+  });
+});
+
 // ── Kev filter tests (ephemeral HTTP server) ────────────────────────
 
 import { createServer, type Server, type IncomingMessage, type ServerResponse } from "node:http";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { join as pathJoin } from "node:path";
+import { tmpdir } from "node:os";
 
 
 function startKevServer(
@@ -1800,7 +2088,7 @@ describe("dispatch routing: commit gate still works alongside dispatch", () => {
       };
       const result = await handlers["tool_call"](event, ctx);
       assert.ok(result?.block, "commit should be blocked");
-      assert.ok(result.reason.includes("Load skill:git-commit"), `reason: ${result.reason}`);
+      assert.ok(result.reason.includes("Apply the skill instructions below"), `reason: ${result.reason}`);
     } finally {
       _setConfig(saved);
     }

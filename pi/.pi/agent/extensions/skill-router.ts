@@ -182,6 +182,154 @@ const SCORE_ENFORCER = 0.75;
 const MIN_SCORE = 0.5;
 const CUSTOM_TYPE = "skill-router";
 const DECISION_ENTRY = "skill-router-decision";
+const GIT_COMMIT_SKILL_MARKER = "[skill-router] git-commit skill loaded for this commit:";
+
+// ── Commit-gate command introspection ────────────────────────────────
+//
+// Ceiling: shell-lite scan, not a real parser. For example, `bash <<EOF`
+// bodies that do run are not seen after stripping.
+
+/**
+ * Strip shell constructs that are not executed as commands:
+ *   - Heredoc bodies (<<EOF ... EOF, <<'EOF', <<-EOF, <<"EOF")
+ *   - Single-quoted string contents
+ *   - Double-quoted string contents
+ *   - # comments (outside quotes)
+ * Returns the remaining text for command-position scanning.
+ */
+function stripShellNonCommands(cmd: string): string {
+  // Phase 1: strip heredoc bodies.  We look for <<[-]?['"]?WORD['"]? and
+  // remove everything from the next newline up to and including the line
+  // matching the bare delimiter.
+  let result = cmd;
+  const heredocRe = /<<-?\s*['"]?(\w+)['"]?/g;
+  let hm: RegExpExecArray | null;
+  // Process from last to first so indices stay valid
+  const heredocs: Array<{ start: number; end: number }> = [];
+  while ((hm = heredocRe.exec(result)) !== null) {
+    const delim = hm[1];
+    const afterOp = hm.index + hm[0].length;
+    const nlPos = result.indexOf("\n", afterOp);
+    if (nlPos === -1) continue;
+    const bodyStart = nlPos; // include the newline
+    const endRe = new RegExp(`^${delim}\\s*$`, "m");
+    const bodySlice = result.slice(nlPos + 1);
+    const endMatch = endRe.exec(bodySlice);
+    if (!endMatch) continue;
+    const bodyEnd = nlPos + 1 + endMatch.index + endMatch[0].length;
+    heredocs.push({ start: bodyStart, end: bodyEnd });
+  }
+  // Remove from last to first
+  for (let i = heredocs.length - 1; i >= 0; i--) {
+    result = result.slice(0, heredocs[i].start) + result.slice(heredocs[i].end);
+  }
+
+  // Phase 2: strip single-quoted strings, double-quoted strings, and comments.
+  // Walk character by character.
+  let out = "";
+  let i = 0;
+  while (i < result.length) {
+    const ch = result[i];
+    if (ch === "$" && i + 1 < result.length && result[i + 1] === "'") {
+      // ANSI-C $'...' string: skip content, honoring backslash escapes
+      let j = i + 2;
+      while (j < result.length) {
+        if (result[j] === "\\" ) { j += 2; continue; }
+        if (result[j] === "'") break;
+        j++;
+      }
+      i = j + 1;
+      continue;
+    }
+    if (ch === "'" ) {
+      // Single-quoted string: skip to closing '
+      const end = result.indexOf("'", i + 1);
+      if (end === -1) { i++; continue; }
+      i = end + 1;
+      continue;
+    }
+    if (ch === '"') {
+      // Double-quoted string: skip to closing " (respecting \")
+      let j = i + 1;
+      while (j < result.length) {
+        if (result[j] === "\\" ) { j += 2; continue; }
+        if (result[j] === '"') break;
+        j++;
+      }
+      i = j + 1;
+      continue;
+    }
+    if (ch === "#") {
+      // Comment: skip to end of line
+      const eol = result.indexOf("\n", i);
+      if (eol === -1) break;
+      i = eol; // keep the newline
+      continue;
+    }
+    out += ch;
+    i++;
+  }
+  return out;
+}
+
+/**
+ * Detect a real `git commit` invocation at a command position in a shell
+ * command string.  Strips non-command text, splits into command segments,
+ * then matches git plus global options plus `commit`.
+ */
+function isRealGitCommit(cmd: string): boolean {
+  const stripped = stripShellNonCommands(cmd);
+  // Split on command boundaries
+  const segments = stripped.split(/[;\n]|&&|\|\||\|/);
+  for (const seg of segments) {
+    // Also split on ( and $( — use a secondary split
+    const subsegments = seg.split(/\(/);
+    for (const sub of subsegments) {
+      if (testSegmentForGitCommit(sub.trim())) return true;
+    }
+  }
+  return false;
+}
+
+/** Test a single command segment (already split on boundaries) for git commit. */
+function testSegmentForGitCommit(seg: string): boolean {
+  // Strip leading VAR=value assignments
+  let s = seg;
+  while (/^\w+=\S*\s/.test(s)) {
+    s = s.replace(/^\w+=\S*\s+/, "");
+  }
+  // Strip optional command wrappers
+  while (/^(?:sudo|env|command|exec)\s/.test(s)) {
+    s = s.replace(/^(?:sudo|env|command|exec)\s+/, "");
+  }
+  // Must start with "git" now
+  if (!s.startsWith("git") || (s.length > 3 && /\w/.test(s[3]))) return false;
+  // Walk past "git" and consume global options to find the subcommand
+  let rest = s.slice(3).trimStart();
+  // Consume global options
+  while (rest.length > 0) {
+    // Options that take a value: -C <path>, -c <key=value>
+    const shortOpt = rest.match(/^-[CcP]\s+\S+\s*/);
+    if (shortOpt) { rest = rest.slice(shortOpt[0].length).trimStart(); continue; }
+    // --option=value
+    const longOptEq = rest.match(/^--[a-z][a-z0-9-]+=\S*\s*/);
+    if (longOptEq) { rest = rest.slice(longOptEq[0].length).trimStart(); continue; }
+    // --option <value> (for known options that take a separate arg)
+    const longOptSep = rest.match(/^--(?:git-dir|work-tree|exec-path|namespace)\s+\S+\s*/);
+    if (longOptSep) { rest = rest.slice(longOptSep[0].length).trimStart(); continue; }
+    // Boolean long options
+    const longBool = rest.match(/^--(?:no-pager|bare|paginate|no-replace-objects|literal-pathspecs|glob-pathspecs|noglob-pathspecs|no-optional-locks)\s*/);
+    if (longBool) { rest = rest.slice(longBool[0].length).trimStart(); continue; }
+    // -P (alias for --no-pager)
+    if (rest.startsWith("-P") && (rest.length === 2 || /\s/.test(rest[2]))) {
+      rest = rest.slice(2).trimStart(); continue;
+    }
+    break;
+  }
+  // The next word should be the subcommand
+  const subCmd = rest.match(/^(\S+)/);
+  return subCmd !== null && subCmd[1] === "commit";
+}
 
 // ── Enforcer patterns (same list as run_models.py ENFORCER) ─────────
 const ENFORCER: Array<{ pattern: RegExp; skill: string }> = [
@@ -397,6 +545,19 @@ function skillsInContext(entries: any[]): Set<string> {
           }
           for (const match of text.matchAll(/\/skill:([\w-]+)/g)) {
             names.add(match[1]);
+          }
+        }
+      }
+
+      // toolResult messages: detect the git-commit skill marker.
+      // Only count when isError === true and the text *starts with* the
+      // marker (a model could echo the marker in a successful result).
+      if (msg.role === "toolResult" && msg.isError === true && Array.isArray(msg.content)) {
+        for (const block of msg.content) {
+          if (block?.type === "text" && typeof block.text === "string") {
+            if (block.text.startsWith(GIT_COMMIT_SKILL_MARKER)) {
+              names.add("git-commit");
+            }
           }
         }
       }
@@ -897,7 +1058,10 @@ export default function (pi: ExtensionAPI) {
         const fused = (event.input as any)?.then_run?.command;
         if (typeof fused === "string") cmd = fused;
       }
-      if (!cmd || !/git\s+commit/.test(cmd)) return;
+      if (!cmd || !isRealGitCommit(cmd)) return;
+
+      // If catalog has no git-commit skill, the gate can never be satisfied; allow the command.
+      if (!catalog.has("git-commit")) return;
 
       // Check if git-commit is in context from any source.
       // If session introspection throws, fail closed with a clear reason.
@@ -913,9 +1077,15 @@ export default function (pi: ExtensionAPI) {
       }
       if (inContext.has("git-commit")) return;
 
+      // Load the git-commit skill body into the block reason so the agent
+      // can apply it and retry.  The marker MUST be at position 0 so that
+      // skillsInContext (startsWith check) recognises the toolResult on retry.
+      const gcEntry = catalog.get("git-commit");
+      const skillBlock = gcEntry ? "\n\n" + formatSkillMessage(gcEntry) : "";
+
       return {
         block: true,
-        reason: "Load skill:git-commit before committing. Use /skill:git-commit or read the SKILL.md file.",
+        reason: `${GIT_COMMIT_SKILL_MARKER}\nApply the skill instructions below and retry.${skillBlock}`,
       };
     } catch (err) {
       // Unexpected error in command parsing — fail closed
@@ -947,6 +1117,8 @@ export {
   queryKevWithState,
   kevThenRules,
   routeDispatchTasks,
+  stripShellNonCommands,
+  isRealGitCommit,
   ENFORCER,
   _setConfig,
   _getConfig,
@@ -956,5 +1128,6 @@ export {
   SCORE_ENFORCER,
   CUSTOM_TYPE,
   DECISION_ENTRY,
+  GIT_COMMIT_SKILL_MARKER,
 };
 export type { CatalogEntry, RouterConfig, DeciderConfig, KevResult, KevFallbackResult };
