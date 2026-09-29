@@ -403,11 +403,18 @@ describe("formatSkillMessage", () => {
 // ── Names-only list ─────────────────────────────────────────────────
 
 describe("buildNamesOnlyList", () => {
-  it("produces a text block with all catalog names", () => {
+  it("produces a text block with all catalog names and a real example path", () => {
     const catalog = loadCatalog();
     const block = buildNamesOnlyList(catalog);
-    assert.ok(block.includes("Skills under"));
-    assert.ok(block.includes("/<name>/SKILL.md:"));
+    assert.ok(block.includes("Each skill is at"), "has pattern intro");
+    assert.ok(block.includes("/SKILL.md, for example"), "has example");
+    // Must use a real skill name in the example, not <name>
+    assert.ok(!block.includes("/<name>/"), "no literal <name> in path");
+    // git-commit should be the example if in catalog
+    if (catalog.has("git-commit")) {
+      assert.ok(block.includes("/git-commit/SKILL.md"), "uses git-commit as example");
+    }
+    assert.ok(block.includes("Skills:"));
     for (const name of catalog.keys()) {
       assert.ok(block.includes(name), `missing ${name}`);
     }
@@ -438,7 +445,7 @@ describe("replaceSkillsBlock", () => {
     const namesBlock = buildNamesOnlyList(catalog);
     const result = replaceSkillsBlock(verbose, namesBlock);
     assert.ok(!result.includes("<available_skills>"), "XML removed");
-    assert.ok(result.includes("Skills under"), "names-only present");
+    assert.ok(result.includes("Each skill is at"), "names-only present");
     assert.ok(result.startsWith("Base prompt here."), "base preserved");
   });
 
@@ -447,14 +454,30 @@ describe("replaceSkillsBlock", () => {
       "Base prompt here.",
       "\n\nThe following skills provide specialized instructions for specific tasks. When a skill name matches the task you are doing, read the SKILL.md.",
       "",
-      "Skills under /root/<name>/SKILL.md:",
+      "Each skill is at /root/<skill>/SKILL.md, for example /root/git-commit/SKILL.md. Skills:",
       "  git-commit, nix, python-design",
     ].join("\n");
     const catalog = loadCatalog();
     const namesBlock = buildNamesOnlyList(catalog);
     const result = replaceSkillsBlock(compressed, namesBlock);
-    assert.ok(!result.includes("/root/<name>/SKILL.md"), "old list gone");
-    assert.ok(result.includes("Skills under"), "new list present");
+    assert.ok(!result.includes("/root/<skill>/SKILL.md, for example /root/git-commit/SKILL.md. Skills:\n  git-commit, nix"), "old list gone");
+    assert.ok(result.includes("Each skill is at"), "new list present");
+    assert.ok(result.startsWith("Base prompt here."), "base preserved");
+  });
+
+  it("replaces old 'Skills under <root>/<name>/SKILL.md:' form", () => {
+    const oldForm = [
+      "Base prompt here.",
+      "\n\nThe following skills provide specialized instructions for specific tasks. When a skill name matches the task you are doing, read the SKILL.md.",
+      "",
+      "Skills under /home/user/.pi/agent/skill-profiles/all/<name>/SKILL.md:",
+      "  git-commit, nix, python-design",
+    ].join("\n");
+    const catalog = loadCatalog();
+    const namesBlock = buildNamesOnlyList(catalog);
+    const result = replaceSkillsBlock(oldForm, namesBlock);
+    assert.ok(!result.includes("Skills under"), "old form gone");
+    assert.ok(result.includes("Each skill is at"), "new list present");
     assert.ok(result.startsWith("Base prompt here."), "base preserved");
   });
 
@@ -464,7 +487,7 @@ describe("replaceSkillsBlock", () => {
     const namesBlock = buildNamesOnlyList(catalog);
     const result = replaceSkillsBlock(prompt, namesBlock);
     assert.ok(result.startsWith("Just a plain prompt."));
-    assert.ok(result.includes("Skills under"));
+    assert.ok(result.includes("Each skill is at"));
   });
 });
 

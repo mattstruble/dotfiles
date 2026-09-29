@@ -578,6 +578,8 @@ function formatSkillMessage(entry: CatalogEntry): string {
 function buildNamesOnlyList(catalog: Map<string, CatalogEntry>): string {
   const names = [...catalog.keys()].sort();
   const root = expandTilde(_config.catalog);
+  // Pick a real example skill name for the path pattern
+  const exampleName = catalog.has("git-commit") ? "git-commit" : (names[0] ?? "example");
   // Leading empty strings produce "\n\n" after join("\n"), separating this
   // block from whatever precedes it when spliced into the system prompt.
   const lines: string[] = [
@@ -585,7 +587,7 @@ function buildNamesOnlyList(catalog: Map<string, CatalogEntry>): string {
     "",
     "The following skills provide specialized instructions for specific tasks. When a skill name matches the task you are doing, read the SKILL.md at the listed location to load the full instructions. When a SKILL.md references a relative path, resolve it against the skill directory (parent of SKILL.md / dirname of the path) and use that absolute path in tool commands.",
     "",
-    `Skills under ${root}/<name>/SKILL.md:`,
+    `Each skill is at ${root}/<skill>/SKILL.md, for example ${root}/${exampleName}/SKILL.md. Skills:`,
   ];
   // Wrap at ~80 columns
   let buf = "  ";
@@ -615,10 +617,10 @@ function replaceSkillsBlock(prompt: string, namesOnlyBlock: string): string {
     return prompt.replace(xmlMatch[0], namesOnlyBlock);
   }
 
-  // Form 2: pi-cache-optimizer's compressed "Skills under ..." form
+  // Form 2: pi-cache-optimizer's compressed "Skills under ..." or "Each skill is at ..." form
   // (preamble + grouped name lists)
   const compressedMatch = prompt.match(
-    /\n\nThe following skills provide specialized instructions[\s\S]*?(?=\n\n(?!Skills under )|$)/,
+    /\n\nThe following skills provide specialized instructions[\s\S]*?(?=\n\n(?!(?:Skills under |Each skill is at ))|$)/,
   );
   if (compressedMatch) {
     return prompt.replace(compressedMatch[0], namesOnlyBlock);
