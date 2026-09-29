@@ -317,6 +317,12 @@ in
       ];
       pi.subagents = [ "${path}/pi/.pi/agent/agents/" ];
       opencode.profiles = {
+        ai = {
+          dirs = [ "~/software/ai" ];
+        };
+        infra = {
+          dirs = [ "~/software/infra" ];
+        };
         software = {
           dirs = [ "~/software" ];
         };
@@ -376,6 +382,42 @@ in
             "nix"
             "nix-dendritic"
             "nix-packaging"
+          ];
+        };
+        # Infra skills
+        mattstruble-infra = {
+          source = inputs.skills-mattstruble;
+          priority = 200;
+          profiles = [ "infra" ];
+          include = [
+            "grafana"
+            "helm"
+            "homelab-monitoring"
+            "k3s"
+            "k8s-networking"
+            "k8s-operations"
+            "k8s-storage"
+            "k8s-workloads"
+            "logql"
+            "promql"
+          ];
+        };
+        # AI Skills
+        mattstruble-ai = {
+          source = inputs.skills-mattstruble;
+          priority = 200;
+          profiles = [ "ai" ];
+          include = [
+            "agent-architecture"
+            "agent-evaluation"
+            "agent-memory"
+            "agent-post-training"
+            "agent-self-evolution"
+            "agent-tool-design"
+            "context-engineering"
+            "ml-post-training"
+            "multi-agent-collaboration"
+            "rag-design"
           ];
         };
       };
