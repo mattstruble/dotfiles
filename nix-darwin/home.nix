@@ -1124,6 +1124,7 @@ in
       setOptions = [
         "NO_BEEP"
         "NUMERIC_GLOB_SORT"
+        "IGNORE_EOF"
       ];
 
       autosuggestion.enable = true;
