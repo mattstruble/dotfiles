@@ -28,14 +28,20 @@ optional model filter (the local [Kev decision server](../../../../README.md#kev
    status (`ok`, `failed`, `skipped`), probabilities, rule hits, skills already in context, skills injected, and
    whether the turn was explicit. No prompt text is stored.
 
-**Subagents.** On a `dispatch` tool call, each task's text goes through the same rules and decider (queried in
-parallel, so a slow decider costs about one timeout per dispatch, not one per task), and the chosen skill bodies
-are appended to that task's `systemPrompt`. Skills already present in the task are skipped, and any error leaves
-the task untouched.
+**Subagents.** On a `dispatch` tool call each task is routed independently.
 
-**Commit check.** A `bash` command, or an `edit`/`write` with a `then_run` command, containing `git commit` is
-blocked until `git-commit` is in context. It matches the text anywhere in the command. If the session cannot be
-inspected, the command is blocked with the reason. The check stays active in every mode.
+- **Coding task** — `tools` includes `write`/`edit`, or `worktree: true` / `allowTreeMutation: true`.
+- **Language detection** — from file names/extensions in the task text and from top-level marker files of the `Repo root:` directory (or the working directory). The language map covers Python, Nix, Docker, Helm, Odin, Godot (+ shaders), Fennel/LÖVE, and LÖVE 2D.
+- **Precedence** — detected language skills and `software-design` are injected first without the Kev filter, then the usual rules + Kev picks are appended; duplicates and already-present skills are dropped; the total is capped at `maxSkillsPerTask`.
+- **Shadow and off** — shadow mode logs decisions (with `wouldInject`) without mutating tasks; off mode does nothing.
+
+**Commit check.** A `bash` command, or an `edit`/`write` with a `then_run` command, is checked for a real
+`git commit` invocation. The check strips heredoc bodies (`<<EOF … EOF`, `<<'EOF'`, `<<-EOF`), ANSI-C `$'…'`
+strings, single- and double-quoted string contents, and `#` comments, then looks for `git` at a command position
+(start of line, after `; && || | (` `$(`, or after leading `VAR=value` assignments or `sudo`/`env`/`command`/`exec`)
+followed by optional global options and the subcommand `commit`. When the gate blocks, the block reason includes the
+full git-commit SKILL.md body behind the `[skill-router] git-commit skill loaded for this commit:` marker; the skill
+arrives in the blocked call's error result so the agent can apply it and retry without a separate read.
 
 ## Configuration
 
@@ -53,7 +59,8 @@ one warning lists every invalid field.
 | `decider.threshold` | number, 0 to 1 | `0.30` | Minimum probability to keep a hit. Tuned for Kev-0.8B on the replay labels (it removed a quarter of the wrong injections without losing a right one); not yet tuned for Kev-4B. |
 | `decider.apiKeyEnv` | string or `null` | `null` | Name of an environment variable holding a bearer token for a hosted decider. The token is never read from this file; the router warns once if the variable is empty. |
 | `catalog` | string | `"~/.pi/agent/skill-profiles/all"` | Directory of `<name>/SKILL.md` skills to route over, independent of the per-directory skill profiles. `~` is expanded. |
-| `maxSkillsPerTurn` | number > 0 | `2` | Most skills injected per user turn and per dispatched task. |
+| `maxSkillsPerTurn` | number > 0 | `2` | Most skills injected per user turn and per dispatched task (non-coding). |
+| `maxSkillsPerTask` | number > 0 | `3` | Most skills injected per dispatched coding task (language + software-design + Kev picks). |
 
 What leaves the Pi process: the working directory and the first 2,000 characters of each prompt and dispatched task,
 sent only to `decider.url`.
