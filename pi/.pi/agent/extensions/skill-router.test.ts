@@ -480,9 +480,12 @@ describe("ENFORCER patterns", () => {
     assert.deepEqual(ENFORCER.map((e) => e.skill), expected);
   });
 
-  it("helm enforcer pattern exists but helm is not in catalog", () => {
-    const catalog = loadCatalog();
-    assert.ok(!catalog.has("helm"), "helm should not be in the skill catalog");
+  it("enforcer pattern for a skill absent from a synthetic catalog produces no hit", () => {
+    // Use a synthetic catalog that deliberately omits "helm" to test that
+    // enforcer patterns only fire for skills present in the catalog.
+    const syntheticNames = ["git-commit", "git-pr", "nix", "docker"];
+    const scores = scorePrompt("Build a helm chart for the microservice", syntheticNames);
+    assert.ok(!scores.has("helm"), "helm absent from catalog → no hit");
     assert.ok(ENFORCER.some((e) => e.skill === "helm"), "helm enforcer pattern should exist");
   });
 });
@@ -556,7 +559,7 @@ const SYNTHETIC_VECTORS: TestVector[] = [
   },
   {
     prompt: "Build a helm chart for the microservice",
-    expectedHits: {},  // helm is not in catalog
+    expectedHits: { helm: 1.0 },  // helm is now in catalog; named + enforcer match
   },
   // Named overrides enforcer
   {
@@ -601,8 +604,12 @@ const SYNTHETIC_VECTORS: TestVector[] = [
 ];
 
 describe("synthetic vectors", () => {
-  const catalog = loadCatalog();
-  const names = [...catalog.keys()];
+  // Fixed catalog name list so this test does not depend on the live catalog
+  const names = [
+    "anyscale", "api-design", "brainstorm", "code-reviewer", "docker",
+    "git-commit", "git-pr", "helm", "nix", "python-design",
+    "software-design", "test-design", "test-driven-development",
+  ];
   const nameSet = new Set(names);
 
   for (const vec of SYNTHETIC_VECTORS) {

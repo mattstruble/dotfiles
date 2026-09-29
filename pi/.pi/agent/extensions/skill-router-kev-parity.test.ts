@@ -50,6 +50,13 @@ describe("Kev filter parity (real server)", () => {
   const lines = readFileSync(PARITY_FILE, "utf-8").trim().split("\n");
   const vectors: ParityVec[] = lines.map((l) => JSON.parse(l));
   const withHits = vectors.filter((v) => Object.keys(v.kev_keep).length > 0);
+  // Count turns where new-catalog skills have hits but no kev_keep recording
+  let skippedSkillDecisions = 0;
+  for (const v of vectors) {
+    for (const name of Object.keys(v.hits)) {
+      if (!(name in v.kev_keep)) skippedSkillDecisions++;
+    }
+  }
 
   if (withHits.length === 0) {
     it("SKIPPED: no turns with kev_keep data", { skip: true }, () => {});
@@ -172,6 +179,11 @@ describe("Kev filter parity (real server)", () => {
     console.log(
       `\n  Kev parity: ${agreements}/${totalDecisions} decisions agree (${(agreement * 100).toFixed(1)}%)`,
     );
+    if (skippedSkillDecisions > 0) {
+      console.log(
+        `  Skipped ${skippedSkillDecisions} skill decisions (new catalog skills without kev_keep recording)`,
+      );
+    }
     if (mismatches.length > 0) {
       console.log(`  Mismatches (${mismatches.length}):`);
       for (const m of mismatches.slice(0, 10)) {
