@@ -481,6 +481,7 @@ in
                 "token-ledger.ts"
                 "preflight.ts"
                 "statusline.ts"
+                "model-routing.ts"
               ]
           )
           // {
