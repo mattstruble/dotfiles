@@ -854,7 +854,7 @@ interface KevFallbackResult {
 
 /**
  * Try Kev filter on rule hits; on any failure fall back to rules-only.
- * Used by both before_agent_start and routeDispatchTasks.
+ * Used by both before_agent_start and routeSubagentSkills.
  */
 async function kevThenRules(
   hits: Map<string, number>,
@@ -886,21 +886,52 @@ async function kevThenRules(
   }
 }
 
-// ── Dispatch task routing ───────────────────────────────────────────
+// ── Subagent task routing ───────────────────────────────────────────
+
+/** Collect every object carrying a string `task` from single, tasks[] and chain (incl. parallel) shapes. */
+function collectSubagentTasks(input: any): any[] {
+  const out: any[] = [];
+  const add = (t: any) => { if (t && typeof t.task === "string") out.push(t); };
+  if (!input || typeof input !== "object") return out;
+  add(input);
+  if (Array.isArray(input.tasks)) input.tasks.forEach(add);
+  if (Array.isArray(input.chain)) {
+    for (const step of input.chain) {
+      if (Array.isArray(step?.parallel)) step.parallel.forEach(add);
+      else add(step);
+    }
+  }
+  return out;
+}
+
+/** Normalize a subagent `skill` value (array or CSV string) to a name list. */
+function existingSkillNames(skill: unknown): string[] {
+  if (Array.isArray(skill)) return skill.filter((x): x is string => typeof x === "string");
+  if (typeof skill === "string") return skill.split(",").map((x) => x.trim()).filter(Boolean);
+  return [];
+}
 
 /**
- * Route dispatch tasks: score all tasks first, then query Kev concurrently
+ * Route a subagent call: score all task texts first, then query Kev concurrently
  * (one request per task-with-hits, all in parallel via Promise.allSettled),
  * so total wall-clock is bounded by ~1× timeoutMs rather than N× timeoutMs.
+ * Picked skill names are merged into the top-level `skill` field (which
+ * subagent only supports call-wide); `skill: false` is left alone.
  */
-async function routeDispatchTasks(
-  tasks: any[],
+async function routeSubagentSkills(
+  input: any,
   catalog: Map<string, CatalogEntry>,
   catalogNames: string[],
   catalogNameSet: Set<string>,
   pi: ExtensionAPI,
   ctx: any,
 ): Promise<void> {
+  if (!input || typeof input !== "object" || input.skill === false) return;
+  const tasks = collectSubagentTasks(input);
+  const existing = existingSkillNames(input.skill);
+  // Snapshot before routing: `existing` grows as picks are written, but
+  // per-task dedupe must only see skills that were present up front.
+  const initialSkills = [...existing];
   const cwdRaw = ctx?.cwd ?? process.cwd();
   const cwd = cwdRaw.replace(process.env.HOME ?? "", "~");
 
@@ -940,8 +971,8 @@ async function routeDispatchTasks(
       if (!coding && hits.size === 0) continue;
 
       const alreadyPresent = new Set<string>();
-      const combined = (task.systemPrompt ?? "") + "\n" + taskText;
-      for (const match of combined.matchAll(/<skill name="([^"]+)"/g)) {
+      for (const name of initialSkills) alreadyPresent.add(name);
+      for (const match of taskText.matchAll(/<skill name="([^"]+)"/g)) {
         alreadyPresent.add(match[1]);
       }
 
@@ -1005,7 +1036,7 @@ async function routeDispatchTasks(
     if (_config.mode === "shadow") {
       try {
         pi.appendEntry(DECISION_ENTRY, {
-          dispatch: true,
+          subagent: true,
           taskIndex: s.index,
           mode: "shadow" as const,
           coding: s.coding,
@@ -1019,25 +1050,16 @@ async function routeDispatchTasks(
       continue;
     }
 
-    // Inject mode: append skill bodies to task.systemPrompt
+    // Inject mode: merge skill names into the top-level `skill` field
     if (toInject.length === 0) continue;
-
-    const bodies = toInject
-      .map((sk) => catalog.get(sk.name))
-      .filter((e): e is CatalogEntry => !!e)
-      .map(formatSkillMessage);
-    if (bodies.length === 0) continue;
-
-    const injection = bodies.join("\n\n");
-    if (typeof s.task.systemPrompt === "string" && s.task.systemPrompt.length > 0) {
-      s.task.systemPrompt = s.task.systemPrompt + "\n\n" + injection;
-    } else {
-      s.task.systemPrompt = injection;
-    }
+    const names = toInject.map((sk) => sk.name).filter((n) => catalogNameSet.has(n));
+    if (names.length === 0) continue;
+    for (const n of names) if (!existing.includes(n)) existing.push(n);
+    input.skill = [...existing];
 
     try {
       pi.appendEntry(DECISION_ENTRY, {
-        dispatch: true,
+        subagent: true,
         taskIndex: s.index,
         mode: "inject" as const,
         coding: s.coding,
@@ -1168,19 +1190,16 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
-  // Dispatch routing + commit gate
+  // Subagent routing + commit gate
   pi.on("tool_call", async (event, ctx) => {
-    // ── Dispatch routing ──────────────────────────────────────────
-    if (event.toolName === "dispatch" && _config.mode !== "off") {
+    // ── Subagent routing ──────────────────────────────────────────
+    if (event.toolName === "subagent" && _config.mode !== "off") {
       try {
-        const tasks: any[] = (event.input as any)?.tasks;
-        if (Array.isArray(tasks)) {
-          await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, pi, ctx);
-        }
+        await routeSubagentSkills(event.input, catalog, catalogNames, catalogNameSet, pi, ctx);
       } catch {
-        // Never block a dispatch — leave tasks untouched on any error
+        // Never block a subagent call — leave input untouched on any error
       }
-      return; // dispatch calls never reach the commit gate
+      return; // subagent calls never reach the commit gate
     }
 
     // ── Commit gate ──────────────────────────────────────────────
@@ -1250,7 +1269,7 @@ export {
   queryKev,
   queryKevWithState,
   kevThenRules,
-  routeDispatchTasks,
+  routeSubagentSkills,
   stripShellNonCommands,
   isRealGitCommit,
 

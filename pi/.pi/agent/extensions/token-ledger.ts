@@ -61,15 +61,21 @@ export default function (pi: ExtensionAPI): void {
   });
 
   pi.on("tool_call", async (event) => {
-    if (event.toolName === "dispatch" || event.toolName === "workflow") {
+    if (event.toolName === "subagent" || event.toolName === "workflow") {
       if (currentTaskId) {
-        const tasks = (event.input as any)?.tasks;
+        const input = (event.input as any) ?? {};
+        // For chains this counts steps, not leaf agents.
+        const children = Array.isArray(input.tasks)
+          ? input.tasks.length
+          : Array.isArray(input.chain)
+            ? input.chain.length
+            : 1;
         append({
           ts: new Date().toISOString(),
           taskId: currentTaskId,
           sessionId,
           event: "dispatch",
-          children: Array.isArray(tasks) ? tasks.length : 1,
+          children,
         });
       }
       return;

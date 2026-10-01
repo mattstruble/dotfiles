@@ -28,7 +28,7 @@ optional model filter (the local [Kev decision server](../../../../README.md#kev
    status (`ok`, `failed`, `skipped`), probabilities, rule hits, skills already in context, skills injected, and
    whether the turn was explicit. No prompt text is stored.
 
-**Subagents.** On a `dispatch` tool call each task is routed independently.
+**Subagents.** On a `subagent` tool call each task text (single `task`, `tasks[]` items, `chain` steps including `parallel` items) is scored independently. Picked skill *names* are merged into the call's top-level `skill` field (existing array/CSV values preserved; `skill: false` disables routing); skill bodies are not injected.
 
 - **Coding task** — `tools` includes `write`/`edit`, or `worktree: true` / `allowTreeMutation: true`.
 - **Language detection** — from file names/extensions in the task text and from top-level marker files of the `Repo root:` directory (or the working directory). The language map covers Python, Nix, Docker, Helm, Odin, Godot (+ shaders), Fennel/LÖVE, and LÖVE 2D.
@@ -59,10 +59,10 @@ one warning lists every invalid field.
 | `decider.threshold` | number, 0 to 1 | `0.30` | Minimum probability to keep a hit. Tuned for Kev-0.8B on the replay labels (it removed a quarter of the wrong injections without losing a right one); not yet tuned for Kev-4B. |
 | `decider.apiKeyEnv` | string or `null` | `null` | Name of an environment variable holding a bearer token for a hosted decider. The token is never read from this file; the router warns once if the variable is empty. |
 | `catalog` | string | `"~/.pi/agent/skill-profiles/all"` | Directory of `<name>/SKILL.md` skills to route over, independent of the per-directory skill profiles. `~` is expanded. |
-| `maxSkillsPerTurn` | number > 0 | `2` | Most skills injected per user turn and per dispatched task (non-coding). |
-| `maxSkillsPerTask` | number > 0 | `3` | Most skills injected per dispatched coding task (language + software-design + Kev picks). |
+| `maxSkillsPerTurn` | number > 0 | `2` | Most skills injected per user turn and per subagent task (non-coding). |
+| `maxSkillsPerTask` | number > 0 | `3` | Most skills named per subagent coding task (language + software-design + Kev picks). |
 
-What leaves the Pi process: the working directory and the first 2,000 characters of each prompt and dispatched task,
+What leaves the Pi process: the working directory and the first 2,000 characters of each prompt and subagent task,
 sent only to `decider.url`.
 
 Which Kev checkpoint answers is set per host by `services.kev-server.model` in the nix-darwin config

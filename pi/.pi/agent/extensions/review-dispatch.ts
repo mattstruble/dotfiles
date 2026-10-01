@@ -50,11 +50,11 @@ export default function (pi: ExtensionAPI): void {
       "## REVIEW DISPATCH DIRECTIVE",
       "",
       "The following tasks were just completed and need review.",
-      "Create review subtasks and dispatch reviewers:",
+      "Create review subtasks and run reviewers with the `subagent` tool:",
       taskLines,
       "",
       "For each, create correctness-review and failure-path-review subtasks under the parent,",
-      "then dispatch reviewer subagents with the git diff.",
+      "then call `subagent({ agent: \"correctness-reviewer\", task: ... })` (or `tasks: [...]` for parallel) with the git diff.",
     ].join("\n");
 
     // Move to reviewed and clear pending

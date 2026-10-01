@@ -41,7 +41,7 @@ A nonzero count confirms the model is actually using Action Fusion. Zero means t
 
 ### 2. Turns Per Task (Token Ledger)
 
-The token ledger at `~/.local/share/pi/token-ledger.jsonl` records `claim`, `dispatch`, `close`, and `turn` events per task.
+The token ledger at `~/.local/share/pi/token-ledger.jsonl` records `claim`, `dispatch` (one per `subagent`/`workflow` call), `close`, and `turn` events per task.
 
 ```bash
 # Turns per task (lower = better)

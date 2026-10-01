@@ -48,7 +48,7 @@ import skillRouter, {
   queryKev,
   queryKevWithState,
   kevThenRules,
-  routeDispatchTasks,
+  routeSubagentSkills,
   stripShellNonCommands,
   isRealGitCommit,
   validateDeciderUrl,
@@ -1736,10 +1736,15 @@ describe("config parsing", () => {
   });
 });
 
-// ── Dispatch routing tests ──────────────────────────────────────────
+/** Route each task object as its own subagent call input (skills land on task.skill). */
+async function routeEach(tasks: any[], ...rest: any[]): Promise<void> {
+  for (const t of tasks) await (routeSubagentSkills as any)(t, ...rest);
+}
 
-describe("dispatch routing: Python design task gets python-design", () => {
-  it("injects python-design (and software-design) into systemPrompt", async () => {
+// ── Subagent routing tests ──────────────────────────────────────────
+
+describe("subagent routing: Python design task gets python-design", () => {
+  it("injects python-design (and software-design) into the skill field", async () => {
     const { server, port } = await startKevServer((_req, res, body) => {
       const parsed = JSON.parse(body);
       const answers: Record<string, any> = {};
@@ -1766,15 +1771,15 @@ describe("dispatch routing: Python design task gets python-design", () => {
         { task: "Implement a Python FastAPI endpoint for user registration with pydantic models" },
       ];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, {});
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, {});
 
-      assert.ok(typeof tasks[0].systemPrompt === "string", "systemPrompt should be set");
-      assert.ok(tasks[0].systemPrompt.includes('<skill name="python-design"'), "should have python-design");
+      assert.ok(Array.isArray((tasks[0] as any).skill), "skill should be set");
+      assert.ok((tasks[0] as any).skill.includes("python-design"), "should have python-design");
       // software-design matches via enforcer "implement"
       // With max 2 skills, both should be injected
       const decision = appendedEntries.find(e => e.type === DECISION_ENTRY);
       assert.ok(decision, "decision entry logged");
-      assert.ok(decision.data.dispatch, "dispatch marker set");
+      assert.ok(decision.data.subagent, "subagent marker set");
     } finally {
       _setConfig(saved);
       server.close();
@@ -1782,8 +1787,8 @@ describe("dispatch routing: Python design task gets python-design", () => {
   });
 });
 
-describe("dispatch routing: existing systemPrompt preserved", () => {
-  it("appends after existing systemPrompt with a blank line", async () => {
+describe("subagent routing: existing skill values preserved", () => {
+  it("merges picks after existing skill names (CSV string input)", async () => {
     const { server, port } = await startKevServer((_req, res, body) => {
       const parsed = JSON.parse(body);
       const answers: Record<string, any> = {};
@@ -1802,13 +1807,13 @@ describe("dispatch routing: existing systemPrompt preserved", () => {
       const catalogNames = [...catalog.keys()];
       const catalogNameSet = new Set(catalogNames);
       const tasks = [
-        { task: "Write python tests for the parser", systemPrompt: "You are a careful coder." },
+        { task: "Write python tests for the parser", skill: "my-skill, other" },
       ];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
 
-      assert.ok((tasks[0] as any).systemPrompt.startsWith("You are a careful coder."), "original preserved");
-      assert.ok((tasks[0] as any).systemPrompt.includes("\n\n<skill name="), "blank line separator");
+      assert.deepEqual((tasks[0] as any).skill.slice(0, 2), ["my-skill", "other"], "original preserved");
+      assert.ok((tasks[0] as any).skill.length > 2, "picks appended");
     } finally {
       _setConfig(saved);
       server.close();
@@ -1816,7 +1821,7 @@ describe("dispatch routing: existing systemPrompt preserved", () => {
   });
 });
 
-describe("dispatch routing: no-hit task unchanged", () => {
+describe("subagent routing: no-hit task unchanged", () => {
   it("task with no matches stays untouched", async () => {
     const saved = _getConfig();
     _setConfig({ ...saved, mode: "inject" });
@@ -1829,16 +1834,16 @@ describe("dispatch routing: no-hit task unchanged", () => {
         { task: "What is the weather today?" },
       ];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
 
-      assert.equal((tasks[0] as any).systemPrompt, undefined, "no systemPrompt set");
+      assert.equal((tasks[0] as any).skill, undefined, "no skill set");
     } finally {
       _setConfig(saved);
     }
   });
 });
 
-describe("dispatch routing: multiple tasks routed independently", () => {
+describe("subagent routing: multiple tasks routed independently", () => {
   it("each task scored and injected independently", async () => {
     const { server, port } = await startKevServer((_req, res, body) => {
       const parsed = JSON.parse(body);
@@ -1863,14 +1868,14 @@ describe("dispatch routing: multiple tasks routed independently", () => {
         { task: "Write a unit test for the parser module" },
       ];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
 
       // Task 0: python-design/software-design
-      assert.ok((tasks[0] as any).systemPrompt?.includes('<skill name='), "task 0 injected");
+      assert.ok((tasks[0] as any).skill?.length > 0, "task 0 injected");
       // Task 1: no hits
-      assert.equal((tasks[1] as any).systemPrompt, undefined, "task 1 unchanged");
+      assert.equal((tasks[1] as any).skill, undefined, "task 1 unchanged");
       // Task 2: test-design
-      assert.ok((tasks[2] as any).systemPrompt?.includes('<skill name="test-design"'), "task 2 injected test-design");
+      assert.ok((tasks[2] as any).skill?.includes("test-design"), "task 2 injected test-design");
     } finally {
       _setConfig(saved);
       server.close();
@@ -1878,7 +1883,7 @@ describe("dispatch routing: multiple tasks routed independently", () => {
   });
 });
 
-describe("dispatch routing: idempotence", () => {
+describe("subagent routing: idempotence", () => {
   it("running twice does not double-inject", async () => {
     const { server, port } = await startKevServer((_req, res, body) => {
       const parsed = JSON.parse(body);
@@ -1902,13 +1907,13 @@ describe("dispatch routing: idempotence", () => {
       ];
 
       const mockPi = { on() {}, appendEntry() {} } as any;
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, mockPi, {});
-      const afterFirst = (tasks[0] as any).systemPrompt;
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, mockPi, {});
+      const afterFirst = JSON.stringify((tasks[0] as any).skill);
       assert.ok(afterFirst, "first pass injected");
 
-      // Second pass: skills already in systemPrompt should be skipped
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, mockPi, {});
-      const afterSecond = (tasks[0] as any).systemPrompt;
+      // Second pass: skills already in the skill field should be skipped
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, mockPi, {});
+      const afterSecond = JSON.stringify((tasks[0] as any).skill);
       assert.equal(afterFirst, afterSecond, "second pass is no-op (idempotent)");
     } finally {
       _setConfig(saved);
@@ -1917,8 +1922,8 @@ describe("dispatch routing: idempotence", () => {
   });
 });
 
-describe("dispatch routing: shadow mode logs without mutating", () => {
-  it("logs wouldInject but does not set systemPrompt", async () => {
+describe("subagent routing: shadow mode logs without mutating", () => {
+  it("logs wouldInject but does not set skill", async () => {
     const { server, port } = await startKevServer((_req, res, body) => {
       const parsed = JSON.parse(body);
       const answers: Record<string, any> = {};
@@ -1945,12 +1950,12 @@ describe("dispatch routing: shadow mode logs without mutating", () => {
         { task: "Implement a Python FastAPI service" },
       ];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, {});
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, {});
 
-      assert.equal((tasks[0] as any).systemPrompt, undefined, "shadow mode does not mutate");
+      assert.equal((tasks[0] as any).skill, undefined, "shadow mode does not mutate");
       const decision = appendedEntries.find(e => e.type === DECISION_ENTRY);
       assert.ok(decision, "decision logged");
-      assert.ok(decision.data.dispatch, "dispatch marker");
+      assert.ok(decision.data.subagent, "subagent marker");
       assert.equal(decision.data.mode, "shadow");
       assert.ok(decision.data.wouldInject.length > 0, "wouldInject populated");
     } finally {
@@ -1960,8 +1965,53 @@ describe("dispatch routing: shadow mode logs without mutating", () => {
   });
 });
 
-describe("dispatch routing: off mode does nothing", () => {
-  it("tool_call handler skips dispatch when mode is off", async () => {
+describe("subagent routing: shadow mode with two tasks", () => {
+  it("logs the same would-inject picks for both tasks", async () => {
+    const { server, port } = await startKevServer((_req, res, body) => {
+      const parsed = JSON.parse(body);
+      const answers: Record<string, any> = {};
+      for (const name of Object.keys(parsed.questions)) {
+        answers[name] = { type: "noul", noul: 0.9 };
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ answers }));
+    });
+
+    const saved = _getConfig();
+    _setConfig(makeCfg(port, { mode: "shadow" }));
+    const appendedEntries: any[] = [];
+    const mockPi = {
+      on() {},
+      appendEntry(type: string, data: any) { appendedEntries.push({ type, data }); },
+    };
+
+    try {
+      const catalog = loadCatalog();
+      const catalogNames = [...catalog.keys()];
+      const catalogNameSet = new Set(catalogNames);
+      const input: any = {
+        tasks: [
+          { task: "Implement a Python FastAPI service" },
+          { task: "Implement a Python FastAPI service" },
+        ],
+      };
+
+      await (routeSubagentSkills as any)(input, catalog, catalogNames, catalogNameSet, mockPi as any, {});
+
+      assert.equal(input.skill, undefined, "shadow mode does not mutate");
+      const decisions = appendedEntries.filter(e => e.type === DECISION_ENTRY);
+      assert.equal(decisions.length, 2);
+      assert.ok(decisions[0].data.wouldInject.length > 0);
+      assert.deepEqual(decisions[1].data.wouldInject, decisions[0].data.wouldInject);
+    } finally {
+      _setConfig(saved);
+      server.close();
+    }
+  });
+});
+
+describe("subagent routing: off mode does nothing", () => {
+  it("tool_call handler skips subagent when mode is off", async () => {
     const handlers: Record<string, Function> = {};
     const mockPi = {
       on(event: string, handler: Function) { handlers[event] = handler; },
@@ -1974,17 +2024,17 @@ describe("dispatch routing: off mode does nothing", () => {
 
     try {
       const tasks = [{ task: "Write python tests" }];
-      const event = { toolName: "dispatch", input: { tasks } };
+      const event = { toolName: "subagent", input: { tasks } };
       const ctx = {};
       await handlers["tool_call"](event, ctx);
-      assert.equal((tasks[0] as any).systemPrompt, undefined, "off mode leaves tasks untouched");
+      assert.equal((tasks[0] as any).skill, undefined, "off mode leaves tasks untouched");
     } finally {
       _setConfig(saved);
     }
   });
 });
 
-describe("dispatch routing: Kev failure falls back to rules-only", () => {
+describe("subagent routing: Kev failure falls back to rules-only", () => {
   it("injects via rules when Kev returns 500", async () => {
     const { server, port } = await startKevServer((_req, res) => {
       res.writeHead(500);
@@ -2003,12 +2053,12 @@ describe("dispatch routing: Kev failure falls back to rules-only", () => {
         { task: "Help me commit my changes" },
       ];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, {
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, {
         on() {},
         appendEntry(type: string, data: any) { appendedEntries.push({ type, data }); },
       } as any, {});
 
-      assert.ok((tasks[0] as any).systemPrompt?.includes('<skill name="git-commit"'), "rules-only fallback injects git-commit");
+      assert.ok((tasks[0] as any).skill?.includes("git-commit"), "rules-only fallback injects git-commit");
       const decision = appendedEntries.find(e => e.type === DECISION_ENTRY);
       assert.equal(decision.data.kev, "failed");
     } finally {
@@ -2018,7 +2068,7 @@ describe("dispatch routing: Kev failure falls back to rules-only", () => {
   });
 });
 
-describe("dispatch routing: Kev low p drops a skill", () => {
+describe("subagent routing: Kev low p drops a skill", () => {
   it("drops skill when Kev returns low probability", async () => {
     const { server, port } = await startKevServer((_req, res, body) => {
       const parsed = JSON.parse(body);
@@ -2042,11 +2092,11 @@ describe("dispatch routing: Kev low p drops a skill", () => {
         { task: "Implement a Python service with FastAPI" },
       ];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
 
-      const sp = (tasks[0] as any).systemPrompt ?? "";
-      assert.ok(sp.includes('<skill name="software-design"'), "high-p skill injected");
-      assert.ok(!sp.includes('<skill name="python-design"'), "low-p skill dropped");
+      const sp = (tasks[0] as any).skill?.join(",") ?? "";
+      assert.ok(sp.includes("software-design"), "high-p skill injected");
+      assert.ok(!sp.includes("python-design"), "low-p skill dropped");
     } finally {
       _setConfig(saved);
       server.close();
@@ -2054,8 +2104,8 @@ describe("dispatch routing: Kev low p drops a skill", () => {
   });
 });
 
-describe("dispatch routing: throwing path leaves input untouched", () => {
-  it("exception in routeDispatchTasks does not break dispatch", async () => {
+describe("subagent routing: throwing path leaves input untouched", () => {
+  it("exception in routeSubagentSkills does not break subagent", async () => {
     const handlers: Record<string, Function> = {};
     const mockPi = {
       on(event: string, handler: Function) { handlers[event] = handler; },
@@ -2078,23 +2128,21 @@ describe("dispatch routing: throwing path leaves input untouched", () => {
         { task: "Write python code" },  // valid but Kev will fail -> rules fallback
         { notATask: true },  // no .task
       ];
-      const event = { toolName: "dispatch", input: { tasks } };
+      const event = { toolName: "subagent", input: { tasks } };
       const ctx = {};
       // Should not throw
       await handlers["tool_call"](event, ctx);
-      // task 0 and 2 are untouched
-      assert.equal((tasks[0] as any).systemPrompt, undefined, "non-string task untouched");
-      assert.equal((tasks[2] as any).systemPrompt, undefined, "no .task untouched");
-      // task 1 gets rules-only fallback
-      assert.ok((tasks[1] as any).systemPrompt?.includes('<skill name='), "valid task still gets injected via fallback");
+      const input: any = event.input;
+      assert.equal(input.tasks[0].skill, undefined, "per-task skill never set");
+      assert.ok(input.skill?.length > 0, "valid task still names skills via fallback");
     } finally {
       _setConfig(saved);
     }
   });
 });
 
-describe("dispatch routing: commit gate still works alongside dispatch", () => {
-  it("blocks git commit even after dispatch routing runs", async () => {
+describe("subagent routing: commit gate still works alongside subagent", () => {
+  it("blocks git commit even after subagent routing runs", async () => {
     const handlers: Record<string, Function> = {};
     const mockPi = {
       on(event: string, handler: Function) { handlers[event] = handler; },
@@ -2122,7 +2170,7 @@ describe("dispatch routing: commit gate still works alongside dispatch", () => {
   });
 });
 
-describe("dispatch routing: Kev state format", () => {
+describe("subagent routing: Kev state format", () => {
   it("sends correct state string with cwd and task text", async () => {
     let capturedState = "";
     const { server, port } = await startKevServer((_req, res, body) => {
@@ -2147,7 +2195,7 @@ describe("dispatch routing: Kev state format", () => {
         { task: "Write python code" },
       ];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, { cwd: "/Users/me/myproject" });
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, { cwd: "/Users/me/myproject" });
 
       assert.ok(capturedState.includes("Working directory:"), "state has cwd");
       assert.ok(capturedState.includes("User request:"), "state has user request");
@@ -2159,7 +2207,7 @@ describe("dispatch routing: Kev state format", () => {
   });
 });
 
-describe("dispatch routing: concurrent Kev queries bounded by ~1x timeoutMs", () => {
+describe("subagent routing: concurrent Kev queries bounded by ~1x timeoutMs", () => {
   it("4 tasks with slow server complete in under 2x timeoutMs total", async () => {
     const TIMEOUT_MS = 200;
     const { server, port } = await startKevServer((_req, _res) => {
@@ -2181,7 +2229,8 @@ describe("dispatch routing: concurrent Kev queries bounded by ~1x timeoutMs", ()
       ];
 
       const start = Date.now();
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
+      const input: any = { tasks };
+      await routeSubagentSkills(input, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
       const elapsed = Date.now() - start;
 
       // If sequential, would be ~4 x TIMEOUT_MS = 800ms.
@@ -2191,13 +2240,8 @@ describe("dispatch routing: concurrent Kev queries bounded by ~1x timeoutMs", ()
         `Expected < ${2 * TIMEOUT_MS}ms, got ${elapsed}ms (sequential would be ~${4 * TIMEOUT_MS}ms)`,
       );
 
-      // All tasks should still get rules-only fallback injection
-      for (let i = 0; i < tasks.length; i++) {
-        assert.ok(
-          (tasks[i] as any).systemPrompt?.includes('<skill name='),
-          `task ${i} should have rules-only fallback injection`,
-        );
-      }
+      // Rules-only fallback still names skills
+      assert.ok(input.skill?.length > 0, "rules-only fallback names skills");
     } finally {
       _setConfig(saved);
       server.close();
@@ -2309,9 +2353,9 @@ describe("resolveRepoRoot", () => {
   });
 });
 
-// ── Coding task dispatch integration ────────────────────────────────
+// ── Coding task subagent integration ────────────────────────────────
 
-describe("dispatch routing: coding task with pyproject.toml gets python-design + software-design", () => {
+describe("subagent routing: coding task with pyproject.toml gets python-design + software-design", () => {
   it("injects python-design and software-design even when text never mentions Python", async () => {
     const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
     writeFileSync(pathJoin(tmpDir, "pyproject.toml"), "[tool.pytest]");
@@ -2340,11 +2384,11 @@ describe("dispatch routing: coding task with pyproject.toml gets python-design +
         worktree: true,
       }];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, { cwd: tmpDir });
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, { cwd: tmpDir });
 
-      const sp = (tasks[0] as any).systemPrompt ?? "";
-      assert.ok(sp.includes('<skill name="python-design"'), "should have python-design");
-      assert.ok(sp.includes('<skill name="software-design"'), "should have software-design");
+      const sp = (tasks[0] as any).skill?.join(",") ?? "";
+      assert.ok(sp.includes("python-design"), "should have python-design");
+      assert.ok(sp.includes("software-design"), "should have software-design");
 
       const decision = appendedEntries.find(e => e.type === DECISION_ENTRY);
       assert.ok(decision, "decision entry logged");
@@ -2357,7 +2401,7 @@ describe("dispatch routing: coding task with pyproject.toml gets python-design +
   });
 });
 
-describe("dispatch routing: text with foo.nix gets nix skill", () => {
+describe("subagent routing: text with foo.nix gets nix skill", () => {
   it("detects nix from file extension in task text", async () => {
     const saved = _getConfig();
     _setConfig({
@@ -2376,17 +2420,17 @@ describe("dispatch routing: text with foo.nix gets nix skill", () => {
         tools: ["write", "bash"],
       }];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
 
-      const sp = (tasks[0] as any).systemPrompt ?? "";
-      assert.ok(sp.includes('<skill name="nix"'), "should have nix");
+      const sp = (tasks[0] as any).skill?.join(",") ?? "";
+      assert.ok(sp.includes("nix"), "should have nix");
     } finally {
       _setConfig(saved);
     }
   });
 });
 
-describe("dispatch routing: Repo root from task text", () => {
+describe("subagent routing: Repo root from task text", () => {
   it("uses Repo root path for marker file detection", async () => {
     const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
     writeFileSync(pathJoin(tmpDir, "flake.nix"), "{}");
@@ -2409,10 +2453,10 @@ describe("dispatch routing: Repo root from task text", () => {
       }];
 
       // cwd is something else entirely
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, { cwd: "/tmp/elsewhere" });
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, { cwd: "/tmp/elsewhere" });
 
-      const sp = (tasks[0] as any).systemPrompt ?? "";
-      assert.ok(sp.includes('<skill name="nix"'), "should detect nix from flake.nix in Repo root");
+      const sp = (tasks[0] as any).skill?.join(",") ?? "";
+      assert.ok(sp.includes("nix"), "should detect nix from flake.nix in Repo root");
     } finally {
       _setConfig(saved);
       rmSync(tmpDir, { recursive: true });
@@ -2420,7 +2464,7 @@ describe("dispatch routing: Repo root from task text", () => {
   });
 });
 
-describe("dispatch routing: read-only task unchanged from today", () => {
+describe("subagent routing: read-only task unchanged from today", () => {
   it("task with read/grep tools is not a coding task", async () => {
     const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
     writeFileSync(pathJoin(tmpDir, "pyproject.toml"), "[tool.pytest]");
@@ -2448,10 +2492,10 @@ describe("dispatch routing: read-only task unchanged from today", () => {
         tools: ["read", "grep", "bash"],
       }];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, { cwd: tmpDir });
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, { cwd: tmpDir });
 
-      // No hits from rules → no systemPrompt
-      assert.equal((tasks[0] as any).systemPrompt, undefined, "read-only task should not get skills injected from markers");
+      // No hits from rules → no skill
+      assert.equal((tasks[0] as any).skill, undefined, "read-only task should not get skills injected from markers");
     } finally {
       _setConfig(saved);
       rmSync(tmpDir, { recursive: true });
@@ -2459,7 +2503,7 @@ describe("dispatch routing: read-only task unchanged from today", () => {
   });
 });
 
-describe("dispatch routing: skills absent from catalog are skipped", () => {
+describe("subagent routing: skills absent from catalog are skipped", () => {
   it("odin-design absent from catalog is not injected", async () => {
     const saved = _getConfig();
     _setConfig({
@@ -2480,20 +2524,20 @@ describe("dispatch routing: skills absent from catalog are skipped", () => {
         tools: ["edit"],
       }];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, {});
 
-      const sp = (tasks[0] as any).systemPrompt ?? "";
+      const sp = (tasks[0] as any).skill?.join(",") ?? "";
       // Should get software-design (coding task) but not odin-design
       assert.ok(!sp.includes("odin-design"), "odin-design absent from catalog, should not appear");
       // But software-design should still be injected for coding tasks
-      assert.ok(sp.includes('<skill name="software-design"'), "software-design should be injected");
+      assert.ok(sp.includes("software-design"), "software-design should be injected");
     } finally {
       _setConfig(saved);
     }
   });
 });
 
-describe("dispatch routing: maxSkillsPerTask cap holds", () => {
+describe("subagent routing: maxSkillsPerTask cap holds", () => {
   it("caps at maxSkillsPerTask with language + software-design + Kev pick", async () => {
     const { server, port } = await startKevServer((_req, res, body) => {
       const parsed = JSON.parse(body);
@@ -2526,10 +2570,10 @@ describe("dispatch routing: maxSkillsPerTask cap holds", () => {
         tools: ["edit", "bash"],
       }];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, { cwd: tmpDir });
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, { on() {}, appendEntry() {} } as any, { cwd: tmpDir });
 
-      const sp = (tasks[0] as any).systemPrompt ?? "";
-      const skillMatches = [...sp.matchAll(/<skill name="([^"]+)"/g)].map(m => m[1]);
+      const sp = (tasks[0] as any).skill?.join(",") ?? "";
+      const skillMatches = sp ? sp.split(",") : [];
       assert.ok(skillMatches.length <= 2, `should have at most 2 skills, got ${skillMatches.length}: ${skillMatches.join(", ")}`);
       // Language skills come first: python-design should be there
       assert.ok(skillMatches.includes("python-design"), "python-design should be first (language skill)");
@@ -2541,7 +2585,7 @@ describe("dispatch routing: maxSkillsPerTask cap holds", () => {
   });
 });
 
-describe("dispatch routing: shadow mode logs coding/languages without mutating", () => {
+describe("subagent routing: shadow mode logs coding/languages without mutating", () => {
   it("logs coding and languages in shadow mode", async () => {
     const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
     writeFileSync(pathJoin(tmpDir, "pyproject.toml"), "[tool.pytest]");
@@ -2568,10 +2612,10 @@ describe("dispatch routing: shadow mode logs coding/languages without mutating",
         tools: ["edit"],
       }];
 
-      await routeDispatchTasks(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, { cwd: tmpDir });
+      await routeEach(tasks, catalog, catalogNames, catalogNameSet, mockPi as any, { cwd: tmpDir });
 
       // Should NOT mutate
-      assert.equal((tasks[0] as any).systemPrompt, undefined, "shadow mode does not mutate");
+      assert.equal((tasks[0] as any).skill, undefined, "shadow mode does not mutate");
 
       const decision = appendedEntries.find(e => e.type === DECISION_ENTRY);
       assert.ok(decision, "decision logged");
@@ -2583,5 +2627,60 @@ describe("dispatch routing: shadow mode logs coding/languages without mutating",
       _setConfig(saved);
       rmSync(tmpDir, { recursive: true });
     }
+  });
+});
+
+
+describe("subagent routing: input shapes and merging", () => {
+  const setup = async () => {
+    const { server, port } = await startKevServer((_req, res, body) => {
+      const parsed = JSON.parse(body);
+      const answers: Record<string, any> = {};
+      for (const name of Object.keys(parsed.questions)) answers[name] = { type: "noul", noul: 0.9 };
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ answers }));
+    });
+    const saved = _getConfig();
+    _setConfig(makeCfg(port));
+    const catalog = loadCatalog();
+    const catalogNames = [...catalog.keys()];
+    return { server, saved, args: [catalog, catalogNames, new Set(catalogNames), { on() {}, appendEntry() {} } as any, {}] as const };
+  };
+
+  it("unions picks from tasks[] into top-level skill", async () => {
+    const { server, saved, args } = await setup();
+    try {
+      const input: any = { tasks: [
+        { agent: "worker", task: "Write a unit test for the parser module" },
+        { agent: "worker", task: "What is the weather today?" },
+      ] };
+      await routeSubagentSkills(input, ...args);
+      assert.ok(Array.isArray(input.skill) && input.skill.includes("test-design"));
+      assert.equal(input.tasks[0].systemPrompt, undefined);
+    } finally { _setConfig(saved); server.close(); }
+  });
+
+  it("scores chain steps including parallel items", async () => {
+    const { server, saved, args } = await setup();
+    try {
+      const input: any = { chain: [
+        { agent: "scout", task: "What is the weather today?" },
+        { parallel: [{ agent: "worker", task: "Write a unit test for the parser module" }] },
+      ] };
+      await routeSubagentSkills(input, ...args);
+      assert.ok(input.skill?.includes("test-design"));
+    } finally { _setConfig(saved); server.close(); }
+  });
+
+  it("leaves skill:false alone and dedupes existing array", async () => {
+    const { server, saved, args } = await setup();
+    try {
+      const off: any = { task: "Write a unit test for the parser module", skill: false };
+      await routeSubagentSkills(off, ...args);
+      assert.equal(off.skill, false);
+      const arr: any = { task: "Write a unit test for the parser module", skill: ["test-design"] };
+      await routeSubagentSkills(arr, ...args);
+      assert.equal(arr.skill.filter((n: string) => n === "test-design").length, 1);
+    } finally { _setConfig(saved); server.close(); }
   });
 });

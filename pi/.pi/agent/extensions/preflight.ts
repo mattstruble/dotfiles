@@ -131,7 +131,7 @@ export default function (pi: ExtensionAPI): void {
 
   // Register /preflight command
   pi.registerCommand("preflight", {
-    description: "Run pre-dispatch validation checks on the task graph and repo state",
+    description: "Run pre-subagent validation checks on the task graph and repo state",
     handler: async (_args, ctx) => {
       cachedResult = null; // Force fresh run on explicit command
       const result = await runChecks();
@@ -141,7 +141,7 @@ export default function (pi: ExtensionAPI): void {
     },
   });
 
-  // Auto-trigger on before_agent_start when dispatching
+  // Auto-trigger on before_agent_start when dispatching subagents
   pi.on("before_agent_start", async (event, _ctx) => {
     const prompt = (event.prompt ?? "").toLowerCase();
     const shouldTrigger =

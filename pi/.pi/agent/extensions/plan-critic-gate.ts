@@ -3,8 +3,8 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 /**
  * plan-critic-gate extension
  *
- * Registers the /critique command for manual plan-critic dispatch.
- * When triggered, injects a directive on the next agent turn forcing dispatch
+ * Registers the /critique command for manual plan-critic run via the subagent tool.
+ * When triggered, injects a directive on the next agent turn forcing a subagent call
  * of the plan-critic agent with read-only tools.
  */
 export default function (pi: ExtensionAPI): void {
@@ -18,32 +18,31 @@ export default function (pi: ExtensionAPI): void {
     const directive = [
       "## PLAN CRITIC DIRECTIVE",
       "",
-      "You MUST dispatch plan-critic on this turn. No exceptions.",
+      "You MUST run plan-critic via the `subagent` tool on this turn. No exceptions.",
       "",
       "### Instructions",
       "",
-      "1. Dispatch a plan-critic agent with read-only tools to review the task graph:",
+      "1. Call the `subagent` tool with the plan-critic agent (read-only) to review the task graph:",
       "   ```",
-      '   dispatch([{',
-      '     task: "Run plan-critic: evaluate the current beads task graph. Use `bd list --json`, `bd show <id> --json`, `bd dep tree`, and `bd dep cycles` to assess. Return structured findings per the plan-critic methodology (missing-dep, unclear-criteria, scope-gap, oversized, duplicate, ordering). Return \\"No further suggestions.\\" if the plan is sound.",',
+      '   subagent({',
       '     agent: "plan-critic",',
-      '     tools: ["read", "grep", "find", "ls", "bash"]',
-      "   }])",
+      '     task: "Run plan-critic: evaluate the current beads task graph. Use `bd list --json`, `bd show <id> --json`, `bd dep tree`, and `bd dep cycles` to assess. Return structured findings per the plan-critic methodology (missing-dep, unclear-criteria, scope-gap, oversized, duplicate, ordering). Return \\"No further suggestions.\\" if the plan is sound."',
+      "   })",
       "   ```",
       "",
       "2. Read the critic's response.",
       '   - If "No further suggestions." → the plan is ready. Present it to the user.',
       "   - If findings exist → apply them using `bd update`, `bd create`, `bd dep add` as needed.",
       "",
-      "3. After applying fixes, re-dispatch the plan-critic (same dispatch call).",
+      "3. After applying fixes, re-run the plan-critic (same subagent call).",
       "",
       "4. Repeat until the critic returns 'No further suggestions.' OR you reach 3 rounds.",
       "   After 3 rounds, present the plan with any remaining suggestions noted.",
       "",
       "### Rules",
-      "- Do NOT skip the dispatch. The critic MUST run as a separate agent.",
-      "- Do NOT self-critique instead of dispatching.",
-      "- The dispatch uses read-only tools only.",
+      "- Do NOT skip the subagent call. The critic MUST run as a separate agent.",
+      "- Do NOT self-critique instead of calling subagent.",
+      "- The plan-critic agent must stay read-only.",
     ].join("\n");
 
     const base = event.systemPrompt ?? "";
