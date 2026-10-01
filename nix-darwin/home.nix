@@ -14,6 +14,28 @@ let
   userName = import ./hosts/${hostname}/username.nix;
   home = "/Users/${userName}";
   path = "${home}/dotfiles";
+
+  # Extensions loaded inside subagent and workflow children. `name` is how
+  # pi-dynamic-workflows identifies an extension; pi-subagents takes the path.
+  # Keep out anything that needs a UI (pi-permission-system would deny every "ask").
+  piChildExtensions = [
+    {
+      name = "skill-router";
+      path = "${home}/.pi/agent/extensions/skill-router.ts";
+    }
+    {
+      name = "guardrails";
+      path = "${home}/.pi/agent/extensions/guardrails.ts";
+    }
+    {
+      name = "audit";
+      path = "${home}/.pi/agent/extensions/audit.ts";
+    }
+    {
+      name = "pi-rtk-optimizer";
+      path = "${home}/.pi/agent/npm/node_modules/pi-rtk-optimizer/index.ts";
+    }
+  ];
   onePassPath = "${home}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
 
   brew_path = "/opt/homebrew/bin";
@@ -187,8 +209,6 @@ in
               big = m.default;
             };
         };
-        # Hosts serving local models override these with sequential limits (see hosts/MacStruble).
-        ".pi/workflows/settings.json".text = lib.mkDefault (builtins.toJSON { keywordTriggerEnabled = false; });
 
         # Orchestrator scripts as saved workflows, called by name instead of pasted inline.
         ".pi/workflows/saved/orchestrator_wave.json".text = builtins.toJSON {
@@ -205,9 +225,6 @@ in
         };
         ".pi/workflows/saved/orchestrator_audit.js".source =
           "${inputs.skills-mattstruble}/orchestrator/references/audit.js";
-
-        # pi-subagents: keep the subagent tool active instead of behind the subagents_enable loader.
-        ".pi/agent/extensions/subagent/config.json".text = lib.mkDefault (builtins.toJSON { toolActivation = "eager"; });
 
       };
 
@@ -340,6 +357,7 @@ in
     ./modules/neovim-treesitter.nix
     ./modules/opencode-profiles.nix
     ./modules/pi-mcp.nix
+    ./modules/pi-subagents.nix
     ./modules/pi-profiles.nix
     ./modules/sol-pi.nix
     ./modules/pdf-fast.nix
@@ -498,13 +516,25 @@ in
             enabled = true;
             keepRecentTokens = 20000;
           };
-          # pi-subagents role models come from the per-host model map.
-          subagents.agentOverrides = lib.mapAttrs (_: model: { inherit model; }) (
-            removeAttrs config.programs.ai-agents.pi.modelMap [
-              "default"
-              "small_model"
-            ]
-          );
+          # pi-subagents role models come from the per-host model map; children load
+          # the same safety/skill extensions as workflow children (see piChildExtensions).
+          subagents = {
+            defaultExtensions = map (e: e.path) piChildExtensions;
+            agentOverrides =
+              lib.recursiveUpdate
+                (lib.mapAttrs (_: model: { inherit model; }) (
+                  removeAttrs config.programs.ai-agents.pi.modelMap [
+                    "default"
+                    "small_model"
+                  ]
+                ))
+                {
+                  # An agent's own list replaces defaultExtensions, so repeat them.
+                  fetcher.extensions = map (e: e.path) piChildExtensions ++ [
+                    "${home}/.pi/agent/npm/node_modules/pi-web-access/dist"
+                  ];
+                };
+          };
         };
         systemPromptFile = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/SYSTEM.md";
         extensions =
@@ -892,6 +922,13 @@ in
         };
       };
     };
+
+    pi-workflows.settings = {
+      keywordTriggerEnabled = false; # no auto-run on the word "workflow"
+      providerMiddlewareExtensions = map (e: e.name) piChildExtensions;
+    };
+    # Keep the subagent tool active instead of behind the subagents_enable loader.
+    pi-subagents.config.toolActivation = "eager";
 
     pi-mcp.servers = {
       context7 = {

@@ -43,12 +43,8 @@ in
       services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
 
       # Local llama.cpp serves two models at a time: cap workflow and subagent children at two.
-      home.file.".pi/workflows/settings.json".text = builtins.toJSON {
-        keywordTriggerEnabled = false;
-        defaultConcurrency = 2;
-      };
-      home.file.".pi/agent/extensions/subagent/config.json".text = builtins.toJSON {
-        toolActivation = "eager";
+      programs.pi-workflows.settings.defaultConcurrency = 2;
+      programs.pi-subagents.config = {
         globalConcurrencyLimit = 2;
         parallel.concurrency = 2;
       };
