@@ -179,6 +179,9 @@ in
         };
         ".pi/workflows/settings.json".text = builtins.toJSON { keywordTriggerEnabled = false; };
 
+        # pi-subagents: keep the subagent tool active instead of behind the subagents_enable loader.
+        ".pi/agent/extensions/subagent/config.json".text = builtins.toJSON { toolActivation = "eager"; };
+
       };
 
     activation.setupDockerCliPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
