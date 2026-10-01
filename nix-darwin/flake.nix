@@ -75,7 +75,9 @@
                 };
                 overlays = [
                   (final: prev: {
-                    pi = inputs.llm-agents.packages.${system}.pi;
+                    # Node build: pi-subagents imports the pi SDK package from disk, which the
+                    # Bun-compiled binary does not ship.
+                    pi = inputs.llm-agents.packages.${system}.pi.override { useBun = false; };
                   })
                   (final: prev: {
                     # ponytail: beads' postPatch bumps the go directive to the toolchain
