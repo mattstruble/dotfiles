@@ -1,8 +1,5 @@
 pkgs:
 
-let
-  piVersion = "0.84.2";
-in
 with pkgs;
 
 [
@@ -87,9 +84,7 @@ with pkgs;
   opam
   opencode
   opensc
-  (pkgs.writeShellScriptBin "pi" ''
-    exec ${pkgs.nodejs_22}/bin/npx --yes @earendil-works/pi-coding-agent@${piVersion} "$@"
-  '')
+  pi
   openssh
   openssl
   pandoc

@@ -13,6 +13,8 @@
     };
     ai-agents.url = "github:mattstruble/nix-ai-agents";
     agent-sandbox.url = "github:mattstruble/agent-sandbox";
+    # No nixpkgs follows: keeps hashes matching cache.numtide.com.
+    llm-agents.url = "github:numtide/llm-agents.nix";
 
     sops-nix = {
       url = "github:Mic92/sops-nix";
@@ -72,6 +74,9 @@
                   allowUnsupportedSystem = false;
                 };
                 overlays = [
+                  (final: prev: {
+                    pi = inputs.llm-agents.packages.${system}.pi;
+                  })
                   (final: prev: {
                     # ponytail: beads' postPatch bumps the go directive to the toolchain
                     # version, which breaks module resolution on some commits. The Nix
