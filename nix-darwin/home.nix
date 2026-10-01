@@ -115,7 +115,7 @@ in
       PIP_CERT = "${ca-bundle_crt}";
 
       MANPATH = lib.concatStringsSep ":" [
-        "${config.home.profileDirectory}/share/man"
+        "${home}/.nix-profile/share/man"
         "/run/current-system/sw/share/man"
         "/usr/local/share/man"
         "/usr/share/man"
@@ -1190,7 +1190,7 @@ in
             ${pkgs.gnupg}/bin/gpgconf --launch gpg-agent
         fi
 
-        export PATH=/run/current-system/sw/bin:${config.home.profileDirectory}/bin:$PATH
+        export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
         if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
             . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
         fi

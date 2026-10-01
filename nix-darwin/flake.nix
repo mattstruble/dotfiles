@@ -122,7 +122,6 @@
                   {
                     home-manager = {
                       useGlobalPkgs = true;
-                      useUserPackages = true;
                       backupCommand = "${hmBackup}";
                       users = import ./hosts/${hostname}/home.nix { inherit inputs; };
                       extraSpecialArgs = {
