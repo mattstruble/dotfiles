@@ -596,8 +596,18 @@ in
               "git log *" = "allow";
               "git log" = "allow";
               "git show *" = "allow";
-              "git branch *" = "allow";
+              # git branch: listing only; deletes limited to orchestrator branches (one per command)
               "git branch" = "allow";
+              "git branch -a" = "allow";
+              "git branch -r" = "allow";
+              "git branch -v" = "allow";
+              "git branch -vv" = "allow";
+              "git branch --show-current" = "allow";
+              "git branch -D pi/wf/*" = "allow";
+              "git branch -D pi/epic/*" = "allow";
+              # `*` also matches spaces, so a second branch argument (`pi/wf/x main`) asks; `?*` because a trailing ` *` also matches the bare command
+              "git branch -D pi/wf/* ?*" = "ask";
+              "git branch -D pi/epic/* ?*" = "ask";
               "git rev-parse *" = "allow";
               "git ls-files *" = "allow";
               "git remote -v" = "allow";
