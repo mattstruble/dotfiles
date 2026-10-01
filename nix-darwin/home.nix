@@ -170,14 +170,25 @@ in
         ".pi/agent/agents".source = mkLink "${path}/pi/.pi/agent/agents";
 
         # pi-dynamic-workflows: tiers from the per-host model map; no auto-run on the word "workflow".
+        # One tier per role (coder, reviewers, auditors) plus small/medium/big, so workflow
+        # scripts route each role the same way pi-subagents' agentOverrides do.
         ".pi/workflows/model-tiers.json".text = builtins.toJSON {
-          tiers = with config.programs.ai-agents.pi.modelMap; {
-            small = small_model;
-            medium = coder;
-            big = default;
-          };
+          tiers =
+            let
+              m = config.programs.ai-agents.pi.modelMap;
+            in
+            removeAttrs m [
+              "default"
+              "small_model"
+            ]
+            // {
+              small = m.small_model;
+              medium = m.coder;
+              big = m.default;
+            };
         };
-        ".pi/workflows/settings.json".text = builtins.toJSON { keywordTriggerEnabled = false; };
+        # Hosts serving local models override these with sequential limits (see hosts/MacStruble).
+        ".pi/workflows/settings.json".text = lib.mkDefault (builtins.toJSON { keywordTriggerEnabled = false; });
 
         # Orchestrator scripts as saved workflows, called by name instead of pasted inline.
         ".pi/workflows/saved/orchestrator_wave.json".text = builtins.toJSON {
@@ -196,7 +207,7 @@ in
           "${inputs.skills-mattstruble}/orchestrator/references/audit.js";
 
         # pi-subagents: keep the subagent tool active instead of behind the subagents_enable loader.
-        ".pi/agent/extensions/subagent/config.json".text = builtins.toJSON { toolActivation = "eager"; };
+        ".pi/agent/extensions/subagent/config.json".text = lib.mkDefault (builtins.toJSON { toolActivation = "eager"; });
 
       };
 

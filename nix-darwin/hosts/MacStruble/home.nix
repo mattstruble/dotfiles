@@ -42,6 +42,17 @@ in
 
       services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
 
+      # Local llama.cpp serves two models at a time: cap workflow and subagent children at two.
+      home.file.".pi/workflows/settings.json".text = builtins.toJSON {
+        keywordTriggerEnabled = false;
+        defaultConcurrency = 2;
+      };
+      home.file.".pi/agent/extensions/subagent/config.json".text = builtins.toJSON {
+        toolActivation = "eager";
+        globalConcurrencyLimit = 2;
+        parallel.concurrency = 2;
+      };
+
       home.file.".pi/agent/models.json".source = pkgs.writeText "pi-models.json" (
         builtins.toJSON {
           providers = {
@@ -108,7 +119,7 @@ in
             modelMap = {
               default = "mjolnir/swift-qwen3.8-27b";
               small_model = "mjolnir/gemma-4-26b-a4b";
-              coder = "mjolnir/gemma-4-26b-a4b";
+              coder = "mjolnir/swift-qwen3.8-27b";
               fetcher = "mjolnir/gemma-4-26b-a4b";
               plan-critic = "mjolnir/swift-qwen3.8-27b";
               correctness-reviewer = "mjolnir/gemma-4-26b-a4b";
