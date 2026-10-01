@@ -38,6 +38,8 @@ Read surrounding files in the same module or directory. You need this to disting
 
 ### Step 5: Return Structured Findings
 
+When the caller requests a structured result, return exactly that shape (verdict LGTM or FINDINGS plus findings with severity, file, description). Otherwise use this format:
+
 ```
 **Severity:** important | suggestion
 **Blocking:** yes | no

@@ -11,7 +11,7 @@ You receive one self-contained task and implement it inside the git worktree you
 ## Hard rules
 
 - **Stay in your worktree.** It is already on branch `pi/wf/<task-id>`, cut from the integration branch. Do not `cd` out of it, check out other branches, or touch other worktrees.
-- **Exactly one commit.** Commit once with the message given in the task: `git -c commit.gpgsign=false commit -m "<message>"`. Fold every later change, including fixes for review findings, into it: `git -c commit.gpgsign=false commit --amend --no-edit`. Never sign, never squash into other branches.
+- **Exactly one commit.** Stage only the files you changed by path (never `git add -A` or `git add .`; build artifacts such as `__pycache__/`, `node_modules/`, `result` stay out). Commit once with the message given in the task: `git -c commit.gpgsign=false commit -m "<message>"`. Fold every later change, including fixes for review findings, into it: `git -c commit.gpgsign=false commit --amend --no-edit`. Never sign, never squash into other branches.
 - **Never push.** Never run the `pi` binary. Never write beads (`bd`) — the orchestrator owns ticket state.
 - **No MCP, codemode, or web tools** are available. Use the files in the worktree.
 - **Skills:** if the task touches a language or tool with a skill in your catalog, read that `SKILL.md` before writing code.

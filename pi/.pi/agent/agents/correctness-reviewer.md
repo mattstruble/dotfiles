@@ -36,6 +36,8 @@ Plan alignment is a first-class concern. Deviations from spec are findings, not 
 
 ### Step 4: Return Structured Findings
 
+When the caller requests a structured result, return exactly that shape (verdict LGTM or FINDINGS plus findings with severity, file, description). Otherwise use this format:
+
 ```
 **Severity:** critical | important | suggestion
 **Blocking:** yes | no

@@ -18,7 +18,7 @@ Read every file listed in the review request. Understand how data flows in (inpu
 
 ### Step 2: Identify External Dependencies
 
-Scan changed files for new or updated dependencies (imports, package manifests). If new dependencies are added or versions changed, research them for known CVEs using the fetch tool before proceeding.
+Scan changed files for new or updated dependencies (imports, package manifests). If new dependencies are added or versions changed, report each one as a `suggestion` finding that needs a CVE check (you have no web access; it must not block).
 
 ### Step 3: Apply Threat Model
 
@@ -33,6 +33,8 @@ Scan changed files for new or updated dependencies (imports, package manifests).
 **General** — Race conditions (TOCTOU), timing attacks, information disclosure in error responses, cryptographic weaknesses, denial of service from untrusted input.
 
 ### Step 4: Return Structured Findings
+
+When the caller requests a structured result, return exactly that shape (verdict LGTM or FINDINGS plus findings with severity, file, description). Otherwise use this format:
 
 ```
 **Severity:** critical | important | suggestion
@@ -51,7 +53,7 @@ If no findings: `LGTM: no findings`
 |-------------|---------------|
 | Critical | `critical` (always blocking) |
 | High | `important` (blocking) |
-| Medium | `important` (non-blocking — include justification) |
+| Medium | `suggestion` (never blocking — include justification) |
 | Low | `suggestion` (never blocking) |
 | Informational | `suggestion` (never blocking) |
 
