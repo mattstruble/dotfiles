@@ -1081,7 +1081,7 @@ describe("commit gate integration: catalog missing git-commit allows commit", ()
     // Point the config at a temp catalog that lacks git-commit
     const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-empty-catalog-"));
     const dummyDir = pathJoin(tmpDir, "nix");
-    require("node:fs").mkdirSync(dummyDir, { recursive: true });
+    mkdirSync(dummyDir, { recursive: true });
     writeFileSync(pathJoin(dummyDir, "SKILL.md"), "---\nname: nix\ndescription: Nix\n---\n# Nix");
 
     const saved = _getConfig();
@@ -1167,7 +1167,7 @@ describe("commit gate integration: does not block non-commit commands", () => {
 // ── Kev filter tests (ephemeral HTTP server) ────────────────────────
 
 import { createServer, type Server, type IncomingMessage, type ServerResponse } from "node:http";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { join as pathJoin } from "node:path";
 import { tmpdir } from "node:os";
 
