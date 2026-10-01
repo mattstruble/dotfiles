@@ -105,10 +105,46 @@ function getThenRunCommand(input: unknown): string | null {
   return typeof cmd === "string" ? cmd : null;
 }
 
+type ToolHints = { readOnlyHint?: boolean; destructiveHint?: boolean };
+
+// Known read-only MCP tools on servers that declare no annotations.
+// Full mcp__<server>__<tool> names (pi replaces "-" with "_"), keyed by server.
+const READ_ALLOWLIST: Record<string, string[]> = {
+  nixos: ["mcp__nixos__nix", "mcp__nixos__nix_versions"],
+  pdf_fast: ["mcp__pdf_fast__inspect", "mcp__pdf_fast__outline", "mcp__pdf_fast__read", "mcp__pdf_fast__search"],
+};
+export const READ_ALLOWLIST_FLAT = Object.values(READ_ALLOWLIST).flat();
+
+/**
+ * MCP write gate: approval needed unless allowlisted or readOnlyHint is true.
+ * Missing hints count as a write (MCP default readOnlyHint: false). destructiveHint is
+ * ignored: per the MCP spec it is only meaningful when readOnlyHint is false.
+ */
+export function needsApproval(toolName: string, hints: ToolHints | undefined, allowlist: string[]): boolean {
+  if (allowlist.includes(toolName)) return false;
+  return hints?.readOnlyHint !== true;
+}
+
 export default function (pi: ExtensionAPI) {
-  pi.on("tool_call", async (event) => {
+  pi.on("tool_call", async (event, ctx) => {
     const tool = event.toolName;
     const input = event.input as Record<string, string>;
+
+    // ── MCP write gate ─────────────────────────────────────────────────────
+    if (tool.startsWith("mcp__")) {
+      const hints = pi.getAllTools().find((t) => t.name === tool)?.annotations;
+      if (needsApproval(tool, hints, READ_ALLOWLIST_FLAT)) {
+        if (!ctx.hasUI) {
+          return { block: true, reason: "MCP write tools need interactive confirmation; ask the user in the main session" };
+        }
+        const args = JSON.stringify(event.input ?? {});
+        const summary = args.length > 200 ? `${args.slice(0, 200)}…` : args;
+        if (!(await ctx.ui.confirm("Allow MCP write tool?", `${tool}\n${summary}`))) {
+          return { block: true, reason: `${tool} was not approved by the user` };
+        }
+      }
+      return;
+    }
 
     // ── Secret scan: write / edit ──────────────────────────────────────────
     if (tool === "write") {
