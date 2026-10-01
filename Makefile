@@ -134,6 +134,7 @@ nix_rebuild:
 
 .PHONY: rebuild refresh
 rebuild: nix_rebuild fix-compinit
+	$(MAKE) clean_nix
 
 refresh: rebuild
 
@@ -150,7 +151,8 @@ update: update_nix update_sbarlua rebuild
 
 .PHONY: clean_nix
 clean_nix:
-	nix-store --gc
+	sudo nix-collect-garbage --delete-older-than 7d
+	nix-collect-garbage --delete-older-than 7d
 
 .PHONY: clean
 clean: clean_nix
