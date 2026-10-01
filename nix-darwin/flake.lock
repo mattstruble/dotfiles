@@ -41,11 +41,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790858257,
-        "narHash": "sha256-h0QE7sbUDlGOLATA+Rnt37ZxlDUbPcN8PcWEg2j/VxQ=",
+        "lastModified": 1790868776,
+        "narHash": "sha256-MVtEnmpQ/FkD64wu/MG0Ct9eI/qsb9GB0i9E/5Xd8d0=",
         "owner": "gastownhall",
         "repo": "beads",
-        "rev": "e1ceedf095d20569ab69adfdb7233f214e0a5ffa",
+        "rev": "6cd11846873228c3d83e064d4f45c96ad16a9a2f",
         "type": "github"
       },
       "original": {
@@ -309,11 +309,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1790864162,
-        "narHash": "sha256-7utF8CsnM21wifMSyKO/E/5VmdK8lkgMKID1toZStIo=",
+        "lastModified": 1790866708,
+        "narHash": "sha256-1yu2AwhKxU2VtZh7dB5r1KUK2iu8aSrxX0+tGyZtAf0=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "681f29a6bd028afc6f454bf11411295a80403281",
+        "rev": "83cd3693f5f33071ceb33977f2298c8b40b2aba4",
         "type": "github"
       },
       "original": {
@@ -501,11 +501,11 @@
     "rtk": {
       "flake": false,
       "locked": {
-        "lastModified": 1790846845,
-        "narHash": "sha256-owtMFZbP7FvLuDhOFjcIkjElJy+XeCf5aikQazOEab8=",
+        "lastModified": 1790865287,
+        "narHash": "sha256-pvweHKWrKvJIcHqfQAHEgbDM2JyDbyBqoNDMPFc79z4=",
         "owner": "rtk-ai",
         "repo": "rtk",
-        "rev": "4c8a255e42b97011675fc3d8aed687b13196ad39",
+        "rev": "3a12dfe3773603e55099e2a8bb0c58d9a92c2822",
         "type": "github"
       },
       "original": {
