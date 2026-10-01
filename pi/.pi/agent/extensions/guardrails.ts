@@ -125,10 +125,22 @@ export function needsApproval(toolName: string, hints: ToolHints | undefined, al
   return hints?.readOnlyHint !== true;
 }
 
+// Tools whose progress UI only renders for direct calls; a codemode script calling them hides it.
+const DIRECT_ONLY_TOOLS = new Set(["workflow", "subagent"]);
+
+/** Block direct-only tools when another tool (e.g. codemode) issued the call. */
+export function nestedCallReason(toolName: string, parentToolCallId: string | undefined): string | undefined {
+  if (!parentToolCallId || !DIRECT_ONLY_TOOLS.has(toolName)) return undefined;
+  return `Call \`${toolName}\` directly as a tool, not from codemode or another tool: nested calls hide its progress in the TUI.`;
+}
+
 export default function (pi: ExtensionAPI) {
   pi.on("tool_call", async (event, ctx) => {
     const tool = event.toolName;
     const input = event.input as Record<string, string>;
+
+    const nested = nestedCallReason(tool, event.parentToolCallId);
+    if (nested) return { block: true, reason: nested };
 
     // ── MCP write gate ─────────────────────────────────────────────────────
     if (tool.startsWith("mcp__")) {
