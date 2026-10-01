@@ -41,11 +41,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790868776,
-        "narHash": "sha256-MVtEnmpQ/FkD64wu/MG0Ct9eI/qsb9GB0i9E/5Xd8d0=",
+        "lastModified": 1790879646,
+        "narHash": "sha256-0tztSIr8ZlB03hD66cRdsfwrS7d03d0lq+X9CsODUWw=",
         "owner": "gastownhall",
         "repo": "beads",
-        "rev": "6cd11846873228c3d83e064d4f45c96ad16a9a2f",
+        "rev": "555b01d7891d4b592d83c4545a6dcedd018cbb9c",
         "type": "github"
       },
       "original": {
@@ -517,11 +517,11 @@
     "skills-mattstruble": {
       "flake": false,
       "locked": {
-        "lastModified": 1790194712,
-        "narHash": "sha256-BLItVRoxwkFRTrI8luaCXhr771MT/pGVMnFD0we1X2Y=",
+        "lastModified": 1790880607,
+        "narHash": "sha256-L0REa1lFbfQvHPf/hB7gdCGxjOH9wSgosTVDJYhkUXQ=",
         "owner": "mattstruble",
         "repo": "skills",
-        "rev": "a27d136dc9b8c4891d563b5f15a70bb7f58e576f",
+        "rev": "50866dfcb0f7b6b5ab8bc081b87ee46f2ee671fb",
         "type": "github"
       },
       "original": {
