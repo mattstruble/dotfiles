@@ -108,9 +108,6 @@ in
             modelMap = {
               default = "mjolnir/swift-qwen3.8-27b";
               small_model = "mjolnir/gemma-4-26b-a4b";
-              planner = "mjolnir/swift-qwen3.8-27b";
-              orchestrator = "mjolnir/swift-qwen3.8-27b";
-              builder = "mjolnir/gemma-4-26b-a4b";
               coder = "mjolnir/gemma-4-26b-a4b";
               fetcher = "mjolnir/gemma-4-26b-a4b";
               plan-critic = "mjolnir/swift-qwen3.8-27b";
@@ -118,6 +115,9 @@ in
               failure-path-reviewer = "mjolnir/gemma-4-26b-a4b";
               readability-reviewer = "mjolnir/gemma-4-26b-a4b";
               security-reviewer = "mjolnir/gemma-4-26b-a4b";
+              probe = "mjolnir/gemma-4-26b-a4b";
+              ticket-auditor = "mjolnir/gemma-4-26b-a4b";
+              epic-auditor = "mjolnir/swift-qwen3.8-27b";
             };
           };
           skills = {

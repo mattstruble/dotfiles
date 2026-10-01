@@ -36,15 +36,15 @@ Mid-conversation: if the user references something as if you should know it and 
 
 Use Context7 MCP docs before general web search for any library, framework, SDK, or API question — even well-known ones. Your training data may be stale.
 
-For research involving multiple pages or broad searches, dispatch a fetcher. Single doc lookups are fine in-session.
+For research involving multiple pages or broad searches, run the `fetcher` subagent (it has bash/curl, no web tools) or fan out fetches in codemode. Single doc lookups are fine in-session.
 
 # Workflow Commands
 
 Available commands for the plan→critique→execute→review lifecycle:
 
-- `/critique` — dispatch plan-critic to review the current task graph
-- `/preflight` — validate repo + task graph before dispatching work
-- `/wave` — show live dispatch progress (dispatched/completed/failed)
+- `/critique` — run the plan-critic subagent on the current task graph
+- `/preflight` — validate repo + task graph before running subagents
+- `/workflows` — live workflow runs: phases, agents, tokens, cost
 - `/review [task-id]` — queue a completed task for review
 - `/reviews` — show pending/completed review status
 - `/cost [task-id]` — token spend per task (or `--epic <id>` for rollup)

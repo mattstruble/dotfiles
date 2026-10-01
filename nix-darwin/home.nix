@@ -169,6 +169,16 @@ in
         # pi-subagents skips symlinked entries (Dirent.isFile() is false for them).
         ".pi/agent/agents".source = mkLink "${path}/pi/.pi/agent/agents";
 
+        # pi-dynamic-workflows: tiers from the per-host model map; no auto-run on the word "workflow".
+        ".pi/workflows/model-tiers.json".text = builtins.toJSON {
+          tiers = with config.programs.ai-agents.pi.modelMap; {
+            small = small_model;
+            medium = coder;
+            big = default;
+          };
+        };
+        ".pi/workflows/settings.json".text = builtins.toJSON { keywordTriggerEnabled = false; };
+
       };
 
     activation.setupDockerCliPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -458,6 +468,13 @@ in
             enabled = true;
             keepRecentTokens = 20000;
           };
+          # pi-subagents role models come from the per-host model map.
+          subagents.agentOverrides = lib.mapAttrs (_: model: { inherit model; }) (
+            removeAttrs config.programs.ai-agents.pi.modelMap [
+              "default"
+              "small_model"
+            ]
+          );
         };
         systemPromptFile = config.lib.file.mkOutOfStoreSymlink "${path}/pi/.pi/agent/SYSTEM.md";
         extensions =
@@ -478,12 +495,10 @@ in
                 "notification.ts"
                 "audit.ts"
                 "plan-critic-gate.ts"
-                "wave-progress.ts"
                 "review-dispatch.ts"
                 "token-ledger.ts"
                 "preflight.ts"
                 "statusline.ts"
-                "model-routing.ts"
               ]
           )
           // {
@@ -494,11 +509,11 @@ in
           "npm:@gotgenes/pi-permission-system"
           "npm:@narumitw/pi-caffeinate"
           "npm:@narumitw/pi-lsp"
-          "npm:@nicknisi/pi-subagents"
-          "npm:@nicknisi/pi-workflows"
+          "npm:@quintinshaw/pi-dynamic-workflows"
           "npm:pi-cache-optimizer"
           "npm:pi-effort"
           "npm:pi-rtk-optimizer"
+          "npm:pi-subagents"
           "npm:@sting8k/pi-vcc"
           "npm:pi-vim"
           "npm:pi-web-access"
@@ -587,6 +602,11 @@ in
               "git stash list" = "allow";
               "git config *" = "allow";
               "git worktree list" = "allow";
+              # Orchestrator integration steps (commit/reset/push still ask)
+              "git worktree add *" = "allow";
+              "git worktree remove *" = "allow";
+              "git -c commit.gpgsign=false cherry-pick pi/wf/*" = "allow";
+              "git cherry-pick --abort" = "allow";
               # Git write — ask
               "git *" = "ask";
               # Git dangerous — deny
@@ -936,6 +956,7 @@ in
         ".beads*"
         ".beads/*"
         ".beads"
+        ".pi/worktrees"
       ];
 
       signing = {
