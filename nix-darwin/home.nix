@@ -295,6 +295,7 @@ in
     ./modules/llm-wiki.nix
     ./modules/neovim-treesitter.nix
     ./modules/opencode-profiles.nix
+    ./modules/pi-mcp.nix
     ./modules/pi-profiles.nix
     ./modules/sol-pi.nix
     ./modules/pdf-fast.nix
@@ -452,6 +453,7 @@ in
           enableSkillCommands = true;
           defaultProjectTrust = "always";
           hideThinkingBlock = false;
+          defaultTools = [ "+codemode" ];
           compaction = {
             enabled = true;
             keepRecentTokens = 20000;
@@ -496,7 +498,6 @@ in
           "npm:@nicknisi/pi-workflows"
           "npm:pi-cache-optimizer"
           "npm:pi-effort"
-          "npm:pi-mcp-adapter"
           "npm:pi-rtk-optimizer"
           "npm:@sting8k/pi-vcc"
           "npm:pi-vim"
@@ -696,11 +697,6 @@ in
               "/tmp/**" = "allow";
             };
 
-            # MCP tools
-            mcp = {
-              "*" = "allow";
-            };
-
             # Skills
             skill = {
               "*" = "allow";
@@ -834,6 +830,19 @@ in
             webfetch = "allow";
           };
         };
+      };
+    };
+
+    pi-mcp.servers = {
+      context7 = {
+        url = "https://mcp.context7.com/mcp";
+        exposure = "direct";
+        description = "Up-to-date documentation and code examples for libraries and frameworks.";
+      };
+      nixos = {
+        command = "uvx";
+        args = [ "mcp-nixos" ];
+        description = "Search NixOS packages and options, Home Manager options, and nix-darwin options.";
       };
     };
 

@@ -11,4 +11,9 @@ in
     command = [ "${pdf-fast-wrapper}/bin/pdf-fast" ];
     enabled = false;
   };
+
+  programs.pi-mcp.servers.pdf-fast = {
+    command = "${pdf-fast-wrapper}/bin/pdf-fast";
+    description = "Read text, metadata, and images from local PDF files.";
+  };
 }

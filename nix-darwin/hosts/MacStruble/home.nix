@@ -32,30 +32,12 @@ in
         secrets = {
           n8n-mcp-token = { };
         };
-        templates."pi-mcp-json" = {
-          content = builtins.toJSON {
-            mcpServers = {
-              context7 = {
-                url = "https://mcp.context7.com/mcp";
-              };
-              nixos = {
-                command = "uvx";
-                args = [ "mcp-nixos" ];
-              };
-              pdf-fast = {
-                command = "npx";
-                args = [ "@sylphx/pdf-reader-mcp" ];
-              };
-              n8n = {
-                url = "http://roque:5678/mcp-server/http";
-                headers = {
-                  Authorization = "Bearer ${config.sops.placeholder.n8n-mcp-token}";
-                };
-              };
-            };
-          };
-          path = "${config.home.homeDirectory}/.pi/agent/mcp-adapter.json";
-        };
+      };
+
+      programs.pi-mcp.servers.n8n = {
+        url = "http://roque:5678/mcp-server/http";
+        headers.Authorization = "!echo Bearer $(cat ${config.sops.secrets.n8n-mcp-token.path})";
+        description = "Trigger and manage n8n workflows on the home server.";
       };
 
       services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
