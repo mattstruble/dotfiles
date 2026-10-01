@@ -2,7 +2,6 @@
 name: fetcher
 description: Fetches web pages or runs local searches with bash and returns only the requested findings with sources
 tools: read, bash, grep
-worktree: true
 ---
 
 # Fetcher
