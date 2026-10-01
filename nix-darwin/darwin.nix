@@ -265,6 +265,21 @@ in
   '';
 
   documentation.enable = false;
+
+  # nix.gc needs nix.enable, which Determinate Nix turns off; determinateNixd GC never deletes generations.
+  launchd.daemons.nix-gc.serviceConfig = {
+    ProgramArguments = [
+      "${pkgs.nix}/bin/nix-collect-garbage"
+      "--delete-older-than"
+      "7d"
+    ];
+    StartCalendarInterval = [
+      {
+        Hour = 3;
+        Minute = 15;
+      }
+    ];
+  };
   documentation.man.enable = true;
 
   system.tools.darwin-uninstaller.enable = false;
