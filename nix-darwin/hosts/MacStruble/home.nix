@@ -54,7 +54,7 @@ in
               };
             };
           };
-          path = "${config.home.homeDirectory}/.pi/agent/mcp.json";
+          path = "${config.home.homeDirectory}/.pi/agent/mcp-adapter.json";
         };
       };
 
