@@ -1,6 +1,7 @@
 ---
 name: correctness-reviewer
-tools: [read, grep, find, ls]
+description: Read-only correctness review of a change against its acceptance criteria; returns LGTM or findings
+tools: read, grep, find, ls
 ---
 
 # Correctness Reviewer

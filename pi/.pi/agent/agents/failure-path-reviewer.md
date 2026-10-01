@@ -1,6 +1,7 @@
 ---
 name: failure-path-reviewer
-tools: [read, grep, find, ls]
+description: Read-only failure-path review of a change against its acceptance criteria; returns LGTM or findings
+tools: read, grep, find, ls
 ---
 
 # Failure Path Reviewer

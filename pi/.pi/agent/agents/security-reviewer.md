@@ -1,6 +1,7 @@
 ---
 name: security-reviewer
-tools: [read, grep, find, ls]
+description: Read-only security review of a change against its acceptance criteria; returns LGTM or findings
+tools: read, grep, find, ls
 ---
 
 # Security Reviewer

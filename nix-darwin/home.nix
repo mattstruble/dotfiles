@@ -165,6 +165,10 @@ in
         # Pi themes
         ".pi/agent/themes".source = mkLink "${path}/pi/.pi/agent/themes";
 
+        # Pi subagent profiles: one directory symlink, not per-file links —
+        # pi-subagents skips symlinked entries (Dirent.isFile() is false for them).
+        ".pi/agent/agents".source = mkLink "${path}/pi/.pi/agent/agents";
+
       };
 
     activation.setupDockerCliPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -313,10 +317,6 @@ in
         "opencode"
         "pi"
       ];
-      subagents = [
-        "${path}/opencode/.config/opencode/agents/"
-      ];
-      pi.subagents = [ "${path}/pi/.pi/agent/agents/" ];
       opencode.profiles = {
         ai = {
           dirs = [ "~/software/ai" ];

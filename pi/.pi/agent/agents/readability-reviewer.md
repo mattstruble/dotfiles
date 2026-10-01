@@ -1,6 +1,7 @@
 ---
 name: readability-reviewer
-tools: [read, grep, find, ls]
+description: Read-only readability review of a change against its acceptance criteria; returns LGTM or findings
+tools: read, grep, find, ls
 ---
 
 # Readability Reviewer

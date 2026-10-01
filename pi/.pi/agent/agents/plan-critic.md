@@ -1,6 +1,8 @@
 ---
 name: plan-critic
-tools: [read, grep, glob, bash]
+description: Stress-tests a beads task graph (read-only bd queries) and returns structured suggestions
+tools: read, grep, find, ls, bash
+worktree: true
 ---
 
 # Plan Critic
