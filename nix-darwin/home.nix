@@ -179,6 +179,22 @@ in
         };
         ".pi/workflows/settings.json".text = builtins.toJSON { keywordTriggerEnabled = false; };
 
+        # Orchestrator scripts as saved workflows, called by name instead of pasted inline.
+        ".pi/workflows/saved/orchestrator_wave.json".text = builtins.toJSON {
+          name = "orchestrator_wave";
+          description = "Orchestrator: code, review, and retry one wave of beads tasks in prepared worktrees";
+          scriptPath = "orchestrator_wave.js";
+        };
+        ".pi/workflows/saved/orchestrator_wave.js".source =
+          "${inputs.skills-mattstruble}/orchestrator/references/wave.js";
+        ".pi/workflows/saved/orchestrator_audit.json".text = builtins.toJSON {
+          name = "orchestrator_audit";
+          description = "Orchestrator: audit an epic's integration branch per ticket and against its plan";
+          scriptPath = "orchestrator_audit.js";
+        };
+        ".pi/workflows/saved/orchestrator_audit.js".source =
+          "${inputs.skills-mattstruble}/orchestrator/references/audit.js";
+
         # pi-subagents: keep the subagent tool active instead of behind the subagents_enable loader.
         ".pi/agent/extensions/subagent/config.json".text = builtins.toJSON { toolActivation = "eager"; };
 
