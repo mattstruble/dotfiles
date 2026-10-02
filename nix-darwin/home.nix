@@ -939,6 +939,8 @@ in
       nixos = {
         command = "uvx";
         args = [ "mcp-nixos" ];
+        sandbox.domains = [ "search.nixos.org" ];
+        sandbox.allow = [ "$HOME/Library/Application Support/fastmcp" ];
         description = "Search NixOS packages and options, Home Manager options, and nix-darwin options.";
       };
     };

@@ -14,6 +14,7 @@ in
 
   programs.pi-mcp.servers.pdf-fast = {
     command = "${pdf-fast-wrapper}/bin/pdf-fast";
+    sandbox.launcher = "npx";
     description = "Read text, metadata, and images from local PDF files.";
   };
 }
