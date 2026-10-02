@@ -58,6 +58,29 @@ let
       allow_domain = lib.unique (mcp.domains ++ cfg.domains);
     };
   };
+
+  launcher = pkgs.writeShellApplication {
+    name = "pi-box";
+    runtimeInputs = [ cfg.package ];
+    text = ''
+      known=${lib.escapeShellArg (lib.concatStringsSep " " (lib.attrNames cfg.layers))}
+      spec=''${PI_SANDBOX:-${lib.concatStringsSep "," cfg.defaultLayers}}
+      [ -n "$spec" ] || spec=${lib.escapeShellArg (lib.concatStringsSep "," cfg.defaultLayers)}
+      IFS=, read -r -a layers <<< "$spec"
+      extends='"pi-base"'
+      for l in "''${layers[@]}"; do
+        case " $known " in
+          *" $l "*) extends+=",\"$l\"" ;;
+          *) echo "pi-box: unknown layer '$l'; known layers: $known" >&2; exit 1 ;;
+        esac
+      done
+      name=$(IFS=-; echo "''${layers[*]}")
+      dir=''${TMPDIR:-/tmp}/pi-box
+      mkdir -p "$dir"
+      printf '{"extends":[%s],"meta":{"name":"pi-box-%s"}}\n' "$extends" "$name" > "$dir/$name.json"
+      exec nono run --profile "$dir/$name.json" --allow-cwd -- pi "$@"
+    '';
+  };
 in
 {
   options.programs.pi-box = {
@@ -137,7 +160,10 @@ in
       };
     };
 
-    home.packages = [ cfg.package ];
+    home.packages = [
+      cfg.package
+      launcher
+    ];
 
     xdg.configFile = {
       "nono/profiles/pi-base.json".source = json.generate "pi-base.json" base;
