@@ -1,0 +1,152 @@
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
+
+let
+  json = pkgs.formats.json { };
+  cfg = config.programs.pi-box;
+  mcp = config.programs.pi-mcp.sandbox;
+
+  nonEmpty = name: v: lib.optionalAttrs (v != [ ]) { ${name} = v; };
+
+  base = {
+    extends = "default";
+    meta = {
+      name = "pi-base";
+      description = "pi-box base profile";
+    };
+    groups.include = [
+      "node_runtime"
+      "rust_runtime"
+      "python_runtime"
+      "user_caches_macos"
+      "nix_runtime"
+      "git_config"
+      "unlink_protection"
+    ];
+    workdir.access = "readwrite";
+    filesystem =
+      {
+        allow = [
+          "$HOME/.pi"
+          "$HOME/llm-wiki"
+          "$HOME/.beads"
+          "$HOME/.local/share/pi"
+          "$HOME/.config/pi"
+        ]
+        ++ mcp.allow
+        ++ cfg.filesystem.allow;
+        allow_file = [ "$HOME/.beads.gate.lock" ];
+        read = [
+          cfg.piConfigDir
+          "$HOME/.local/share/ponytail"
+          "$HOME/.config/sops-nix/secrets"
+        ]
+        ++ mcp.secretPaths
+        ++ cfg.filesystem.read;
+      }
+      // nonEmpty "bypass_protection" cfg.filesystem.bypassProtection
+      // lib.optionalAttrs (cfg.onePasswordSocket != null) {
+        unix_socket = [ cfg.onePasswordSocket ];
+      };
+    network = {
+      open_port = cfg.localPorts;
+      allow_domain = lib.unique (mcp.domains ++ cfg.domains);
+    };
+  };
+in
+{
+  options.programs.pi-box = {
+    enable = lib.mkEnableOption "pi-box nono sandbox profiles";
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = inputs.nono.packages.${pkgs.system}.prebuilt;
+      description = "nono package.";
+    };
+    defaultLayers = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ "net-https" ];
+      description = "Layer profiles the launcher composes by default.";
+    };
+    piConfigDir = lib.mkOption {
+      type = lib.types.str;
+      description = "Out-of-store directory pi's ~/.pi/agent files symlink into (read-only in the sandbox).";
+    };
+    onePasswordSocket = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "1Password agent socket to allow, if any.";
+    };
+    localPorts = lib.mkOption {
+      type = lib.types.listOf lib.types.port;
+      default = [
+        3308
+        8008
+      ];
+      description = "Localhost ports the sandbox may connect to.";
+    };
+    domains = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Extra model/API domains allowed by domain filtering.";
+    };
+    filesystem = {
+      allow = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Extra read-write paths.";
+      };
+      read = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Extra read-only paths.";
+      };
+      bypassProtection = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Paths exempted from nono's protected-path deny list.";
+      };
+    };
+    layers = lib.mkOption {
+      type = lib.types.attrsOf json.type;
+      default = { };
+      description = "Layer profiles composed on top of pi-base via extends.";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    programs.pi-box.layers = {
+      net-none = {
+        extends = [ "pi-base" ];
+        meta = {
+          name = "net-none";
+          description = "pi-box: no network beyond pi-base";
+        };
+      };
+      net-https = {
+        extends = [ "pi-base" ];
+        meta = {
+          name = "net-https";
+          description = "pi-box: registries, GitHub, docs";
+        };
+        network.network_profile = "developer";
+      };
+    };
+
+    home.packages = [ cfg.package ];
+
+    xdg.configFile = {
+      "nono/profiles/pi-base.json".source = json.generate "pi-base.json" base;
+    }
+    // lib.mapAttrs' (
+      name: layer:
+      lib.nameValuePair "nono/profiles/${name}.json" {
+        source = json.generate "${name}.json" layer;
+      }
+    ) cfg.layers;
+  };
+}

@@ -21,6 +21,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nono = {
+      url = "github:nolabs-ai/nono";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     beads = {
       url = "github:gastownhall/beads";
       inputs.nixpkgs.follows = "nixpkgs";
