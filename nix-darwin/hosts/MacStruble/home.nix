@@ -101,6 +101,62 @@ in
         cacheLimitBytes = 1024 * 1024 * 1024;
       };
 
+      programs.pi-box = {
+        # Local llama.cpp server (http://mjolnir:8000); nono's proxy forwards plain HTTP.
+        domains = [ "mjolnir" ];
+        # nono cannot filter raw TCP by host on macOS, so these tools get per-command allow_all.
+        layers.net-lan-ops =
+          let
+            baseRead = [
+              "/nix/store"
+              "/etc/ssl"
+              "/private/etc/ssl"
+              "$HOME/.nix-profile"
+              "/etc/profiles/per-user"
+            ];
+            envVars = [
+              "PATH"
+              "HOME"
+              "LANG"
+              "KUBECONFIG"
+              "SSH_AUTH_SOCK"
+              "HELM_*"
+            ];
+            policy = extra: {
+              sandbox = {
+                network.allow_all = true;
+                environment.allow_vars = envVars;
+              }
+              // extra;
+            };
+          in
+          {
+            extends = [ "pi-base" ];
+            meta = {
+              name = "net-lan-ops";
+              description = "pi-box: ssh, kubectl and helm with unrestricted network in their command sandboxes";
+            };
+            command_policies.commands = {
+              ssh = policy {
+                fs_read = baseRead ++ [ "$HOME/.ssh" ];
+                fs_write_file = [ "$HOME/.ssh/known_hosts" ];
+                unix_socket_bind = [ "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" ];
+              };
+              kubectl = policy {
+                fs_read = baseRead ++ [ "$HOME/.kube" ];
+                fs_write = [ "$HOME/.kube/cache" ];
+              };
+              helm = policy {
+                fs_read = baseRead ++ [ "$HOME/.kube" ];
+                fs_write = [
+                  "$HOME/Library/Preferences/helm"
+                  "$HOME/Library/Caches/helm"
+                ];
+              };
+            };
+          };
+      };
+
       programs = {
         ai-agents = {
           pi = {
