@@ -689,10 +689,11 @@ function buildNamesOnlyList(catalog: Map<string, CatalogEntry>): string {
 
 function replaceSkillsBlock(prompt: string, namesOnlyBlock: string): string {
   // Strategy: detect and replace whichever form is present.
-  // Form 1: Pi's verbose <available_skills>...</available_skills> XML block
-  // (including the preamble paragraph that starts with "\n\nThe following skills")
+  // Form 1: Pi's verbose <available_skills>...</available_skills> XML block, including its
+  // preamble. Pi <=0.98 put two newlines before the preamble; 0.99 renders it trimmed inside
+  // a <skills> section, so a single newline precedes it.
   const xmlMatch = prompt.match(
-    /\n\nThe following skills provide specialized instructions[\s\S]*?<\/available_skills>/,
+    /\n+The following skills provide specialized instructions[\s\S]*?<\/available_skills>/,
   );
   if (xmlMatch) {
     return prompt.replace(xmlMatch[0], namesOnlyBlock);
@@ -701,7 +702,7 @@ function replaceSkillsBlock(prompt: string, namesOnlyBlock: string): string {
   // Form 2: pi-cache-optimizer's compressed "Skills under ..." or "Each skill is at ..." form
   // (preamble + grouped name lists)
   const compressedMatch = prompt.match(
-    /\n\nThe following skills provide specialized instructions[\s\S]*?(?=\n\n(?!(?:Skills under |Each skill is at ))|$)/,
+    /\n+The following skills provide specialized instructions[\s\S]*?(?=\n\n(?!(?:Skills under |Each skill is at ))|\n<\/skills>|$)/,
   );
   if (compressedMatch) {
     return prompt.replace(compressedMatch[0], namesOnlyBlock);

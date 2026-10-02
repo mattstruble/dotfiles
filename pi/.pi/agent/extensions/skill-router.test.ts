@@ -453,6 +453,26 @@ describe("replaceSkillsBlock", () => {
     assert.ok(result.startsWith("Base prompt here."), "base preserved");
   });
 
+  it("replaces Pi 0.99's sectioned skills block (single newline after <skills>)", () => {
+    const sectioned = [
+      "Base prompt here.",
+      "<skills>",
+      "The following skills provide specialized instructions for specific tasks.",
+      "Use the read tool to load a skill's file when the task matches its description.",
+      "",
+      "<available_skills>",
+      '  <skill><name>git-commit</name><description>Commits</description><location>/path</location></skill>',
+      "</available_skills>",
+      "</skills>",
+      "<cwd>/repo</cwd>",
+    ].join("\n");
+    const namesBlock = buildNamesOnlyList(loadCatalog());
+    const result = replaceSkillsBlock(sectioned, namesBlock);
+    assert.ok(!result.includes("<available_skills>"), "XML removed");
+    assert.equal(result.split("The following skills provide").length - 1, 1, "exactly one skills list");
+    assert.ok(result.includes("</skills>\n<cwd>/repo</cwd>"), "section structure preserved");
+  });
+
   it("replaces compressed 'Skills under' form", () => {
     const compressed = [
       "Base prompt here.",
