@@ -68,6 +68,8 @@ let
       };
     network = {
       open_port = cfg.localPorts;
+    }
+    // lib.optionalAttrs cfg.domainFiltering {
       allow_domain = lib.unique (mcp.domains ++ cfg.domains);
     };
     session_hooks = {
@@ -127,6 +129,15 @@ in
       default = null;
       description = "1Password agent socket to allow, if any.";
     };
+    domainFiltering = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Route network through nono's domain-filtering proxy. Disable on hosts whose
+        clients dial out directly (e.g. the AWS SDK's SSO credential exchange); the
+        filesystem fence still applies and the net-* layers then add nothing.
+      '';
+    };
     localPorts = lib.mkOption {
       type = lib.types.listOf lib.types.port;
       default = [
@@ -179,7 +190,7 @@ in
           name = "net-https";
           description = "pi-box: registries, GitHub, docs";
         };
-        network.network_profile = "developer";
+        network = lib.optionalAttrs cfg.domainFiltering { network_profile = "developer"; };
       };
     };
 
