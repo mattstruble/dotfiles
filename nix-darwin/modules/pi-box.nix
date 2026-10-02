@@ -13,6 +13,18 @@ let
 
   nonEmpty = name: v: lib.optionalAttrs (v != [ ]) { ${name} = v; };
 
+  # Per-session scratch: TMPDIR points into ~/.cache/pi-box/<session>, removed when the box closes.
+  sessionDir = ''dir="$HOME/.cache/pi-box/''${NONO_SESSION_ID:?}"'';
+  beforeHook = pkgs.writeShellScript "pi-box-before" ''
+    ${sessionDir}
+    mkdir -p "$dir/tmp"
+    echo "TMPDIR=$dir/tmp" >> "$NONO_ENV_FILE"
+  '';
+  afterHook = pkgs.writeShellScript "pi-box-after" ''
+    ${sessionDir}
+    rm -rf "$dir"
+  '';
+
   base = {
     extends = "default";
     meta = {
@@ -37,6 +49,7 @@ let
           "$HOME/.beads"
           "$HOME/.local/share/pi"
           "$HOME/.config/pi"
+          "$HOME/.cache/pi-box"
         ]
         ++ mcp.allow
         ++ cfg.filesystem.allow;
@@ -56,6 +69,16 @@ let
     network = {
       open_port = cfg.localPorts;
       allow_domain = lib.unique (mcp.domains ++ cfg.domains);
+    };
+    session_hooks = {
+      before = {
+        script = "${beforeHook}";
+        timeout_secs = 10;
+      };
+      after = {
+        script = "${afterHook}";
+        timeout_secs = 30;
+      };
     };
   };
 
