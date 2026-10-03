@@ -31,6 +31,7 @@ in
         defaultSopsFile = ./secrets.yaml;
         secrets = {
           n8n-mcp-token = { };
+          litellm-key = { };
         };
       };
 
@@ -60,7 +61,9 @@ in
             "mjolnir" = {
               baseUrl = "http://mjolnir:8000/v1";
               api = "openai-completions";
-              apiKey = "foo";
+              # pi resolves a leading `!command` at runtime (the sops secret file
+              # only exists post-activation, so builtins.readFile fails at eval).
+              apiKey = "!cat ${config.sops.secrets."litellm-key".path}";
               compat = {
                 supportsDeveloperRole = false;
                 supportsReasoningEffort = false;
@@ -86,13 +89,15 @@ in
         }
       );
 
-      home.file.".pi/agent/web-search.json".source = lib.mkForce (pkgs.writeText "pi-web-search.json" (
-        builtins.toJSON {
-          provider = "mjolnir";
-          model = "gemma-4-26b-a4b";
-          curator = "none";
-        }
-      ));
+      home.file.".pi/agent/web-search.json".source = lib.mkForce (
+        pkgs.writeText "pi-web-search.json" (
+          builtins.toJSON {
+            provider = "mjolnir";
+            model = "gemma-4-26b-a4b";
+            curator = "none";
+          }
+        )
+      );
 
       # 64 GB host: Kev-4B instead of the shared 0.8B default (~9 GB weights, ~17 GB load peak).
       services.kev-server = {
