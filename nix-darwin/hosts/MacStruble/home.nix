@@ -255,8 +255,14 @@ in
               odin.dirs = [ "~/software/gamedev/odin" ];
               love.dirs = [ "~/software/gamedev/love2d" ];
               godot.dirs = [ "~/software/gamedev/godot" ];
-              infra.dirs = [ "~/software/infra" ];
-              ai.dirs = [ "~/software/ai" ];
+              infra.dirs = [
+                "~/software/infra"
+                "~/software/nix-config"
+              ];
+              ai.dirs = [
+                "~/software/ai"
+                "~/software/nix-config"
+              ];
             };
             config = {
               provider = {
