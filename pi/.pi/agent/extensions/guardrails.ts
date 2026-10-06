@@ -30,6 +30,46 @@ const recentCommands: string[] = [];
 
 type GuardResult = { block: true; reason: string; terminate?: boolean } | undefined;
 
+/** bd global flags that consume the following token. */
+const BD_VALUE_FLAGS = new Set(["--db", "--actor", "--dolt-auto-commit"]);
+
+/**
+ * Return the bd verb of every command segment that invokes bd.
+ * ponytail: gaps accepted — `sh -c`/`bash -c` strings, subshell parentheses, and
+ * quote-unaware splitting (`bd q "a; bd init"` is blocked as a false positive).
+ */
+export function bdVerbs(command: string): string[] {
+  const verbs: string[] = [];
+  for (const segment of command.split(/&&|\|\||[;|\n]/)) {
+    const t = segment.trim().split(/\s+/).filter(Boolean);
+    let i = 0;
+    for (;;) {
+      if (i < t.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(t[i])) i++;
+      else if (t[i] === "command") i++;
+      else if (t[i] === "env") {
+        i++;
+        while (i < t.length && (t[i].startsWith("-") || /^[A-Za-z_][A-Za-z0-9_]*=/.test(t[i]))) {
+          i += t[i] === "-u" || t[i] === "--unset" ? 2 : 1;
+        }
+      } else break;
+    }
+    if (i >= t.length || t[i].split("/").pop() !== "bd") continue;
+    i++;
+    while (i < t.length && t[i].startsWith("-")) i += BD_VALUE_FLAGS.has(t[i]) ? 2 : 1;
+    if (i < t.length) verbs.push(t[i]);
+  }
+  return verbs;
+}
+
+/** Reason to block a bash command that runs bd init/setup, else undefined. */
+export function bdInitBlockReason(command: string): string | undefined {
+  const verbs = bdVerbs(command);
+  if (verbs.includes("init") || verbs.includes("setup")) {
+    return "beads.ts initializes repos automatically on the first bd write; never run bd init or bd setup.";
+  }
+  return undefined;
+}
+
 /** Shared bash-command guards: force-push, doom loop, conventional commit, staged diff secrets, bd remember secrets. */
 async function checkBashCommand(cmd: string, pi: ExtensionAPI): Promise<GuardResult> {
   // ── Doom loop breaker ──────────────────────────────────────────────────
@@ -47,6 +87,10 @@ async function checkBashCommand(cmd: string, pi: ExtensionAPI): Promise<GuardRes
   if (/git\s+push\s+.*(-f|--force|--force-with-lease)/.test(cmd) || /\+refs\//.test(cmd)) {
     return { block: true, reason: "Force-push is blocked. Use a regular push or open a PR." };
   }
+
+  // ── bd init / setup block ──────────────────────────────────────────────
+  const bdReason = bdInitBlockReason(cmd);
+  if (bdReason) return { block: true, reason: bdReason };
 
   // ── Conventional commit format enforcement ─────────────────────────────
   const commitMsgMatch = cmd.match(/git\s+commit\s+.*-m\s+["'](.+?)["']/);
