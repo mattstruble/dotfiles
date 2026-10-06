@@ -549,6 +549,7 @@ in
                 "skill-router.ts"
                 "skills-picker.ts"
                 "guardrails.ts"
+                "tool-shelf.ts"
                 "beads.ts"
                 "knowledge-base.ts"
                 "ponytail-skills.ts"
