@@ -1,5 +1,5 @@
 {
-  "servers": {
+  "lsp": {
     "nixd": {
       "command": ["nixd"],
       "extensions": [".nix"]

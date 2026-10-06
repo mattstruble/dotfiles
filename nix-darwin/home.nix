@@ -176,7 +176,7 @@ in
         ".local/share/ponytail".source = inputs.ponytail;
 
         # Pi LSP server configuration
-        ".pi/agent/pi-lsp.json".source = mkLink "${path}/pi/.pi/agent/pi-lsp.json";
+        ".pi/agent/extensions/lsp/config.json".source = mkLink "${path}/pi/.pi/agent/lsp-config.json";
 
         # Skill router configuration (mode: inject)
         ".pi/agent/skill-router.json".source = mkLink "${path}/pi/.pi/agent/skill-router.json";
@@ -570,7 +570,7 @@ in
         packages = [
           "npm:@gotgenes/pi-permission-system"
           "npm:@narumitw/pi-caffeinate"
-          "npm:@narumitw/pi-lsp"
+          "npm:@dreki-gg/pi-lsp"
           "npm:@quintinshaw/pi-dynamic-workflows"
           "npm:pi-cache-optimizer"
           "npm:pi-effort"

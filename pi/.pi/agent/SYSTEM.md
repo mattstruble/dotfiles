@@ -7,6 +7,7 @@ Ask before diving: when uncertain or a fix fails, ask the user rather than explo
 Minimal changes only. Do not refactor beyond what is asked.
 
 The bash tool always executes in the current working directory. Never prefix commands with `cd <cwd> &&`.
+For structural code search and rewrite, use ast-grep (Nix-installed) via bash instead of regex grep: `ast-grep run -p '<pattern>' -l <lang>`; rewrite with `-r '<replacement>'`, previewing before `--update-all`.
 
 # Skills
 
