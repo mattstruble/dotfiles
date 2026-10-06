@@ -23,7 +23,8 @@ Mid-conversation: if the user references something as if you should know it and 
 - Track work with `bd create`, `bd ready`, `bd close` — not TodoWrite or markdown files.
 - Create beads issue BEFORE writing code, mark in_progress when starting.
 - Claim tasks before starting: `bd update <id> --claim`.
-- Store persistent cross-session knowledge: `bd remember "insight"`. Search with `bd memories <keyword>`.
+- Store persistent cross-session knowledge: `bd remember "insight"`. Search with `bd memories <keyword>`. `bd remember` is repo-local; cross-repo knowledge goes to the wiki (knowledge-base skill).
+- Never run `bd init` or `bd setup`; the beads extension initializes a repo on its first bd write.
 - Do NOT use MEMORY.md files — they fragment across accounts.
 - No git operations — beads runs in stealth mode.
 - Never reference beads IDs in code, comments, docstrings or commit messages; describe the substance instead. Strip them from task text handed to subagents too.
