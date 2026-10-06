@@ -5,7 +5,7 @@ export default function (pi: ExtensionAPI): void {
   const reviewed: Set<string> = new Set();
 
   // Track bd close commands — inspect any task closure
-  pi.on("tool_call", async (event) => {
+  pi.on("tool_call", async (event, ctx) => {
     if (event.toolName !== "bash") return;
     const cmd = (event.input as any)?.command ?? "";
     const match = cmd.match(/bd\s+close\s+(\S+)/);
@@ -16,7 +16,7 @@ export default function (pi: ExtensionAPI): void {
 
     // Check task metadata to skip review tasks (prevents infinite loops)
     try {
-      const result = await pi.exec("bd", ["show", taskId, "--json"], { timeout: 10000 });
+      const result = await pi.exec("bd", ["show", taskId, "--json"], { cwd: ctx.cwd, timeout: 10000 });
       const json = JSON.parse(result.stdout ?? "[]");
       const task = Array.isArray(json) ? json[0] : json;
       const title: string = task?.title ?? "";
@@ -85,7 +85,7 @@ export default function (pi: ExtensionAPI): void {
       // Fetch task title via bd
       let title = taskId;
       try {
-        const result = await pi.exec("bd", ["show", taskId, "--json"], { timeout: 10000 });
+        const result = await pi.exec("bd", ["show", taskId, "--json"], { cwd: ctx.cwd, timeout: 10000 });
         const json = JSON.parse(result.stdout ?? "[]");
         const task = Array.isArray(json) ? json[0] : json;
         if (task?.title) title = task.title;

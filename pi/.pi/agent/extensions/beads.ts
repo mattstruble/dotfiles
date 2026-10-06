@@ -1,8 +1,8 @@
 // beads — Pi extension
 // Automatic bd prime context injection on session start and after compaction.
-// Uses --global to target the shared beads_global database. BEADS_DIR and
-// BEADS_DOLT_SHARED_SERVER are set via nix-darwin session variables.
-// No per-project init needed — shared server runs as a launchd agent.
+// One database per repo on the shared Dolt server, discovered from .beads/.
+// BEADS_DIR is unset for every call (it would override discovery). Repos are
+// initialized lazily on the first bd write.
 
 import type {
   ExtensionAPI,
@@ -11,6 +11,19 @@ import type {
   SessionBeforeCompactEvent,
   SessionCompactEvent,
 } from "@earendil-works/pi-coding-agent";
+import { basename, dirname } from "node:path";
+import { existsSync } from "node:fs";
+import { bdVerbs } from "./guardrails.ts";
+
+/** bd database prefix for a repo directory. */
+export function derivePrefix(dir: string): string {
+  return basename(dir).toLowerCase().replace(/[^a-z0-9-]/g, "-");
+}
+
+/** True when the command runs a bd verb that writes (create, q, remember, import). */
+export function isBdWrite(command: string): boolean {
+  return bdVerbs(command).some((v) => ["create", "q", "remember", "import"].includes(v));
+}
 
 
 // ── Prime output filtering ────────────────────────────────────────────────
@@ -47,24 +60,19 @@ function slimPrime(raw: string): string {
 }
 
 // ── Extension ─────────────────────────────────────────────────────────────
-// Shared-server mode: BEADS_DIR and BEADS_DOLT_SHARED_SERVER are set via
-// nix-darwin session variables. All commands use --global to target the
-// beads_global database. No per-project init needed.
 
 export default function (pi: ExtensionAPI): void {
   let primeCache = "";
   let hasBeads = false;
 
-  function bd(args: string[]) {
-    return ["--global", ...args];
+  // pi.exec has no env option; unset BEADS_DIR via env(1).
+  function runBd(args: string[], cwd: string, timeout: number) {
+    return pi.exec("env", ["-u", "BEADS_DIR", "bd", ...args], { cwd, timeout });
   }
 
   async function runPrime(cwd: string): Promise<void> {
     try {
-      const result = await pi.exec("bd", bd(["codex-hook", "SessionStart"]), {
-        cwd,
-        timeout: 15000,
-      });
+      const result = await runBd(["codex-hook", "SessionStart"], cwd, 15000);
       if (result.stdout) primeCache = slimPrime(result.stdout.trim());
     } catch {
       // bd not available or shared server not running
@@ -94,10 +102,7 @@ export default function (pi: ExtensionAPI): void {
       if (!hasBeads) return;
       let compactCtx = primeCache;
       try {
-        const result = await pi.exec("bd", bd(["codex-hook", "PreCompact"]), {
-          cwd: ctx.cwd,
-          timeout: 10000,
-        });
+        const result = await runBd(["codex-hook", "PreCompact"], ctx.cwd, 10000);
         if (result.stdout?.trim()) compactCtx = slimPrime(result.stdout.trim());
       } catch {
         // Fall back to cached primeCache
@@ -119,13 +124,39 @@ export default function (pi: ExtensionAPI): void {
   pi.on("session_compact", async (_event: SessionCompactEvent, ctx) => {
     if (!hasBeads) return;
     try {
-      await pi.exec("bd", bd(["codex-hook", "PostCompact"]), {
-        cwd: ctx.cwd,
-        timeout: 10000,
-      });
+      await runBd(["codex-hook", "PostCompact"], ctx.cwd, 10000);
     } catch {
       // non-fatal
     }
     await runPrime(ctx.cwd);
+  });
+
+  // ponytail: init targets the session cwd's repo, not a `cd` target inside the command.
+  pi.on("tool_call", async (event, ctx) => {
+    if (event.toolName !== "bash") return;
+    try {
+      const command = String((event.input as { command?: unknown }).command ?? "");
+      if (!isBdWrite(command)) return;
+      const git = await pi.exec(
+        "git",
+        ["rev-parse", "--path-format=absolute", "--git-common-dir"],
+        { cwd: ctx.cwd, timeout: 5000 },
+      );
+      const common = git.stdout?.trim();
+      if (git.code !== 0 || !common) return;
+      const main = dirname(common);
+      if (existsSync(`${main}/.beads`)) return;
+      const init = await runBd(
+        ["init", "--shared-server", "--external", "--stealth", "--non-interactive", "--init-if-missing", "-p", derivePrefix(main)],
+        main,
+        30000,
+      );
+      if (init.code === 0) {
+        await runPrime(ctx.cwd);
+        hasBeads = primeCache.length > 0;
+      }
+    } catch {
+      // never block the tool call
+    }
   });
 }
