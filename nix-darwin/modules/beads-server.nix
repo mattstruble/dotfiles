@@ -2,12 +2,13 @@
 
 let
   homeDir = config.home.homeDirectory;
-  dataDir = "${homeDir}/.beads/shared-server/dolt";
+  dataDir = "${homeDir}/.local/share/beads-dolt";
   port = 3308;
 in {
   config = {
     home.activation.ensureBeadsSharedServer = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       mkdir -p "${dataDir}"
+      mkdir -p "${homeDir}/.beads/shared-server"
       printf %s ${toString port} > "${homeDir}/.beads/shared-server/dolt-server.port"
     '';
 
