@@ -16,8 +16,8 @@
       "command": ["yaml-language-server", "--stdio"],
       "extensions": [".yaml", ".yml"]
     },
-    "ty": {
-      "command": ["ty", "server"],
+    "basedpyright": {
+      "command": ["basedpyright-langserver", "--stdio"],
       "extensions": [".py", ".pyi"]
     },
     "ruff": {

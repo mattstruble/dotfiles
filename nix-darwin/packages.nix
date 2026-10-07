@@ -15,6 +15,7 @@ with pkgs;
   }))
   awscli2
   bat
+  basedpyright
   bash-language-server
   beads
   bibtex2html
