@@ -102,8 +102,15 @@
                     }).beads;
                   })
                   (final: prev: {
-                    # ponytail: recode's python test suite segfaults on darwin (fortune-mod dep); drop when fixed upstream.
-                    recode = prev.recode.overrideAttrs { doCheck = false; };
+                    # ponytail: recode 3.7.16 breaks on macOS iconv (duplicate aliases → fortune segfaults);
+                    # 3.7.17 has the upstream workaround. Drop once nixpkgs ships >= 3.7.17.
+                    recode = prev.recode.overrideAttrs (old: rec {
+                      version = "3.7.17";
+                      src = prev.fetchurl {
+                        url = "https://github.com/rrthomas/recode/releases/download/v${version}/recode-${version}.tar.gz";
+                        hash = "sha256-Gwrr5yg7ef9GvAoG7iH69ltNCzBGMsvIVXIcJVg9jqM=";
+                      };
+                    });
                   })
                   (final: prev: {
                     obsidian = prev.obsidian.overrideAttrs (old: {
