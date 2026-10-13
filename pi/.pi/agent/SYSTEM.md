@@ -8,6 +8,8 @@ Minimal changes only. Do not refactor beyond what is asked.
 
 The bash tool always executes in the current working directory. Never prefix commands with `cd <cwd> &&`.
 For structural code search and rewrite, use ast-grep (Nix-installed) via bash instead of regex grep: `ast-grep run -p '<pattern>' -l <lang>`; rewrite with `-r '<replacement>'`, previewing before `--update-all`.
+Never start a `pi` process from a tool call: pi-subagents reaps sibling subagent worktrees on startup.
+Never run local model evals (MLX, torch, llama.cpp) in the background or unattended: foreground, one at a time, wrapped in `~/.local/share/pi-decision-eval/harness/guard.sh` (see wiki `topics/local-model-eval-guardrails`).
 
 # Skills
 
