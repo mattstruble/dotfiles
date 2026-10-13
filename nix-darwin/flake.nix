@@ -102,6 +102,10 @@
                     }).beads;
                   })
                   (final: prev: {
+                    # ponytail: recode's python test suite segfaults on darwin (fortune-mod dep); drop when fixed upstream.
+                    recode = prev.recode.overrideAttrs { doCheck = false; };
+                  })
+                  (final: prev: {
                     obsidian = prev.obsidian.overrideAttrs (old: {
                       unpackPhase = ''
                         runHook preUnpack
