@@ -169,6 +169,79 @@ export function needsApproval(toolName: string, hints: ToolHints | undefined, al
   return hints?.readOnlyHint !== true;
 }
 
+export const MCP_PROMPT_EVENT = "guardrails:mcp_prompt";
+export const MCP_DECISION_EVENT = "guardrails:mcp_decision";
+const APPROVE_ONCE = "Yes, once";
+const DENY = "No";
+
+/**
+ * Split `mcp__<server>__<tool>`; null when the name has no server segment or more than
+ * one `__` boundary, since then the server cannot be told apart from the tool.
+ */
+export function parseMcpTool(name: string): { server: string; tool: string } | null {
+  const m = /^mcp__(.+?)__(.+)$/.exec(name);
+  if (!m || m[2].includes("__")) return null;
+  return { server: m[1], tool: m[2] };
+}
+
+type Select = (title: string, options: string[], signal?: AbortSignal) => Promise<string | undefined>;
+
+/**
+ * MCP approval prompts with session grants (one tool, or every write on a server).
+ * Prompts run one at a time so a codemode fan-out asks once per decision: each queued
+ * prompt re-checks grants when it reaches the front. reset() starts a new session;
+ * a request queued under an older session is denied without a prompt. Only an exact
+ * approve label approves; anything else denies.
+ */
+export function createMcpGate(emit: (channel: string, data: unknown) => void) {
+  const tools = new Set<string>();
+  const servers = new Set<string>();
+  let generation = 0;
+  let chain: Promise<unknown> = Promise.resolve();
+  const safeEmit = (channel: string, data: unknown) => {
+    try {
+      emit(channel, data);
+    } catch {
+      // a listener failure must not skip the decision event or the prompt
+    }
+  };
+
+  return {
+    reset(): void {
+      tools.clear();
+      servers.clear();
+      generation++;
+    },
+    request(name: string, summary: string, select: Select, signal?: AbortSignal): Promise<boolean> {
+      const server = parseMcpTool(name)?.server;
+      const gen = generation;
+      const run = async (): Promise<boolean> => {
+        if (gen !== generation || signal?.aborted) return false;
+        if (tools.has(name) || (server !== undefined && servers.has(server))) return true;
+        const toolOption = `Yes, ${name} for this session`;
+        const serverOption = server ? `Yes, all ${server} writes for this session` : undefined;
+        const options = [APPROVE_ONCE, toolOption, ...(serverOption ? [serverOption] : []), DENY];
+        let choice: string | undefined;
+        safeEmit(MCP_PROMPT_EVENT, { tool: name });
+        try {
+          choice = await select(`Allow MCP write tool?\n${name}\n${summary}`, options, signal);
+        } catch {
+          choice = undefined;
+        } finally {
+          safeEmit(MCP_DECISION_EVENT, { tool: name });
+        }
+        if (gen !== generation || signal?.aborted) return false;
+        if (choice === toolOption) tools.add(name);
+        if (serverOption !== undefined && choice === serverOption) servers.add(server!);
+        return choice === APPROVE_ONCE || choice === toolOption || (serverOption !== undefined && choice === serverOption);
+      };
+      const result = chain.then(run, run);
+      chain = result.catch(() => undefined);
+      return result;
+    },
+  };
+}
+
 // Tools whose progress UI only renders for direct calls; a codemode script calling them hides it.
 const DIRECT_ONLY_TOOLS = new Set(["workflow", "subagent"]);
 
@@ -179,6 +252,9 @@ export function nestedCallReason(toolName: string, parentToolCallId: string | un
 }
 
 export default function (pi: ExtensionAPI) {
+  const mcpGate = createMcpGate((channel, data) => pi.events.emit(channel, data));
+  pi.on("session_start", async () => mcpGate.reset());
+
   pi.on("tool_call", async (event, ctx) => {
     const tool = event.toolName;
     const input = event.input as Record<string, string>;
@@ -195,7 +271,7 @@ export default function (pi: ExtensionAPI) {
         }
         const args = JSON.stringify(event.input ?? {});
         const summary = args.length > 200 ? `${args.slice(0, 200)}…` : args;
-        if (!(await ctx.ui.confirm("Allow MCP write tool?", `${tool}\n${summary}`))) {
+        if (!(await mcpGate.request(tool, summary, (title, options, signal) => ctx.ui.select(title, options, { signal }), ctx.signal))) {
           return { block: true, reason: `${tool} was not approved by the user` };
         }
       }
