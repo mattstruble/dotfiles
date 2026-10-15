@@ -120,8 +120,9 @@
                         if [ ! -d "Obsidian.app" ]; then
                           mv Obsidian*/Obsidian.app .
                         fi
-                        sourceRoot="Obsidian.app"
-                        chmod -R u+r "$sourceRoot"
+                        # installPhase copies Obsidian.app relative to sourceRoot.
+                        sourceRoot="."
+                        chmod -R u+r Obsidian.app
                         runHook postUnpack
                       '';
                     });
