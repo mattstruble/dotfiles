@@ -43,6 +43,9 @@ in
 
       services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
 
+      home.file.".ssh/id_ed25519_mattstruble.pub".text =
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEL+QzypEEYDWtg6jJ1siaNho4ZdwsczWwTZWySAZdkm\n";
+
       # Local llama.cpp serves two models at a time: cap workflow and subagent children at two.
       programs.pi-workflows.settings.defaultConcurrency = 2;
       programs.pi-subagents.config = {
@@ -355,6 +358,7 @@ in
           };
         };
         git = {
+          signing.key = lib.mkForce "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINKfEtgBHtXVJsokYWkPFhUkz/U2ZJKk3TO96fNLIZMz";
           settings = {
             user = {
               name = "Matt Struble";
@@ -362,6 +366,13 @@ in
             };
             github.user = "mattstruble";
           };
+        };
+        # Pin github.com auth to the mattstruble key (1Password agent selects it by public key).
+        ssh.settings."github.com" = {
+          HostName = "github.com";
+          User = "git";
+          IdentityFile = "~/.ssh/id_ed25519_mattstruble.pub";
+          IdentitiesOnly = true;
         };
       };
     };
