@@ -14,6 +14,7 @@ export default function (pi: ExtensionAPI): void {
   let sessionName: string | undefined;
   let cwd = "";
   let hasPermissions = false;
+  let agentRunning = false;
 
   function buildTitle(): string {
     const icon = state === "permission" ? "󰂞" : state === "active" ? "󰔟" : "󰄬";
@@ -53,6 +54,18 @@ export default function (pi: ExtensionAPI): void {
     } catch {
       // permission-system not installed — no permission state tracking
     }
+
+    // MCP write gate prompts from guardrails.ts (channel names: MCP_PROMPT_EVENT / MCP_DECISION_EVENT there)
+    pi.events?.on("guardrails:mcp_prompt", () => {
+      state = "permission";
+      updateTitle(ctx);
+    });
+    pi.events?.on("guardrails:mcp_decision", () => {
+      if (state === "permission") {
+        state = agentRunning ? "active" : "idle";
+        updateTitle(ctx);
+      }
+    });
   });
 
   pi.on("session_info_changed", async (event, ctx) => {
@@ -61,6 +74,7 @@ export default function (pi: ExtensionAPI): void {
   });
 
   pi.on("agent_start", async (_event, ctx) => {
+    agentRunning = true;
     if (state !== "permission") {
       state = "active";
       updateTitle(ctx);
@@ -75,6 +89,7 @@ export default function (pi: ExtensionAPI): void {
   });
 
   pi.on("agent_end", async (_event, ctx) => {
+    agentRunning = false;
     if (state !== "permission") {
       state = "idle";
       updateTitle(ctx);
