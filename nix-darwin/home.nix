@@ -252,6 +252,31 @@ in
       fi
     '';
 
+    # Pi npm extensions follow latest on every switch. `pi update` exits before any session
+    # starts, so no extension (pi-subagents' worktree reaper included) loads. allowScripts is
+    # name-only so updates stay trusted; npm ignores an .npmrc policy once package.json has one.
+    activation.piExtensions = lib.hm.dag.entryAfter [ "writeBoundary" "piInstallPackages" ] ''
+      piNpm="$HOME/.pi/agent/npm/package.json"
+      if [ -f "$piNpm" ]; then
+        ${pkgs.jq}/bin/jq --argjson allow '${
+          builtins.toJSON (
+            lib.genAttrs [
+              "pi-rtk-optimizer"
+              "tree-sitter-bash"
+              "esbuild"
+              "protobufjs"
+              "@google/genai"
+            ] (_: true)
+          )
+        }' '.allowScripts = $allow' "$piNpm" >"$piNpm.tmp" && mv "$piNpm.tmp" "$piNpm"
+      fi
+      if [ -z "''${DRY_RUN:-}" ]; then
+        NODE_EXTRA_CA_CERTS="${ca-bundle_crt}" PATH="${pkgs.nodejs}/bin:${pkgs.git}/bin:$PATH" \
+          "${pkgs.coreutils}/bin/timeout" 300 ${pkgs.pi}/bin/pi update --extensions ||
+          echo "WARNING: pi update --extensions failed or timed out; run it manually" >&2
+      fi
+    '';
+
     activation.umCompletion = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       cacheDir="''${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
       mkdir -p "$cacheDir"
@@ -513,6 +538,8 @@ in
           defaultProjectTrust = "always";
           hideThinkingBlock = false;
           defaultTools = [ "+codemode" ];
+          # Same npm in pi sessions and in the activation update (Homebrew's is not on that PATH).
+          npmCommand = [ "${pkgs.nodejs}/bin/npm" ];
           compaction = {
             enabled = true;
             keepRecentTokens = 20000;
