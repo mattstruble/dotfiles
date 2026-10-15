@@ -1247,7 +1247,8 @@ in
           Compression = true;
           AddKeysToAgent = "yes";
           ControlMaster = "auto";
-          ControlPath = "${tmpdir}/ssh-%u-%r@%h:%p";
+          # %n (alias as typed), not %h/%C (resolved host): github-* aliases must not share a socket.
+          ControlPath = "${tmpdir}/ssh-%u-%r@%n:%p";
           ControlPersist = "no";
 
           ForwardAgent = true;
