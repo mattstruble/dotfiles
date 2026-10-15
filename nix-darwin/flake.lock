@@ -519,6 +519,27 @@
         "type": "github"
       }
     },
+    "obsidian-extensions": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix_2"
+      },
+      "locked": {
+        "lastModified": 1792057008,
+        "narHash": "sha256-EEbLfr0PAO+/IhMl1zHxRRE594Gmenl7eWcb9hTObqs=",
+        "owner": "karaolidis",
+        "repo": "nix-obsidian-extensions",
+        "rev": "75ad0e88e69d217535beedff47276bc70b95c5a8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "karaolidis",
+        "repo": "nix-obsidian-extensions",
+        "type": "github"
+      }
+    },
     "ponytail": {
       "flake": false,
       "locked": {
@@ -547,6 +568,7 @@
         "llm-agents": "llm-agents",
         "nixpkgs": "nixpkgs_5",
         "nono": "nono",
+        "obsidian-extensions": "obsidian-extensions",
         "ponytail": "ponytail",
         "rtk": "rtk",
         "skills-mattstruble": "skills-mattstruble",
@@ -634,6 +656,27 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "rev": "0d6d739a833ba9a9c93034862e4a7b061a062a1c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_2": {
+      "inputs": {
+        "nixpkgs": [
+          "obsidian-extensions",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785360170,
+        "narHash": "sha256-XE1lKgQ3eIO3E7zWryqcRsax+mYXod/5RHBn4YaR9YE=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "d1187f8bc71fb8aab02395869ec3f5c1920f75c0",
         "type": "github"
       },
       "original": {

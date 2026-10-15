@@ -36,6 +36,80 @@ let
       path = "${home}/.pi/agent/npm/node_modules/pi-rtk-optimizer/index.ts";
     }
   ];
+  # Obsidian Linter data.json. Not set via programs.obsidian's plugin `settings`: the linter
+  # back-fills every rule's defaults on load and saves, which fails on a read-only store link.
+  # Merged into a writable file instead; rules not listed here are forced off.
+  # Shared community plugin set; obsidian-git's data.json varies per vault (null = plugin defaults).
+  obsidianCommunityPlugins =
+    gitSettings: with pkgs.obsidianPlugins; [
+      obsidian-auto-link-title
+      {
+        pkg = obsidian-git;
+        settings = gitSettings;
+      }
+      # Settings merged into a writable data.json by home.activation.obsidianLinter.
+      obsidian-linter
+      obsidian-outliner
+      obsidian-vimrc-support
+      omnisearch
+      quickadd
+      various-complements
+      vim-yank-highlight
+    ];
+
+  # obsidian-git: commit-and-sync shortly after edits stop, so a vault is pushed before the
+  # laptop closes; pull on open and periodically so the other machine starts from the latest.
+  obsidianGitAutoSync = {
+    # Commit + pull + push 1 minute after the last edit (debounced, not a fixed clock).
+    autoSaveInterval = 1;
+    autoBackupAfterFileChange = true;
+    differentIntervalCommitAndPush = false;
+    autoPullOnBoot = true;
+    autoPullInterval = 5;
+    pullBeforePush = true;
+    # Linear history; local edits are autostashed during the rebase.
+    syncMethod = "rebase";
+    rebaseAutoStash = "enabled";
+    commitMessage = "{{date}}";
+    autoCommitMessage = "{{date}}";
+    disablePopupsForNoChanges = true;
+    showedMobileNotice = true;
+  };
+
+  obsidianLinterSettings = {
+    # Lint only on explicit save (Cmd+S / :w), never in the background.
+    lintOnSave = true;
+    lintOnFileChange = false;
+    displayChanged = true;
+    suppressMessageWhenNoChange = true;
+    # Mark migrations done; the name-keyed migration would reset these rule configs.
+    settingsConvertedToConfigKeyValues = true;
+    textAreaSettingsConvertedToListItemSettings = true;
+    defaultArrayStyleMovedToCommonStyles = true;
+    ruleConfigs = {
+      # YAML frontmatter
+      format-yaml-array = {
+        enabled = true;
+        alias-key = true;
+        tag-key = true;
+        # Leave other arrays (e.g. multi-line `sources:`) in whatever style they were written.
+        default-array-keys = false;
+      };
+      format-tags-in-yaml.enabled = true;
+      dedupe-yaml-array-values.enabled = true;
+      escape-yaml-special-characters.enabled = true;
+      compact-yaml.enabled = true;
+      # Whitespace only
+      trailing-spaces = {
+        enabled = true;
+        two-space-line-break = true;
+      };
+      consecutive-blank-lines.enabled = true;
+      line-break-at-document-end.enabled = true;
+      space-after-list-markers.enabled = true;
+    };
+  };
+
   onePassPath = "${home}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
 
   brew_path = "/opt/homebrew/bin";
@@ -276,6 +350,28 @@ in
           echo "WARNING: pi update --extensions failed or timed out; run it manually" >&2
       fi
     '';
+
+    activation.obsidianLinter = lib.hm.dag.entryAfter [ "linkGeneration" ] (
+      let
+        managed = pkgs.writeText "obsidian-linter-managed.json" (builtins.toJSON obsidianLinterSettings);
+        dirs = lib.concatMapStringsSep " " (
+          v: lib.escapeShellArg "${home}/${v.target}/.obsidian/plugins/obsidian-linter"
+        ) (builtins.filter (v: v.enable) (builtins.attrValues config.programs.obsidian.vaults));
+      in
+      ''
+        for dir in ${dirs}; do
+          [ -d "$dir" ] || continue
+          data="$dir/data.json"
+          if [ -L "$data" ] || [ ! -f "$data" ]; then
+            rm -f "$data"
+            echo '{}' >"$data"
+          fi
+          ${pkgs.jq}/bin/jq --slurpfile nix ${managed} \
+            '.ruleConfigs = ((.ruleConfigs // {}) | map_values(.enabled = false)) | . * $nix[0]' \
+            "$data" >"$data.tmp" && mv "$data.tmp" "$data" || rm -f "$data.tmp"
+        done
+      ''
+    );
 
     activation.umCompletion = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       cacheDir="''${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
@@ -1071,6 +1167,8 @@ in
         ".beads/*"
         ".beads"
         ".pi/worktrees"
+        # Obsidian vault config is home-manager managed (programs.obsidian).
+        ".obsidian"
       ];
 
       signing = {
@@ -1228,6 +1326,54 @@ in
 
       };
 
+    };
+
+    obsidian = {
+      enable = true;
+
+      # Present on every machine; host files add machine-specific vaults.
+      # llm-wiki has its own auto-sync (knowledge-base extension), so obsidian-git stays manual there.
+      vaults.llm-wiki = {
+        target = "llm-wiki";
+        settings.communityPlugins = obsidianCommunityPlugins null;
+      };
+
+      defaultSettings = {
+        app.vimMode = true;
+        # "obsidian" = dark base scheme ("moonstone" = light, "system" = follow OS).
+        appearance.theme = "obsidian";
+
+        # Exhaustive: core plugins not listed are written as disabled.
+        corePlugins = [
+          "backlink"
+          "bases"
+          "bookmarks"
+          "canvas"
+          "command-palette"
+          "daily-notes"
+          "editor-status"
+          "file-explorer"
+          "file-recovery"
+          "global-search"
+          "graph"
+          "note-composer"
+          "outgoing-link"
+          "outline"
+          "page-preview"
+          "properties"
+          "switcher"
+          "sync"
+          "tag-pane"
+          "templates"
+          "word-count"
+        ];
+
+        communityPlugins = obsidianCommunityPlugins obsidianGitAutoSync;
+
+        themes = with pkgs.obsidianThemes; [
+          everforest-clarity
+        ];
+      };
     };
 
     ssh = {

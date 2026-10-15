@@ -61,6 +61,11 @@
       };
     };
 
+    obsidian-extensions = {
+      url = "github:karaolidis/nix-obsidian-extensions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -112,6 +117,7 @@
                       };
                     });
                   })
+                  inputs.obsidian-extensions.overlays.default
                   (final: prev: {
                     obsidian = prev.obsidian.overrideAttrs (old: {
                       unpackPhase = ''
