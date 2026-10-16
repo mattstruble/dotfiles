@@ -58,11 +58,16 @@ in
           providers = {
             # One provider -> the LiteLLM gateway (:8000). modelName = real running
             # name (pod --alias = gateway model_name). compat is provider-level, with a
-            # per-model override for gemma (supportsReasoningEffort -> thinking levels
-            # from the API). mergeCompat = {...provider, ...model}, so gemma inherits
+            # per-model override for strata (supportsReasoningEffort -> per-request
+            # reasoning off/low/medium/high; the Strata engine honors reasoning_effort
+            # per request, unlike llama.cpp where thinking is an endpoint property).
+            # mergeCompat = {...provider, ...model}, so strata inherits
             # sendSessionAffinityHeaders + supportsDeveloperRole from the provider.
+            # qwen3.8-flash-next = the Strata engine pod (262k ctx); gemma-4-26b-a4b
+            # was disabled on the fleet 2026-10-08 (GPU 1 taken by Strata), so no
+            # gemma model here.
             "mjolnir" = {
-              baseUrl = "http://mjolnir:8000/v1";
+              baseUrl = "http://10.0.0.4:8000/v1";
               api = "openai-completions";
               # pi resolves a leading `!command` at runtime (the sops secret file
               # only exists post-activation, so builtins.readFile fails at eval).
@@ -79,9 +84,9 @@ in
                   contextWindow = 131072;
                 }
                 {
-                  id = "gemma-4-26b-a4b";
+                  id = "qwen3.8-flash-next";
                   reasoning = true;
-                  contextWindow = 131072;
+                  contextWindow = 262144;
                   compat = {
                     supportsReasoningEffort = true;
                   };
@@ -96,7 +101,7 @@ in
         pkgs.writeText "pi-web-search.json" (
           builtins.toJSON {
             provider = "mjolnir";
-            model = "gemma-4-26b-a4b";
+            model = "qwen3.8-flash-next";
             curator = "none";
           }
         )
@@ -173,21 +178,21 @@ in
               defaultModel = "mjolnir/swift-qwen3.8-27b";
               enabledModels = [
                 "mjolnir/swift-qwen3.8-27b"
-                "mjolnir/gemma-4-26b-a4b"
+                "mjolnir/qwen3.8-flash-next"
               ];
             };
             modelMap = {
               default = "mjolnir/swift-qwen3.8-27b";
-              small_model = "mjolnir/gemma-4-26b-a4b";
+              small_model = "mjolnir/qwen3.8-flash-next";
               coder = "mjolnir/swift-qwen3.8-27b";
-              fetcher = "mjolnir/gemma-4-26b-a4b";
+              fetcher = "mjolnir/qwen3.8-flash-next";
               plan-critic = "mjolnir/swift-qwen3.8-27b";
-              correctness-reviewer = "mjolnir/gemma-4-26b-a4b";
-              failure-path-reviewer = "mjolnir/gemma-4-26b-a4b";
-              readability-reviewer = "mjolnir/gemma-4-26b-a4b";
-              security-reviewer = "mjolnir/gemma-4-26b-a4b";
-              probe = "mjolnir/gemma-4-26b-a4b";
-              ticket-auditor = "mjolnir/gemma-4-26b-a4b";
+              correctness-reviewer = "mjolnir/qwen3.8-flash-next";
+              failure-path-reviewer = "mjolnir/qwen3.8-flash-next";
+              readability-reviewer = "mjolnir/qwen3.8-flash-next";
+              security-reviewer = "mjolnir/qwen3.8-flash-next";
+              probe = "mjolnir/qwen3.8-flash-next";
+              ticket-auditor = "mjolnir/qwen3.8-flash-next";
               epic-auditor = "mjolnir/swift-qwen3.8-27b";
             };
           };
