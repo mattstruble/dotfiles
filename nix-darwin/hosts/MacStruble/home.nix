@@ -46,7 +46,8 @@ in
       home.file.".ssh/id_ed25519_mattstruble.pub".text =
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEL+QzypEEYDWtg6jJ1siaNho4ZdwsczWwTZWySAZdkm\n";
 
-      # Local llama.cpp serves two models at a time: cap workflow and subagent children at two.
+      # Two cards = two models awake at a time, so cap workflow and subagent
+      # children at two. A child aimed at a sleeping model also pays a wake.
       programs.pi-workflows.settings.defaultConcurrency = 2;
       programs.pi-subagents.config = {
         globalConcurrencyLimit = 2;
@@ -56,16 +57,26 @@ in
       home.file.".pi/agent/models.json".source = pkgs.writeText "pi-models.json" (
         builtins.toJSON {
           providers = {
-            # One provider -> the LiteLLM gateway (:8000). modelName = real running
-            # name (pod --alias = gateway model_name). compat is provider-level, with a
-            # per-model override for strata (supportsReasoningEffort -> per-request
-            # reasoning off/low/medium/high; the Strata engine honors reasoning_effort
-            # per request, unlike llama.cpp where thinking is an endpoint property).
-            # mergeCompat = {...provider, ...model}, so strata inherits
-            # sendSessionAffinityHeaders + supportsDeveloperRole from the provider.
-            # qwen3.8-flash-next = the Strata engine pod (262k ctx); gemma-4-26b-a4b
-            # was disabled on the fleet 2026-10-08 (GPU 1 taken by Strata), so no
-            # gemma model here.
+            # One provider -> the LiteLLM gateway (:8000). Model ids are the fleet
+            # values' `modelName` (the gateway route), not the deployment name.
+            # Every model is on-demand since 2026-10-12: the swapper wakes one on the
+            # first request (measured 86-145 s to first token, cold or warm) and
+            # sleeps it after an idle ttl (900 s, flash-next 1800 s). The wake streams
+            # loading remarks, so pi's 5-minute httpIdleTimeoutMs covers it - do not
+            # lower that. Two cards means two models can be awake at once; the swapper
+            # places each wake on whichever card is free.
+            #
+            # `reasoning` follows how the engine is told to think. llama.cpp makes it
+            # an endpoint property, so gemma ships twice: plain (off, speakable
+            # latency, fixed-budget JSON) and -think (on, first tokens go to
+            # reasoning, so budget content above it). Strata honors reasoning_effort
+            # per request, which is the per-model supportsReasoningEffort override
+            # below; mergeCompat = {...provider, ...model}, so the llama.cpp models
+            # inherit supportsDeveloperRole + sendSessionAffinityHeaders from here.
+            #
+            # qwen3.8-flash-next-max (the 2-GPU spanning variant) is deliberately
+            # absent: the route exists but the variant is gated off on this host's
+            # 94 GiB of RAM.
             "mjolnir" = {
               baseUrl = "http://10.0.0.4:8000/v1";
               api = "openai-completions";
@@ -90,6 +101,24 @@ in
                   compat = {
                     supportsReasoningEffort = true;
                   };
+                }
+                # MoE A3B: the cheapest wake on the fleet and 262k of context, at
+                # medium reasoning effort (server-side default; the sampler knob
+                # does not reach llama.cpp per request).
+                {
+                  id = "Qwen3.6-35B-A3B";
+                  reasoning = true;
+                  contextWindow = 262144;
+                }
+                {
+                  id = "gemma-4-26b-a4b";
+                  reasoning = false;
+                  contextWindow = 131072;
+                }
+                {
+                  id = "gemma-4-26b-a4b-think";
+                  reasoning = true;
+                  contextWindow = 131072;
                 }
               ];
             };
@@ -179,6 +208,9 @@ in
               enabledModels = [
                 "mjolnir/swift-qwen3.8-27b"
                 "mjolnir/qwen3.8-flash-next"
+                "mjolnir/Qwen3.6-35B-A3B"
+                "mjolnir/gemma-4-26b-a4b"
+                "mjolnir/gemma-4-26b-a4b-think"
               ];
             };
             modelMap = {
