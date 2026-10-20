@@ -29,6 +29,9 @@
  */
 
 import { describe, it } from "node:test";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import * as assert from "node:assert/strict";
 import skillRouter, {
   parseFrontmatter,
@@ -55,12 +58,13 @@ import skillRouter, {
   isCodingTask,
   detectLanguages,
   resolveRepoRoot,
-  ENFORCER,
+  parseFrontmatterFull,
+  compileKeywords,
   LANGUAGE_MAP,
   _setConfig,
   _getConfig,
   SCORE_NAMED,
-  SCORE_ENFORCER,
+  SCORE_ROUTE_PROMPT,
   CUSTOM_TYPE,
   DECISION_ENTRY,
   GIT_COMMIT_SKILL_MARKER,
@@ -154,6 +158,40 @@ function makeCompaction(firstKeptEntryId: string, parentId?: string): any {
     timestamp: new Date().toISOString(),
   };
 }
+
+// ── Synthetic catalogs ──────────────────────────────────────────────
+
+interface SynthSkill { description?: string; routePrompt?: string; manual?: boolean }
+
+function makeTmpCatalog(skills: Record<string, SynthSkill>): string {
+  const dir = mkdtempSync(join(tmpdir(), "skill-router-cat-"));
+  for (const [name, sk] of Object.entries(skills)) {
+    mkdirSync(join(dir, name));
+    const lines = ["---", `name: "${name}"`, `description: "${sk.description ?? `Synthetic ${name} skill`}"`];
+    if (sk.manual) lines.push("disable-model-invocation: true");
+    if (sk.routePrompt !== undefined) lines.push("metadata:", `  route-prompt: "${sk.routePrompt}"`);
+    lines.push("---", `# ${name}`, "");
+    writeFileSync(join(dir, name, "SKILL.md"), lines.join("\n"));
+  }
+  return dir;
+}
+
+/** Synthetic catalog shaped like the installed one (names + keyword specs). */
+const SYNTH_SKILLS: Record<string, SynthSkill> = {
+  anyscale: {}, brainstorm: {},
+  "git-commit": { routePrompt: "commit amend git-add stage unstage git-push" },
+  "git-pr": { routePrompt: "pull-request create*pr open*pr gh-pr" },
+  "software-design": { routePrompt: "implement refactor design architect write*code add*feature build*feature" },
+  "test-design": { routePrompt: "write*test add*test test*coverage unit-test integration-test tdd" },
+  docker: { routePrompt: "dockerfile docker-compose container build*image containerize" },
+  helm: { routePrompt: "helm helm-chart values.yaml helmfile helm-template" },
+  nix: { routePrompt: "nix flake.nix derivation nixos nix-darwin darwin-rebuild home-manager nixpkgs" },
+  "python-design": { routePrompt: "python .py pydantic fastapi django flask pytest pyproject" },
+  "api-design": { routePrompt: "api-design rest-api grpc openapi swagger resource-model endpoint-design api-spec" },
+  "code-reviewer": { routePrompt: "code-review review*pr review*diff review*changes lgtm" },
+  "test-driven-development": {},
+  planner: { manual: true, routePrompt: "plan planning" },
+};
 
 // ── Catalog loading ─────────────────────────────────────────────────
 
@@ -262,35 +300,33 @@ describe("isExplicitTurn", () => {
 // ── Scoring ─────────────────────────────────────────────────────────
 
 describe("scorePrompt", () => {
-  const names = [
-    "anyscale", "api-design", "brainstorm", "code-reviewer", "docker",
-    "git-commit", "git-pr", "nix", "python-design", "software-design",
-    "test-design", "test-driven-development",
-  ];
+  const synth = loadCatalog(makeTmpCatalog(SYNTH_SKILLS));
+  const names = [...synth.keys()].filter((n) => !synth.get(n)!.manual);
+  const score = (t: string) => scorePrompt(t, names, undefined, synth);
 
   it("named-skill match scores 1.0", () => {
-    const scores = scorePrompt("use the git-commit skill", names);
+    const scores = score("use the git-commit skill");
     assert.equal(scores.get("git-commit"), SCORE_NAMED);
   });
 
-  it("enforcer pattern match scores 0.75", () => {
-    const scores = scorePrompt("help me commit my changes", names);
-    assert.equal(scores.get("git-commit"), SCORE_ENFORCER);
+  it("route-prompt keyword match scores 0.75", () => {
+    const scores = score("help me commit my changes");
+    assert.equal(scores.get("git-commit"), SCORE_ROUTE_PROMPT);
   });
 
-  it("named-skill overrides enforcer (keeps 1.0)", () => {
-    const scores = scorePrompt("follow git-commit and commit changes", names);
+  it("named-skill overrides route-prompt (keeps 1.0)", () => {
+    const scores = score("follow git-commit and commit changes");
     assert.equal(scores.get("git-commit"), SCORE_NAMED);
   });
 
   it("multiple skills can match", () => {
-    const scores = scorePrompt("write python test coverage", names);
+    const scores = score("write python test coverage");
     assert.ok(scores.has("python-design"), "python-design");
     assert.ok(scores.has("test-design"), "test-design");
   });
 
   it("returns empty for unrelated prompt", () => {
-    const scores = scorePrompt("what is the weather today?", names);
+    const scores = score("what is the weather today?");
     assert.equal(scores.size, 0);
   });
 });
@@ -419,7 +455,8 @@ describe("buildNamesOnlyList", () => {
       assert.ok(block.includes("/git-commit/SKILL.md"), "uses git-commit as example");
     }
     assert.ok(block.includes("Skills:"));
-    for (const name of catalog.keys()) {
+    for (const [name, e] of catalog) {
+      if (e.manual) continue;
       assert.ok(block.includes(name), `missing ${name}`);
     }
   });
@@ -515,31 +552,6 @@ describe("replaceSkillsBlock", () => {
   });
 });
 
-// ── Enforcer parity ─────────────────────────────────────────────────
-
-describe("ENFORCER patterns", () => {
-  it("has exactly 10 patterns matching run_models.py ENFORCER", () => {
-    assert.equal(ENFORCER.length, 10);
-  });
-
-  it("maps to the same skill names", () => {
-    const expected = [
-      "git-commit", "git-pr", "software-design", "test-design",
-      "docker", "helm", "nix", "python-design", "api-design", "code-reviewer",
-    ];
-    assert.deepEqual(ENFORCER.map((e) => e.skill), expected);
-  });
-
-  it("enforcer pattern for a skill absent from a synthetic catalog produces no hit", () => {
-    // Use a synthetic catalog that deliberately omits "helm" to test that
-    // enforcer patterns only fire for skills present in the catalog.
-    const syntheticNames = ["git-commit", "git-pr", "nix", "docker"];
-    const scores = scorePrompt("Build a helm chart for the microservice", syntheticNames);
-    assert.ok(!scores.has("helm"), "helm absent from catalog → no hit");
-    assert.ok(ENFORCER.some((e) => e.skill === "helm"), "helm enforcer pattern should exist");
-  });
-});
-
 // ── Synthetic test vectors ──────────────────────────────────────────
 
 interface TestVector {
@@ -560,7 +572,7 @@ const SYNTHETIC_VECTORS: TestVector[] = [
   },
   {
     prompt: "Follow the api-design skill for this endpoint",
-    expectedHits: { "api-design": 1.0, "software-design": 0.75 },
+    expectedHits: { "api-design": 1.0 },
   },
   {
     prompt: "Use the code-reviewer and software-design skills",
@@ -655,11 +667,8 @@ const SYNTHETIC_VECTORS: TestVector[] = [
 
 describe("synthetic vectors", () => {
   // Fixed catalog name list so this test does not depend on the live catalog
-  const names = [
-    "anyscale", "api-design", "brainstorm", "code-reviewer", "docker",
-    "git-commit", "git-pr", "helm", "nix", "python-design",
-    "software-design", "test-design", "test-driven-development",
-  ];
+  const synth = loadCatalog(makeTmpCatalog(SYNTH_SKILLS));
+  const names = [...synth.keys()].filter((n) => !synth.get(n)!.manual);
   const nameSet = new Set(names);
 
   for (const vec of SYNTHETIC_VECTORS) {
@@ -673,7 +682,7 @@ describe("synthetic vectors", () => {
 
       assert.ok(!explicit, "should not be explicit");
 
-      const scores = scorePrompt(vec.prompt, names);
+      const scores = scorePrompt(vec.prompt, names, undefined, synth);
       // Only check catalog skills in expected hits
       for (const [name, expectedScore] of Object.entries(vec.expectedHits)) {
         if (!nameSet.has(name)) continue;
@@ -701,7 +710,7 @@ describe("dedup across turns", () => {
     const names = [...catalog.keys()];
 
     // Turn 1: git-commit scores and gets injected
-    const scores1 = scorePrompt("commit my changes", names);
+    const scores1 = scorePrompt("commit my changes", names, undefined, catalog);
     const inContext1 = new Set<string>();
     const inject1 = selectSkills(scores1, inContext1);
     assert.ok(inject1.some((s) => s.name === "git-commit"), "turn 1 injects git-commit");
@@ -710,7 +719,7 @@ describe("dedup across turns", () => {
     const entries = [makeRouterInjection(["git-commit"])];
     const inContext2 = skillsInContext(entries);
     assert.ok(inContext2.has("git-commit"), "injection detected in context");
-    const scores2 = scorePrompt("commit my changes", names);
+    const scores2 = scorePrompt("commit my changes", names, undefined, catalog);
     const inject2 = selectSkills(scores2, inContext2);
     assert.ok(!inject2.some((s) => s.name === "git-commit"), "turn 2 does not re-inject");
   });
@@ -729,7 +738,7 @@ describe("dedup across turns", () => {
     // So it should be re-injected
     const catalog = loadCatalog();
     const names = [...catalog.keys()];
-    const scores = scorePrompt("commit my changes", names);
+    const scores = scorePrompt("commit my changes", names, undefined, catalog);
     const inject = selectSkills(scores, inContext);
     assert.ok(inject.some((s) => s.name === "git-commit"), "re-injects after compaction");
   });
@@ -743,7 +752,7 @@ describe("dedup across turns", () => {
 
     const catalog = loadCatalog();
     const names = [...catalog.keys()];
-    const scores = scorePrompt("commit my changes", names);
+    const scores = scorePrompt("commit my changes", names, undefined, catalog);
     const inject = selectSkills(scores, inContext);
     assert.ok(!inject.some((s) => s.name === "git-commit"), "no re-inject after SKILL.md read");
   });
@@ -2702,5 +2711,109 @@ describe("subagent routing: input shapes and merging", () => {
       await routeSubagentSkills(arr, ...args);
       assert.equal(arr.skill.filter((n: string) => n === "test-design").length, 1);
     } finally { _setConfig(saved); server.close(); }
+  });
+});
+
+// ── Frontmatter routing keys ────────────────────────────────────────
+
+const VECTORS_PATH = join(
+  homedir(), ".pi", "agent", "skill-profiles", "all", "skill-creator", "references", "routing-vectors.json",
+);
+
+function loadVectors(): any {
+  if (!existsSync(VECTORS_PATH)) {
+    assert.fail(`routing vectors missing at ${VECTORS_PATH}; install the skill catalog (skill-creator/references/routing-vectors.json)`);
+  }
+  return JSON.parse(readFileSync(VECTORS_PATH, "utf-8"));
+}
+
+describe("routing vectors", () => {
+  it("frontmatter vectors", () => {
+    const vectors = loadVectors();
+    for (const v of vectors.frontmatter) {
+      const got = parseFrontmatterFull(v.text);
+      const keys = Object.keys(v.expect);
+      if (keys.length === 0) {
+        assert.deepEqual(got, {}, JSON.stringify(v.text));
+        continue;
+      }
+      for (const k of keys) {
+        assert.deepEqual(got[k], v.expect[k], `${k} in ${JSON.stringify(v.text)}`);
+      }
+    }
+  });
+
+  it("keyword vectors", () => {
+    const vectors = loadVectors();
+    for (const v of vectors.keywords) {
+      if (v.invalid) {
+        assert.throws(() => compileKeywords(v.spec), undefined, `spec ${JSON.stringify(v.spec)} should be invalid`);
+        continue;
+      }
+      assert.equal(compileKeywords(v.spec).test(v.text), v.match, `${JSON.stringify(v.spec)} vs ${JSON.stringify(v.text)}`);
+    }
+  });
+});
+
+describe("route-prompt from frontmatter", () => {
+  it("keyword hit scores 0.75 and name hit scores 1.0", () => {
+    const cat = loadCatalog(makeTmpCatalog({ alpha: { routePrompt: "frobnicate" }, beta: {} }));
+    const names = [...cat.keys()];
+    assert.equal(scorePrompt("please frobnicate the widget", names, undefined, cat).get("alpha"), SCORE_ROUTE_PROMPT);
+    assert.equal(scorePrompt("use alpha and frobnicate", names, undefined, cat).get("alpha"), SCORE_NAMED);
+    assert.equal(scorePrompt("nothing relevant", names, undefined, cat).size, 0);
+  });
+
+  it("manual skills are excluded from scores and the names list", () => {
+    const cat = loadCatalog(makeTmpCatalog({ alpha: {}, gamma: { manual: true, routePrompt: "frobnicate" } }));
+    assert.equal(cat.get("gamma")!.manual, true);
+    const scores = scorePrompt("use gamma to frobnicate", [...cat.keys()], undefined, cat);
+    assert.ok(!scores.has("gamma"));
+    const block = buildNamesOnlyList(cat);
+    assert.ok(block.includes("alpha"));
+    assert.ok(!block.includes("gamma"));
+  });
+
+  it("invalid route-prompt warns once and is ignored", () => {
+    const dir = makeTmpCatalog({ badone: { routePrompt: "**" } });
+    const warns: string[] = [];
+    const orig = console.warn;
+    console.warn = (...a: any[]) => { warns.push(a.join(" ")); };
+    try {
+      const cat = loadCatalog(dir);
+      loadCatalog(dir);
+      assert.equal(warns.length, 1);
+      assert.ok(warns[0].includes("badone"));
+      assert.equal(cat.get("badone")!.keywords, undefined);
+      assert.equal(scorePrompt("anything **", ["badone"], undefined, cat).size, 0);
+    } finally { console.warn = orig; }
+  });
+
+  it("full description reaches the Kev question", async () => {
+    const long = "Synthetic description. " + "word ".repeat(200) + "TAILMARK";
+    const cat = loadCatalog(makeTmpCatalog({ alpha: { description: long } }));
+    let seen = "";
+    const { server, port } = await startKevServer((_req, res, body) => {
+      const parsed = JSON.parse(body);
+      seen = parsed.questions.alpha.instructions;
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ answers: { alpha: { type: "noul", noul: 0.9 } } }));
+    });
+    try {
+      await queryKev(new Map([["alpha", 0.75]]), cat, "state", makeCfg(port));
+      assert.ok(seen.includes("TAILMARK"));
+    } finally { server.close(); }
+  });
+
+  it("installed catalog routes the former enforcer skills; planner is manual", () => {
+    const cat = loadCatalog(join(homedir(), ".pi", "agent", "skill-profiles", "all"));
+    assert.ok(cat.size > 0, "installed catalog missing");
+    const names = [...cat.values()].filter((e) => !e.manual).map((e) => e.name);
+    assert.equal(scorePrompt("please amend my last commit", names, undefined, cat).get("git-commit"), SCORE_ROUTE_PROMPT);
+    assert.ok(scorePrompt("write a helm chart", names, undefined, cat).has("helm"));
+    assert.equal(scorePrompt("edit values.yaml", names, undefined, cat).get("helm"), SCORE_ROUTE_PROMPT);
+    assert.equal(cat.get("planner")!.manual, true);
+    assert.ok(!scorePrompt("planner plan this", names, undefined, cat).has("planner"));
+    assert.ok(!buildNamesOnlyList(cat).includes("planner"));
   });
 });

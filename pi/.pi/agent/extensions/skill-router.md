@@ -1,7 +1,7 @@
 # skill-router
 
 Pi extension that injects the skills a turn needs instead of hoping the agent loads them. It replaces
-`skill-enforcer.ts`: same trigger patterns and commit check, plus skill injection, a names-only skill list, and an
+`skill-enforcer.ts`: the commit check, keyword triggers read from skill frontmatter, plus skill injection, a names-only skill list, and an
 optional model filter (the local [Kev decision server](../../../../README.md#kev-decision-server)).
 
 ## What happens on each user turn
@@ -9,12 +9,13 @@ optional model filter (the local [Kev decision server](../../../../README.md#kev
 1. **Explicit turns are left alone.** If the prompt starts with a catalog skill name, contains `/skill:<name>`, a
    `<skill` block, or `SKILL.md`, nothing is routed.
 2. **Rules score the first 2,000 characters of the prompt.** A skill named in the prompt (`git-pr`, `/git-pr`,
-   `git pr`) scores 1.0. A match on one of the trigger patterns (the `ENFORCER` list in the source: commit, PR,
-   implement/refactor, tests, docker, helm, nix, python, API design, code review) scores 0.75. Only skills in the
-   catalog count.
+   `git pr`) scores 1.0. A match on the skill's `metadata.route-prompt` keywords (read from its SKILL.md
+   frontmatter, compiled once at catalog load) scores 0.75. Skills with `disable-model-invocation: true` are manual:
+   they are never scored, never sent to the decider, left out of the names-only list and never routed to subagents
+   (typing `/skill:<name>` still works through Pi itself). Only skills in the catalog count.
 3. **The decider filters the hits.** When there are hits, the router asks the decider one yes/no question per hit
-   ("Would a careful coding agent load the `<skill>` skill before handling this request?", with the skill's
-   description cut to 400 characters). Hits with a probability of at least `decider.threshold` are kept, ordered by
+   ("Would a careful coding agent load the `<skill>` skill before handling this request?", with the skill's full
+   description). Hits with a probability of at least `decider.threshold` are kept, ordered by
    probability, and cut to `maxSkillsPerTurn`.
 4. **Without a decider, the rules decide.** On a timeout, connection error, non-200 reply or malformed answer, the
    turn uses the rule scores instead (hits scoring at least 0.5, same cap) and warns once per Pi process.
@@ -27,6 +28,12 @@ optional model filter (the local [Kev decision server](../../../../README.md#kev
 7. **A decision entry is recorded** in the session file (`customType: "skill-router-decision"`): mode, decider
    status (`ok`, `failed`, `skipped`), probabilities, rule hits, skills already in context, skills injected, and
    whether the turn was explicit. No prompt text is stored.
+
+**Keyword syntax (`route-prompt`).** Space-separated words, each matched as a whole word, case-insensitive. `*`
+inside a word matches any text; `-` matches a hyphen or a space (`git-push` matches `git push` and `git-push`). A
+word starting or ending with a non-word character (`.py`) drops the word boundary on that side. A word made only of
+`*` and `-`, or an empty spec, is invalid: the skill's keyword signal is disabled and one warning per process lists
+the skill. `route-paths` and `route-commands` are stored but not used yet.
 
 **Subagents.** On a `subagent` tool call each task text (single `task`, `tasks[]` items, `chain` steps including `parallel` items) is scored independently. Picked skill *names* are merged into the call's top-level `skill` field (existing array/CSV values preserved; `skill: false` disables routing); skill bodies are not injected.
 
@@ -81,10 +88,9 @@ grep -o '"kev":"[a-z]*"' "$f" | sort | uniq -c                       # decider s
 ## Tests
 
 ```bash
-npx tsx --test pi/.pi/agent/extensions/skill-router.test.ts \
-  pi/.pi/agent/extensions/skill-router-parity.test.ts
-npx tsx --test pi/.pi/agent/extensions/skill-router-kev-parity.test.ts   # needs Kev on :8008
+npx tsx --test pi/.pi/agent/extensions/skill-router.test.ts
 ```
 
-The parity tests compare against the replay harness in `~/.local/share/pi-decision-eval` and skip when its local
-data is absent; no session text is stored in this repo.
+The frontmatter and keyword tests run the shared vectors in
+`~/.pi/agent/skill-profiles/all/skill-creator/references/routing-vectors.json` and fail if that file is missing.
+Routing tests use synthetic catalogs written to temp directories; no session text is stored in this repo.

@@ -3,7 +3,9 @@
  *
  * Replaces skill-enforcer.ts. Per user turn at before_agent_start:
  *   1. Named-skill rule (score 1.0): catalog name found in the prompt text.
- *   2. Enforcer rule (score 0.75): pattern match on the prompt text.
+ *   2. Route-prompt rule (score 0.75): keywords from the skill's SKILL.md
+ *      frontmatter (metadata.route-prompt) match the prompt text. Skills with
+ *      disable-model-invocation: true are never routed.
  *   3. Sort hits by (score desc, name desc), keep top 2 with score >= 0.5.
  *   4. Drop skills already in context (injected, read via tool, explicit /skill).
  *   5. Inject remaining skill bodies as custom_message entries.
@@ -187,7 +189,7 @@ function _getConfig(): RouterConfig { return _config; }
 
 const MAX_STATE_CHARS = 2000;
 const SCORE_NAMED = 1.0;
-const SCORE_ENFORCER = 0.75;
+const SCORE_ROUTE_PROMPT = 0.75;
 const MIN_SCORE = 0.5;
 const CUSTOM_TYPE = "skill-router";
 const DECISION_ENTRY = "skill-router-decision";
@@ -340,20 +342,6 @@ function testSegmentForGitCommit(seg: string): boolean {
   return subCmd !== null && subCmd[1] === "commit";
 }
 
-// ── Enforcer patterns (same list as run_models.py ENFORCER) ─────────
-const ENFORCER: Array<{ pattern: RegExp; skill: string }> = [
-  { pattern: /\b(commit|amend|git add|stage|unstage|git push)\b/i, skill: "git-commit" },
-  { pattern: /\b(pull request|create.*pr|open.*pr|gh pr)\b/i, skill: "git-pr" },
-  { pattern: /\b(implement|refactor|design|architect|write.*code|add.*feature|build.*feature)\b/i, skill: "software-design" },
-  { pattern: /\b(write.*test|add.*test|test.*coverage|unit test|integration test|tdd)\b/i, skill: "test-design" },
-  { pattern: /\b(dockerfile|docker.compose|docker compose|container|build.*image|containerize)\b/i, skill: "docker" },
-  { pattern: /\b(helm|helm chart|values\.yaml|helmfile|helm template)\b/i, skill: "helm" },
-  { pattern: /\b(nix|flake\.nix|derivation|nixos|nix-darwin|darwin-rebuild|home-manager|nixpkgs)\b/i, skill: "nix" },
-  { pattern: /\b(python|\.py|pydantic|fastapi|django|flask|pytest|pyproject)\b/i, skill: "python-design" },
-  { pattern: /\b(api design|rest api|grpc|openapi|swagger|resource model|endpoint design|api spec)\b/i, skill: "api-design" },
-  { pattern: /\b(code review|review.*pr|review.*diff|review.*changes|lgtm)\b/i, skill: "code-reviewer" },
-];
-
 // ── Language-to-skill map for coding task detection (extensions, filenames, and marker files) ──
 const LANGUAGE_MAP: Array<{ patterns: RegExp[]; markers: string[]; skill: string }> = [
   { patterns: [/\.py\b/], markers: ["pyproject.toml", "setup.py", "requirements.txt"], skill: "python-design" },
@@ -433,6 +421,12 @@ interface CatalogEntry {
   description: string;
   location: string;
   body: string;
+  routePrompt?: string;
+  routePaths?: string;
+  routeCommands?: string;
+  manual: boolean;
+  /** Compiled route-prompt matcher; undefined when absent or invalid. */
+  keywords?: RegExp;
 }
 
 function parseFrontmatter(text: string, key: string): string {
@@ -461,9 +455,141 @@ function parseFrontmatter(text: string, key: string): string {
   return "";
 }
 
+const KEY_RE = /^([A-Za-z0-9_][A-Za-z0-9_.-]*):(?:\s+(.*)|\s*)$/;
+const BLOCK_RE = /^([>|])([+-]?)$/;
+
+function fmScalar(raw: string): string {
+  const v = raw.trim();
+  if (v.length >= 2 && v[0] === '"' && v[v.length - 1] === '"') {
+    return v.slice(1, -1).replace(/\\(["\\])/g, "$1");
+  }
+  if (v.length >= 2 && v[0] === "'" && v[v.length - 1] === "'") {
+    return v.slice(1, -1).replace(/''/g, "'");
+  }
+  return v;
+}
+
+function fmIndent(line: string): number {
+  return line.length - line.replace(/^[ \t]+/, "").length;
+}
+
+/**
+ * Parse the leading frontmatter block into an object: top-level scalars and
+ * block scalars, one nesting level under `metadata:` (string values), and
+ * `disable-model-invocation` as a boolean. Problems land in `errors`.
+ */
+function parseFrontmatterFull(text: string): Record<string, any> {
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  if (lines.length === 0 || lines[0].trim() !== "---") return {};
+  let end = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === "---") { end = i; break; }
+  }
+  if (end < 0) return {};
+  const body = lines.slice(1, end);
+  const result: Record<string, any> = {};
+  const errors: string[] = [];
+  let i = 0;
+  while (i < body.length) {
+    const line = body[i];
+    if (!line.trim() || line.trimStart().startsWith("#") || fmIndent(line) > 0) { i++; continue; }
+    const m = line.match(KEY_RE);
+    if (!m) { i++; continue; }
+    const key = m[1];
+    const val = (m[2] ?? "").trim();
+    i++;
+    const block: string[] = [];
+    while (i < body.length && (!body[i].trim() || fmIndent(body[i]) > 0)) { block.push(body[i]); i++; }
+    while (block.length && !block[block.length - 1].trim()) block.pop();
+    const bm = val.match(BLOCK_RE);
+    if (bm) {
+      const [, style, chomp] = bm;
+      const items = block.map((b) => b.trim());
+      let out: string;
+      if (style === ">") {
+        const paras: string[] = [];
+        let cur: string[] = [];
+        for (const it of items) {
+          if (it) cur.push(it);
+          else if (cur.length) { paras.push(cur.join(" ")); cur = []; }
+        }
+        if (cur.length) paras.push(cur.join(" "));
+        out = paras.join("\n");
+      } else {
+        out = items.join("\n");
+      }
+      result[key] = chomp === "-" ? out : out + "\n";
+    } else if (key === "metadata" && !val) {
+      const meta: Record<string, string> = {};
+      let base: number | null = null;
+      for (const b of block) {
+        if (!b.trim() || b.trimStart().startsWith("#")) continue;
+        const ind = fmIndent(b);
+        if (base === null) base = ind;
+        const s = b.trim();
+        if (ind > base || s.startsWith("- ")) {
+          errors.push(`metadata: unsupported nested value: '${s}'`);
+          continue;
+        }
+        const km = s.match(KEY_RE);
+        if (!km) { errors.push(`metadata: cannot parse line: '${s}'`); continue; }
+        const mk = km[1];
+        const mv = (km[2] ?? "").trim();
+        if (!mv || "[{".includes(mv[0]) || BLOCK_RE.test(mv)) {
+          errors.push(`metadata.${mk}: value must be a string`);
+          continue;
+        }
+        meta[mk] = fmScalar(mv);
+      }
+      result[key] = meta;
+    } else if (!val) {
+      result[key] = "";
+    } else if (key === "disable-model-invocation") {
+      const low = val.toLowerCase();
+      if (low === "true" || low === "false") result[key] = low === "true";
+      else errors.push(`${key}: expected true or false`);
+    } else {
+      result[key] = fmScalar(val);
+    }
+  }
+  if (errors.length) result.errors = errors;
+  return result;
+}
+
+// ── Route-prompt keywords ───────────────────────────────────────────
+
+function escapeRegexChar(ch: string): string {
+  return ch.replace(/[.*+?^${}()|[\]\\\/-]/g, "\\$&");
+}
+
+/**
+ * Compile a space-separated keyword spec. Whole word, case-insensitive;
+ * `*` = any text, `-` = hyphen or space. Throws on an empty spec or a word
+ * made only of `*` and `-`.
+ */
+function compileKeywords(spec: string): RegExp {
+  const words = typeof spec === "string" ? spec.split(/\s+/).filter(Boolean) : [];
+  if (words.length === 0) throw new Error("empty keyword spec");
+  const wordChar = /^[\p{L}\p{N}_*]$/u;
+  const pats = words.map((w) => {
+    if (!w.replace(/[*-]/g, "")) throw new Error(`invalid keyword: ${JSON.stringify(w)}`);
+    const chars = [...w];
+    const pre = wordChar.test(chars[0]) ? "(?<![\\w-])" : "";
+    const post = wordChar.test(chars[chars.length - 1]) ? "(?![\\w-])" : "";
+    const body = chars
+      .map((ch) => (ch === "*" ? "[\\s\\S]*" : ch === "-" ? "[- ]" : escapeRegexChar(ch)))
+      .join("");
+    return `(?:${pre}${body}${post})`;
+  });
+  return new RegExp(pats.join("|"), "i");
+}
+
+const _routeWarned = new Set<string>();
+
 function loadCatalog(catalogDir?: string): Map<string, CatalogEntry> {
   const dir = catalogDir ?? expandTilde(_config.catalog);
   const catalog = new Map<string, CatalogEntry>();
+  const invalid: string[] = [];
   try {
     for (const name of readdirSync(dir).sort()) {
       const loc = join(dir, name, "SKILL.md");
@@ -471,14 +597,35 @@ function loadCatalog(catalogDir?: string): Map<string, CatalogEntry> {
       try {
         const body = readFileSync(loc, "utf-8");
         const desc = parseFrontmatter(body, "description");
-        catalog.set(name, { name, description: desc, location: loc, body });
+        const fm = parseFrontmatterFull(body);
+        const meta: Record<string, string> = fm.metadata && typeof fm.metadata === "object" ? fm.metadata : {};
+        const entry: CatalogEntry = {
+          name, description: desc, location: loc, body,
+          routePrompt: meta["route-prompt"],
+          routePaths: meta["route-paths"],
+          routeCommands: meta["route-commands"],
+          manual: fm["disable-model-invocation"] === true,
+        };
+        if (entry.routePrompt !== undefined) {
+          try {
+            entry.keywords = compileKeywords(entry.routePrompt);
+          } catch {
+            invalid.push(name);
+          }
+        }
+        catalog.set(name, entry);
       } catch { /* skip unreadable */ }
     }
   } catch { /* catalog dir missing */ }
+  const fresh = invalid.filter((n) => !_routeWarned.has(n));
+  if (fresh.length) {
+    for (const n of fresh) _routeWarned.add(n);
+    console.warn(`[skill-router] invalid route-prompt ignored for: ${fresh.join(", ")}`);
+  }
   return catalog;
 }
 
-// ── Named-skill regex builder (mirrors run_models.rule_probs) ───────
+// ── Named-skill regex builder (same semantics as the Python reference) ───────
 
 function buildNameRegex(name: string): RegExp {
   // Escape regex special chars, then replace every hyphen with [- ] so
@@ -508,24 +655,28 @@ function isExplicitTurn(text: string, catalogNames: Set<string>): boolean {
 function scorePrompt(
   text: string,
   catalogNames: string[],
-  catalogNameSet?: Set<string>,
+  _catalogNameSet?: Set<string>,
+  catalog?: Map<string, CatalogEntry>,
 ): Map<string, number> {
   const scores = new Map<string, number>();
   const truncated = text.slice(0, MAX_STATE_CHARS);
 
   // Named-skill rule: catalog name found in prompt → 1.0
   for (const name of catalogNames) {
+    if (catalog?.get(name)?.manual) continue;
     if (buildNameRegex(name).test(truncated)) {
       scores.set(name, SCORE_NAMED);
     }
   }
 
-  // Enforcer rule: pattern match → 0.75, but only for catalog names
-  const nameSet = catalogNameSet ?? new Set(catalogNames);
-  for (const { pattern, skill } of ENFORCER) {
-    if (!nameSet.has(skill)) continue;
-    if (pattern.test(truncated) && !scores.has(skill)) {
-      scores.set(skill, SCORE_ENFORCER);
+  // Route-prompt rule: frontmatter keywords → 0.75 (manual skills never scored)
+  if (catalog) {
+    for (const name of catalogNames) {
+      const entry = catalog.get(name);
+      if (!entry || entry.manual || !entry.keywords) continue;
+      if (!scores.has(name) && entry.keywords.test(truncated)) {
+        scores.set(name, SCORE_ROUTE_PROMPT);
+      }
     }
   }
 
@@ -657,10 +808,10 @@ function formatSkillMessage(entry: CatalogEntry): string {
 // ── Names-only skill list ───────────────────────────────────────────
 
 function buildNamesOnlyList(catalog: Map<string, CatalogEntry>): string {
-  const names = [...catalog.keys()].sort();
+  const names = [...catalog.values()].filter((e) => !e.manual).map((e) => e.name).sort();
   const root = expandTilde(_config.catalog);
   // Pick a real example skill name for the path pattern
-  const exampleName = catalog.has("git-commit") ? "git-commit" : (names[0] ?? "example");
+  const exampleName = names.includes("git-commit") ? "git-commit" : (names[0] ?? "example");
   // Leading empty strings produce "\n\n" after join("\n"), separating this
   // block from whatever precedes it when spliced into the system prompt.
   const lines: string[] = [
@@ -755,7 +906,7 @@ async function queryKevWithState(
   const questions: Record<string, any> = {};
   for (const [name] of hits) {
     const entry = catalog.get(name);
-    const desc = entry?.description?.slice(0, 400) ?? "";
+    const desc = entry?.description ?? "";
     questions[name] = {
       type: "noul",
       instructions: `Would a careful coding agent load the \`${name}\` skill before handling this request? Skill description: ${desc}`,
@@ -956,7 +1107,7 @@ async function routeSubagentSkills(
       const taskText = task.task;
       const truncated = taskText.slice(0, MAX_STATE_CHARS);
 
-      if (isExplicitTurn(truncated, catalogNameSet)) continue;
+      if (isExplicitTurn(truncated, new Set(catalog.keys()))) continue;
 
       const coding = isCodingTask(task);
       let languages: string[] = [];
@@ -966,7 +1117,7 @@ async function routeSubagentSkills(
         languages = detectLanguages(taskText, repoRoot, catalogNameSet);
       }
 
-      const hits = scorePrompt(taskText, catalogNames, catalogNameSet);
+      const hits = scorePrompt(taskText, catalogNames, catalogNameSet, catalog);
 
       // Non-coding tasks with no hits can be skipped entirely
       if (!coding && hits.size === 0) continue;
@@ -1081,7 +1232,8 @@ let _kevWarnFired = false;
 
 export default function (pi: ExtensionAPI) {
   const catalog = loadCatalog();
-  const catalogNames = [...catalog.keys()];
+  const allNameSet = new Set(catalog.keys());
+  const catalogNames = [...catalog.values()].filter((e) => !e.manual).map((e) => e.name);
   const catalogNameSet = new Set(catalogNames);
   const namesOnlyBlock = buildNamesOnlyList(catalog);
 
@@ -1107,7 +1259,7 @@ export default function (pi: ExtensionAPI) {
       const inContext = skillsInContext(entries);
 
       // Check for explicit turn — skip routing
-      const explicit = isExplicitTurn(truncated, catalogNameSet);
+      const explicit = isExplicitTurn(truncated, allNameSet);
 
       let hits: Map<string, number>;
       let toInject: Array<{ name: string; score: number }> = [];
@@ -1117,7 +1269,7 @@ export default function (pi: ExtensionAPI) {
       if (explicit) {
         hits = new Map();
       } else {
-        hits = scorePrompt(text, catalogNames, catalogNameSet);
+        hits = scorePrompt(text, catalogNames, catalogNameSet, catalog);
 
         // Kev filter: only when rules produced hits
         if (hits.size > 0) {
@@ -1277,14 +1429,15 @@ export {
   isCodingTask,
   detectLanguages,
   resolveRepoRoot,
-  ENFORCER,
+  parseFrontmatterFull,
+  compileKeywords,
   LANGUAGE_MAP,
   _setConfig,
   _getConfig,
   validateDeciderUrl,
   MAX_STATE_CHARS,
   SCORE_NAMED,
-  SCORE_ENFORCER,
+  SCORE_ROUTE_PROMPT,
   CUSTOM_TYPE,
   DECISION_ENTRY,
   GIT_COMMIT_SKILL_MARKER,
