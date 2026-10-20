@@ -29,7 +29,9 @@
  */
 
 import { describe, it } from "node:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, realpathSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import * as assert from "node:assert/strict";
@@ -60,6 +62,12 @@ import skillRouter, {
   resolveRepoRoot,
   parseFrontmatterFull,
   compileKeywords,
+  compileGlobs,
+  matchPath,
+  resolveToolPath,
+  compileCommands,
+  matchCommand,
+  buildRouteIndex,
   LANGUAGE_MAP,
   _setConfig,
   _getConfig,
@@ -169,7 +177,11 @@ function makeTmpCatalog(skills: Record<string, SynthSkill>): string {
     mkdirSync(join(dir, name));
     const lines = ["---", `name: "${name}"`, `description: "${sk.description ?? `Synthetic ${name} skill`}"`];
     if (sk.manual) lines.push("disable-model-invocation: true");
-    if (sk.routePrompt !== undefined) lines.push("metadata:", `  route-prompt: "${sk.routePrompt}"`);
+    const meta: string[] = [];
+    if (sk.routePrompt !== undefined) meta.push(`  route-prompt: "${sk.routePrompt}"`);
+    if (sk.routePaths !== undefined) meta.push(`  route-paths: "${sk.routePaths}"`);
+    if (sk.routeCommands !== undefined) meta.push(`  route-commands: "${sk.routeCommands}"`);
+    if (meta.length) lines.push("metadata:", ...meta);
     lines.push("---", `# ${name}`, "");
     writeFileSync(join(dir, name, "SKILL.md"), lines.join("\n"));
   }
@@ -2815,5 +2827,68 @@ describe("route-prompt from frontmatter", () => {
     assert.equal(cat.get("planner")!.manual, true);
     assert.ok(!scorePrompt("planner plan this", names, undefined, cat).has("planner"));
     assert.ok(!buildNamesOnlyList(cat).includes("planner"));
+  });
+});
+
+describe("path and command matchers", () => {
+  it("glob vectors", () => {
+    for (const v of loadVectors().globs) {
+      if (v.invalid) { assert.throws(() => compileGlobs(v.spec)); continue; }
+      assert.equal(matchPath(compileGlobs(v.spec), v.path, v.root), v.match, `${v.spec} vs ${v.path}`);
+    }
+  });
+
+  it("command vectors", () => {
+    for (const v of loadVectors().commands) {
+      if (v.invalid) { assert.throws(() => compileCommands(v.spec)); continue; }
+      assert.equal(matchCommand(compileCommands(v.spec), v.command), v.match, `${v.spec} vs ${v.command}`);
+    }
+  });
+
+  it("empty specs throw", () => {
+    assert.throws(() => compileGlobs("  "));
+    assert.throws(() => compileCommands(""));
+  });
+
+  it("resolveToolPath handles relative, absolute, ~, @ and worktrees", () => {
+    const tmp = realpathSync(mkdtempSync(join(tmpdir(), "route-paths-")));
+    const repo = join(tmp, "repo");
+    mkdirSync(join(repo, "sub"), { recursive: true });
+    execFileSync("git", ["init", "-q", repo]);
+    const wt = join(tmp, "wt");
+    mkdirSync(join(wt, "pkg"), { recursive: true });
+    writeFileSync(join(wt, ".git"), "gitdir: /x\n");
+
+    const rel = resolveToolPath("sub/a.ts", repo);
+    assert.deepEqual(rel, { abs: join(repo, "sub/a.ts"), root: repo, rel: "sub/a.ts" });
+    assert.deepEqual(resolveToolPath(join(repo, "b.ts"), tmp), { abs: join(repo, "b.ts"), root: repo, rel: "b.ts" });
+    assert.equal(resolveToolPath("@sub/a.ts", repo).rel, "sub/a.ts");
+    assert.deepEqual(resolveToolPath("pkg/c.ts", wt), { abs: join(wt, "pkg/c.ts"), root: wt, rel: "pkg/c.ts" });
+    assert.equal(resolveToolPath("sub/a\u00A0b.ts", repo).abs, join(repo, "sub/a b.ts"));
+    assert.equal(resolveToolPath("~/zz-nonexistent/x.ts", tmp).abs, join(homedir(), "zz-nonexistent/x.ts"));
+    assert.equal(resolveToolPath("@~/zz-nonexistent/x.ts", tmp).abs, join(homedir(), "zz-nonexistent/x.ts"));
+    assert.equal(resolveToolPath("/", tmp).root, undefined);
+  });
+
+  it("buildRouteIndex skips manual skills and warns once for invalid entries", () => {
+    const dir = makeTmpCatalog({
+      zpaths: { routePaths: "**/*.zz", routeCommands: "zcmd" },
+      zbad: { routePaths: "   " },
+      zmanual: { routePaths: "**/*.q", manual: true },
+    });
+    const cat = loadCatalog(dir);
+    const warns: string[] = [];
+    const orig = console.warn;
+    console.warn = (m: string) => { warns.push(String(m)); };
+    try {
+      const idx = buildRouteIndex(cat);
+      buildRouteIndex(cat);
+      assert.ok(idx.has("zpaths"));
+      assert.ok(!idx.has("zbad"));
+      assert.ok(!idx.has("zmanual"));
+      assert.ok(matchPath(idx.get("zpaths")!.paths!, "a/b.zz"));
+      assert.ok(matchCommand(idx.get("zpaths")!.commands!, "zcmd --x"));
+      assert.equal(warns.filter((w) => w.includes("zbad")).length, 1);
+    } finally { console.warn = orig; }
   });
 });

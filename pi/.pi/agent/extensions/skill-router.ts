@@ -16,7 +16,8 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve as resolvePath } from "node:path";
+import { homedir } from "node:os";
 
 // ── Config ──────────────────────────────────────────────────────────
 
@@ -302,8 +303,8 @@ function isRealGitCommit(cmd: string): boolean {
   return false;
 }
 
-/** Test a single command segment (already split on boundaries) for git commit. */
-function testSegmentForGitCommit(seg: string): boolean {
+/** Strip leading VAR=value assignments and sudo/env/command/exec wrappers from a command segment. */
+function stripCommandPrefixes(seg: string): string {
   // Strip leading VAR=value assignments
   let s = seg;
   while (/^\w+=\S*\s/.test(s)) {
@@ -313,6 +314,21 @@ function testSegmentForGitCommit(seg: string): boolean {
   while (/^(?:sudo|env|command|exec)\s/.test(s)) {
     s = s.replace(/^(?:sudo|env|command|exec)\s+/, "");
   }
+  return s;
+}
+
+/** Split a shell command into command-position segments (non-commands stripped). */
+function commandSegments(cmd: string): string[] {
+  const out: string[] = [];
+  for (const seg of stripShellNonCommands(cmd).split(/[;\n]|&&|\|\||\|/)) {
+    for (const sub of seg.split(/\(/)) out.push(sub.trim());
+  }
+  return out;
+}
+
+/** Test a single command segment (already split on boundaries) for git commit. */
+function testSegmentForGitCommit(seg: string): boolean {
+  const s = stripCommandPrefixes(seg);
   // Must start with "git" now
   if (!s.startsWith("git") || (s.length > 3 && /\w/.test(s[3]))) return false;
   // Walk past "git" and consume global options to find the subcommand
@@ -623,6 +639,134 @@ function loadCatalog(catalogDir?: string): Map<string, CatalogEntry> {
     console.warn(`[skill-router] invalid route-prompt ignored for: ${fresh.join(", ")}`);
   }
   return catalog;
+}
+
+// ── Route-paths / route-commands matchers ───────────────────────────
+
+function globToRegex(glob: string): RegExp {
+  const out: string[] = [];
+  const esc = (c: string) => c.replace(/[.*+?^${}()|[\]\\\/-]/g, "\\$&");
+  let i = 0;
+  const n = glob.length;
+  while (i < n) {
+    const ch = glob[i];
+    if (ch === "*") {
+      if (glob.startsWith("**/", i)) { out.push("(?:.*/)?"); i += 3; }
+      else if (glob.startsWith("**", i)) { out.push(".*"); i += 2; }
+      else { out.push("[^/]*"); i += 1; }
+    } else if (ch === "?") {
+      out.push("[^/]"); i += 1;
+    } else if (ch === "[") {
+      let j = i + 1;
+      if (j < n && (glob[j] === "!" || glob[j] === "^")) j++;
+      if (j < n && glob[j] === "]") j++;
+      while (j < n && glob[j] !== "]") j++;
+      if (j >= n) { out.push(esc(ch)); i += 1; }
+      else {
+        let inner = glob.slice(i + 1, j);
+        const neg = inner[0] === "!" || inner[0] === "^";
+        if (neg) inner = inner.slice(1);
+        inner = inner.replace(/\\/g, "\\\\");
+        if (inner.startsWith("]")) inner = "\\" + inner;
+        inner = inner.replace(/\[/g, "\\[");
+        out.push("[" + (neg ? "^" : "") + inner + "]");
+        i = j + 1;
+      }
+    } else {
+      out.push(esc(ch)); i += 1;
+    }
+  }
+  return new RegExp("^" + out.join("") + "$", "s");
+}
+
+/** Compile a space-separated glob spec. Throws on an empty spec. */
+function compileGlobs(spec: string): RegExp[] {
+  const words = typeof spec === "string" ? spec.split(/\s+/).filter(Boolean) : [];
+  if (words.length === 0) throw new Error("empty glob spec");
+  return words.map(globToRegex);
+}
+
+/** Match a path against compiled globs; root-relative when under root, else every suffix. */
+function matchPath(globs: RegExp[], path: string, root?: string): boolean {
+  if (root) {
+    const prefix = root.replace(/\/+$/, "") + "/";
+    if (path.startsWith(prefix)) {
+      const rel = path.slice(prefix.length);
+      return globs.some((r) => r.test(rel));
+    }
+  }
+  const cands = [path];
+  for (let i = 0; i < path.length; i++) if (path[i] === "/") cands.push(path.slice(i + 1));
+  return globs.some((r) => cands.some((c) => r.test(c)));
+}
+
+/** Resolve a tool path like pi's resolveToCwd and locate the enclosing git root. */
+function resolveToolPath(rawPath: string, cwd: string): { abs: string; root?: string; rel?: string } {
+  let p = rawPath.startsWith("@") ? rawPath.slice(1) : rawPath;
+  p = p.replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, " ");
+  if (p === "~") p = homedir();
+  else if (p.startsWith("~/")) p = join(homedir(), p.slice(2));
+  const abs = resolvePath(cwd, p);
+  let dir = dirname(abs);
+  for (;;) {
+    if (existsSync(join(dir, ".git"))) {
+      const rel = abs.slice(dir.length).replace(/^\/+/, "");
+      return { abs, root: dir, rel };
+    }
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return { abs };
+}
+
+interface CommandMatcher { regexes: RegExp[] }
+
+/** Compile route-commands keywords (`-` = hyphen or whitespace, `*` = any text). */
+function compileCommands(spec: string): CommandMatcher {
+  const words = typeof spec === "string" ? spec.split(/\s+/).filter(Boolean) : [];
+  if (words.length === 0) throw new Error("empty command spec");
+  const regexes = words.map((w) => {
+    if (!w.replace(/[*-]/g, "")) throw new Error(`invalid command keyword: ${JSON.stringify(w)}`);
+    const body = [...w]
+      .map((ch) => (ch === "*" ? ".*" : ch === "-" ? "[-\\s]" : escapeRegexChar(ch)))
+      .join("");
+    return new RegExp("^" + body + "(?:\\s|$)", "is");
+  });
+  return { regexes };
+}
+
+/** True when any command-position segment starts with a command keyword. */
+function matchCommand(matcher: CommandMatcher, command: string): boolean {
+  for (const seg of commandSegments(command)) {
+    const s = stripCommandPrefixes(seg);
+    if (matcher.regexes.some((r) => r.test(s))) return true;
+  }
+  return false;
+}
+
+interface RouteIndexEntry { paths?: RegExp[]; commands?: CommandMatcher }
+
+function buildRouteIndex(catalog: Map<string, CatalogEntry>): Map<string, RouteIndexEntry> {
+  const index = new Map<string, RouteIndexEntry>();
+  const bad: string[] = [];
+  for (const [name, e] of catalog) {
+    if (e.manual) continue;
+    const item: RouteIndexEntry = {};
+    if (e.routePaths !== undefined) {
+      try { item.paths = compileGlobs(e.routePaths); } catch { bad.push(`${name}:route-paths`); }
+    }
+    if (e.routeCommands !== undefined) {
+      try { item.commands = compileCommands(e.routeCommands); } catch { bad.push(`${name}:route-commands`); }
+    }
+    if (item.paths || item.commands) index.set(name, item);
+  }
+  const fresh = bad.filter((n) => !_routeWarned.has(n));
+  if (fresh.length) {
+    for (const n of fresh) _routeWarned.add(n);
+    console.warn(`[skill-router] invalid route key ignored for: ${fresh.join(", ")}`);
+  }
+  return index;
 }
 
 // ── Named-skill regex builder (same semantics as the Python reference) ───────
@@ -1431,6 +1575,12 @@ export {
   resolveRepoRoot,
   parseFrontmatterFull,
   compileKeywords,
+  compileGlobs,
+  matchPath,
+  resolveToolPath,
+  compileCommands,
+  matchCommand,
+  buildRouteIndex,
   LANGUAGE_MAP,
   _setConfig,
   _getConfig,
