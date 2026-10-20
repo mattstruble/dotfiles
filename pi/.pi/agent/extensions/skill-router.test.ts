@@ -68,7 +68,6 @@ import skillRouter, {
   compileCommands,
   matchCommand,
   buildRouteIndex,
-  LANGUAGE_MAP,
   _setConfig,
   _getConfig,
   SCORE_NAMED,
@@ -170,7 +169,7 @@ function makeCompaction(firstKeptEntryId: string, parentId?: string): any {
 
 // ── Synthetic catalogs ──────────────────────────────────────────────
 
-interface SynthSkill { description?: string; routePrompt?: string; manual?: boolean }
+interface SynthSkill { description?: string; routePrompt?: string; routePaths?: string; routeCommands?: string; manual?: boolean }
 
 function makeTmpCatalog(skills: Record<string, SynthSkill>): string {
   const dir = mkdtempSync(join(tmpdir(), "skill-router-cat-"));
@@ -2325,42 +2324,69 @@ describe("isCodingTask", () => {
 
 // ── Language detection ──────────────────────────────────────────────
 
-describe("detectLanguages", () => {
-  it("detects .py extension in text", () => {
-    const nameSet = new Set(["python-design", "software-design", "nix"]);
-    const langs = detectLanguages("Edit the file src/main.py to fix the bug", "/tmp/nonexistent", nameSet);
-    assert.deepEqual(langs, ["python-design"]);
+describe("detectLanguages (route-paths)", () => {
+  const catDir = makeTmpCatalog({
+    "python-design": { routePaths: "**/*.py pyproject.toml" },
+    nix: { routePaths: "**/*.nix flake.nix" },
+    docker: { routePaths: "Dockerfile" },
+    love2d: { routePaths: "conf.lua" },
+    hidden: { routePaths: "**/*.py", manual: true },
+  });
+  const idx = buildRouteIndex(loadCatalog(catDir));
+  const topDir = (files: string[]) => {
+    const d = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
+    for (const f of files) writeFileSync(pathJoin(d, f), "x");
+    return d;
+  };
+
+  it("detects path token in text", () => {
+    assert.deepEqual(detectLanguages("Edit the file src/app.py, then stop", "/tmp/nonexistent", idx), ["python-design"]);
   });
 
-  it("detects .nix extension in text", () => {
-    const nameSet = new Set(["python-design", "software-design", "nix"]);
-    const langs = detectLanguages("Update foo.nix with the new config", "/tmp/nonexistent", nameSet);
-    assert.deepEqual(langs, ["nix"]);
+  it("detects extensionless names and quoted tokens", () => {
+    assert.deepEqual(detectLanguages("Fix `Dockerfile`.", "/tmp/nonexistent", idx), ["docker"]);
   });
 
-  it("detects marker files at repo root", () => {
-    const tmpDir = mkdtempSync(pathJoin(tmpdir(), "skill-router-test-"));
-    writeFileSync(pathJoin(tmpDir, "pyproject.toml"), "[tool.pytest]");
-    try {
-      const nameSet = new Set(["python-design", "software-design", "nix"]);
-      const langs = detectLanguages("Fix the parsing bug", tmpDir, nameSet);
-      assert.deepEqual(langs, ["python-design"]);
-    } finally {
-      rmSync(tmpDir, { recursive: true });
+  it("detects top-level files of repo root", () => {
+    const d = topDir(["flake.nix"]);
+    try { assert.deepEqual(detectLanguages("Fix it", d, idx), ["nix"]); } finally { rmSync(d, { recursive: true }); }
+    const p = topDir(["pyproject.toml"]);
+    try { assert.deepEqual(detectLanguages("Fix it", p, idx), ["python-design"]); } finally { rmSync(p, { recursive: true }); }
+  });
+
+  it("main.lua alone adds no love2d; manual skills never detected", () => {
+    assert.deepEqual(detectLanguages("Edit main.lua", "/tmp/nonexistent", idx), []);
+    assert.ok(!detectLanguages("Edit a.py", "/tmp/nonexistent", idx).includes("hidden"));
+  });
+
+  it("detects multiple", () => {
+    const langs = detectLanguages("Edit app.py and Dockerfile", "/tmp/nonexistent", idx);
+    assert.ok(langs.includes("python-design") && langs.includes("docker"));
+  });
+
+  it("installed catalog route-paths cover the former language signals", () => {
+    const catalog = loadCatalog();
+    const installed = buildRouteIndex(catalog);
+    const signals: Record<string, string[]> = {
+      "python-design": ["a.py", "pyproject.toml", "setup.py", "requirements.txt"],
+      nix: ["a.nix", "flake.nix"],
+      docker: ["Dockerfile", "docker-compose.yml", "compose.yaml"],
+      helm: ["Chart.yaml"],
+      "odin-design": ["a.odin"],
+      godot: ["a.gd", "a.tscn", "project.godot"],
+      "godot-shader": ["a.gdshader"],
+      "love2d-fennel": ["a.fnl"],
+      love2d: ["conf.lua"],
+    };
+    for (const required of ["python-design", "nix", "docker", "helm"]) {
+      assert.ok(catalog.has(required), `${required} missing from installed catalog`);
     }
-  });
-
-  it("skips skills not in catalog", () => {
-    const nameSet = new Set(["python-design"]); // no odin-design
-    const langs = detectLanguages("Edit main.odin", "/tmp/nonexistent", nameSet);
-    assert.deepEqual(langs, []);
-  });
-
-  it("detects multiple languages", () => {
-    const nameSet = new Set(["python-design", "docker", "nix"]);
-    const langs = detectLanguages("Edit app.py and Dockerfile", "/tmp/nonexistent", nameSet);
-    assert.ok(langs.includes("python-design"));
-    assert.ok(langs.includes("docker"));
+    for (const [skill, files] of Object.entries(signals)) {
+      if (!catalog.has(skill)) continue;
+      for (const f of files) {
+        assert.ok([...installed.values()].some((r) => r.paths && matchPath(r.paths, f)), `no skill route-paths match ${f}`);
+      }
+    }
   });
 });
 

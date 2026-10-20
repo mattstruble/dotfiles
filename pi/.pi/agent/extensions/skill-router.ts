@@ -359,19 +359,6 @@ function testSegmentForGitCommit(seg: string): boolean {
   return subCmd !== null && subCmd[1] === "commit";
 }
 
-// ── Language-to-skill map for coding task detection (extensions, filenames, and marker files) ──
-const LANGUAGE_MAP: Array<{ patterns: RegExp[]; markers: string[]; skill: string }> = [
-  { patterns: [/\.py\b/], markers: ["pyproject.toml", "setup.py", "requirements.txt"], skill: "python-design" },
-  { patterns: [/\.nix\b/], markers: ["flake.nix"], skill: "nix" },
-  { patterns: [/Dockerfile\b/, /docker-compose\.yml\b/, /compose\.yaml\b/], markers: ["Dockerfile", "docker-compose.yml", "compose.yaml"], skill: "docker" },
-  { patterns: [/Chart\.yaml\b/], markers: ["Chart.yaml"], skill: "helm" },
-  { patterns: [/\.odin\b/], markers: [], skill: "odin-design" },
-  { patterns: [/\.gd\b/, /\.tscn\b/, /project\.godot\b/], markers: ["project.godot"], skill: "godot" },
-  { patterns: [/\.gdshader\b/], markers: [], skill: "godot-shader" },
-  { patterns: [/\.fnl\b/], markers: [], skill: "love2d-fennel" },
-  { patterns: [/conf\.lua\b/, /main\.lua\b/], markers: ["conf.lua", "main.lua"], skill: "love2d" },
-];
-
 /** A task is a coding task when it has write/edit tools or sets worktree/allowTreeMutation. */
 function isCodingTask(task: any): boolean {
   if (Array.isArray(task.tools)) {
@@ -396,38 +383,39 @@ function resolveRepoRoot(taskText: string, fallbackDir: string): string {
   return fallbackDir;
 }
 
-/** Detect language skills from file references in text and marker files at repo top level. */
+const EXTENSIONLESS_NAMES = new Set(["Dockerfile", "Makefile", "Containerfile", "Justfile", "Jenkinsfile", "Vagrantfile", "Rakefile", "Gemfile"]);
+
+/** Path-like tokens (first 2000 chars): contain "/", end in name.ext, or are a known extensionless name. */
+function extractPathTokens(taskText: string): string[] {
+  const out: string[] = [];
+  for (const raw of taskText.slice(0, MAX_STATE_CHARS).split(/[\s"'`()]+/)) {
+    const tok = raw.replace(/[,.:;)\]]+$/, "");
+    if (!tok) continue;
+    const base = tok.slice(tok.lastIndexOf("/") + 1);
+    if (tok.includes("/") || /^[^.]+\.[A-Za-z0-9_-]+$|^\..+\.[A-Za-z0-9_-]+$/.test(base) || EXTENSIONLESS_NAMES.has(base)) out.push(tok);
+  }
+  return out;
+}
+
+/** Detect skills whose route-paths match path-like task tokens or top-level files of repoRoot. */
 function detectLanguages(
   taskText: string,
   repoRoot: string,
-  catalogNameSet: Set<string>,
+  routeIndex: Map<string, RouteIndexEntry>,
 ): string[] {
   const detected = new Set<string>();
-
-  // Check text for file patterns
-  for (const entry of LANGUAGE_MAP) {
-    for (const pat of entry.patterns) {
-      if (pat.test(taskText)) {
-        if (catalogNameSet.has(entry.skill)) detected.add(entry.skill);
-        break;
-      }
-    }
+  const entries = [...routeIndex].filter(([, r]) => r.paths);
+  const tokens = extractPathTokens(taskText);
+  for (const [name, r] of entries) {
+    if (tokens.some((t) => matchPath(r.paths!, t))) detected.add(name);
   }
-
-  // Check marker files at repo top level (single readdir, no recursion)
   try {
-    const topFiles = new Set(readdirSync(repoRoot));
-    for (const entry of LANGUAGE_MAP) {
-      if (detected.has(entry.skill)) continue;
-      for (const marker of entry.markers) {
-        if (topFiles.has(marker)) {
-          if (catalogNameSet.has(entry.skill)) detected.add(entry.skill);
-          break;
-        }
-      }
+    const files = readdirSync(repoRoot, { withFileTypes: true }).filter((d) => d.isFile()).map((d) => d.name);
+    for (const [name, r] of entries) {
+      if (detected.has(name)) continue;
+      if (files.some((f) => matchPath(r.paths!, f))) detected.add(name);
     }
-  } catch { /* repo dir unreadable — skip marker detection */ }
-
+  } catch { /* repo dir unreadable — skip top-level detection */ }
   return [...detected];
 }
 
@@ -1247,6 +1235,7 @@ async function routeSubagentSkills(
     languages: string[];
   }
   const scored: ScoredTask[] = [];
+  const subagentRouteIndex = buildRouteIndex(catalog);
 
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
@@ -1263,7 +1252,7 @@ async function routeSubagentSkills(
 
       if (coding) {
         const repoRoot = resolveRepoRoot(taskText, cwdRaw);
-        languages = detectLanguages(taskText, repoRoot, catalogNameSet);
+        languages = detectLanguages(taskText, repoRoot, subagentRouteIndex);
       }
 
       const hits = scorePrompt(taskText, catalogNames, catalogNameSet, catalog);
@@ -1637,7 +1626,6 @@ export {
   compileCommands,
   matchCommand,
   buildRouteIndex,
-  LANGUAGE_MAP,
   _setConfig,
   _getConfig,
   validateDeciderUrl,

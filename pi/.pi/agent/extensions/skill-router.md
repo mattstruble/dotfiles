@@ -35,10 +35,10 @@ word starting or ending with a non-word character (`.py`) drops the word boundar
 `*` and `-`, or an empty spec, is invalid: the skill's keyword signal is disabled and one warning per process lists
 the skill. `route-paths` and `route-commands` drive the edit/command gate below.
 
-**Subagents.** On a `subagent` tool call each task text (single `task`, `tasks[]` items, `chain` steps including `parallel` items) is scored independently. Picked skill *names* are merged into the call's top-level `skill` field (existing array/CSV values preserved; `skill: false` disables routing); skill bodies are not injected.
+**Subagents.** On a `subagent` tool call each task text (single `task`, `tasks[]` items, `chain` steps including `parallel` items) is scored independently. Picked skill *names* are merged into the call's top-level `skill` field (existing array/CSV values preserved; `skill: false` disables routing); skill bodies are not injected. For coding tasks (write/edit tools, `worktree` or `allowTreeMutation`), skills whose `route-paths` globs match path-like tokens in the first 2,000 characters of the task text, or a top-level file of the `Repo root:` directory (else the cwd), are named first, then `software-design` and the rules/Kev picks, capped at `maxSkillsPerTask`.
 
 - **Coding task** — `tools` includes `write`/`edit`, or `worktree: true` / `allowTreeMutation: true`.
-- **Language detection** — from file names/extensions in the task text and from top-level marker files of the `Repo root:` directory (or the working directory). The language map covers Python, Nix, Docker, Helm, Odin, Godot (+ shaders), Fennel/LÖVE, and LÖVE 2D.
+- **Language detection** — skills whose `route-paths` globs match path-like tokens in the task text (containing `/`, ending in a file name with an extension, or a known extensionless name such as `Dockerfile`) or a top-level file of the `Repo root:` directory (or the working directory). Manual skills are never detected, and `main.lua` is not a signal (only `conf.lua` is, via the `love2d` skill's `route-paths`).
 - **Precedence** — detected language skills and `software-design` are injected first without the Kev filter, then the usual rules + Kev picks are appended; duplicates and already-present skills are dropped; the total is capped at `maxSkillsPerTask`.
 - **Shadow and off** — shadow mode logs decisions (with `wouldInject`) without mutating tasks; off mode does nothing.
 
