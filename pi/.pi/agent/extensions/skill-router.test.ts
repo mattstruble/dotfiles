@@ -76,6 +76,7 @@ import skillRouter, {
   CUSTOM_TYPE,
   DECISION_ENTRY,
   GIT_COMMIT_SKILL_MARKER,
+  SKILLS_CALL_MARKER,
   type CatalogEntry,
   type RouterConfig,
 } from "./skill-router.ts";
@@ -2890,5 +2891,133 @@ describe("path and command matchers", () => {
       assert.ok(matchCommand(idx.get("zpaths")!.commands!, "zcmd --x"));
       assert.equal(warns.filter((w) => w.includes("zbad")).length, 1);
     } finally { console.warn = orig; }
+  });
+});
+
+describe("edit/command gate", () => {
+  const tr = (text: string, isError = true) => ({ type: "message", message: { role: "toolResult", isError, content: [{ type: "text", text }] } });
+
+  function setup(skills: Record<string, any>, max = 3) {
+    const prev = _getConfig();
+    const dir = realpathSync(makeTmpCatalog(skills));
+    _setConfig({ ...prev, catalog: dir, mode: "inject", maxSkillsPerTask: max });
+    const handlers: Record<string, Function> = {};
+    skillRouter({ on: (n: string, h: Function) => { handlers[n] = h; } } as any);
+    _setConfig({ ...prev, catalog: dir, mode: "inject", maxSkillsPerTask: max });
+    let entries: any[] = [];
+    let throws = false;
+    const ctx = {
+      cwd: dir,
+      sessionManager: { buildContextEntries: () => { if (throws) throw new Error("boom"); return entries; } },
+    };
+    return {
+      handlers, ctx, restore: () => _setConfig(prev),
+      setEntries: (e: any[]) => { entries = e; },
+      setThrows: (t: boolean) => { throws = t; },
+      call: (toolName: string, input: any) => handlers.tool_call({ toolName, input }, ctx),
+    };
+  }
+  const SK = {
+    "python-design": { routePaths: "**/*.py" },
+    "software-design": { routePaths: "**/*.py **/*.ts" },
+    deployer: { routeCommands: "deployctl" },
+    hidden: { routePaths: "**/*.py", manual: true },
+    "git-commit": { routeCommands: "git-commit-never" },
+  };
+
+  it("blocks the first .py edit with bodies; passes once the result is in context", async () => {
+    const t = setup(SK);
+    try {
+      const r = await t.call("edit", { path: "a.py" });
+      assert.ok(r.block);
+      assert.ok(r.reason.startsWith(`${SKILLS_CALL_MARKER} python-design, software-design\n`));
+      assert.ok(r.reason.includes('<skill name="python-design"'));
+      assert.ok(r.reason.includes('<skill name="software-design"'));
+      assert.ok(!r.reason.includes('name="hidden"'));
+      t.setEntries([tr(r.reason)]);
+      await t.handlers.turn_start({}, t.ctx);
+      assert.equal(await t.call("edit", { path: "b.py" }), undefined);
+      // compaction: earlier result gone
+      t.setEntries([]);
+      assert.ok((await t.call("edit", { path: "b.py" }))?.block);
+    } finally { t.restore(); }
+  });
+
+  it("siblings in one turn get a short block; turn_start resets", async () => {
+    const t = setup(SK);
+    try {
+      const a = await t.call("edit", { path: "a.py" });
+      const b = await t.call("write", { path: "b.py" });
+      const c = await t.call("edit", { path: "c.py" });
+      assert.ok(a.reason.includes("<skill name="));
+      for (const x of [b, c]) {
+        assert.ok(x.block);
+        assert.ok(x.reason.startsWith("[skill-router] python-design, software-design delivered in a sibling call"));
+        assert.ok(!x.reason.includes("<skill name="));
+      }
+      await t.handlers.turn_start({}, t.ctx);
+      assert.ok((await t.call("edit", { path: "d.py" })).reason.includes("<skill name="));
+    } finally { t.restore(); }
+  });
+
+  it("delivers only the new skills when some were already delivered", async () => {
+    const t = setup(SK);
+    try {
+      await t.call("edit", { path: "a.ts" }); // software-design
+      const r = await t.call("edit", { path: "b.py" });
+      assert.ok(r.reason.startsWith(`${SKILLS_CALL_MARKER} python-design\n`));
+      assert.ok(!r.reason.includes('name="software-design"'));
+    } finally { t.restore(); }
+  });
+
+  it("skillsInContext recognises the marker only on erroring, prefixed results", () => {
+    const text = `${SKILLS_CALL_MARKER} alpha, beta\nApply...\n<skill name="zzz">`;
+    assert.deepEqual([...skillsInContext([tr(text)])].sort(), ["alpha", "beta"]);
+    assert.equal(skillsInContext([tr(text, false)]).size, 0);
+    assert.equal(skillsInContext([tr("note: " + text)]).size, 0);
+  });
+
+  it("then_run command matches route-commands; bash too", async () => {
+    const t = setup(SK);
+    try {
+      const r = await t.call("edit", { path: "x.txt", then_run: { command: "deployctl up" } });
+      assert.ok(r.reason.startsWith(`${SKILLS_CALL_MARKER} deployer\n`));
+      await t.handlers.turn_start({}, t.ctx);
+      assert.ok((await t.call("bash", { command: "deployctl up" }))?.block);
+    } finally { t.restore(); }
+  });
+
+  it("git commit is handled by the commit gate only", async () => {
+    const t = setup({ ...SK, deployer: { routeCommands: "git" } });
+    try {
+      const r = await t.call("bash", { command: "git commit -m x" });
+      assert.ok(r.reason.startsWith(GIT_COMMIT_SKILL_MARKER));
+      assert.ok(!r.reason.includes("deployer"));
+    } finally { t.restore(); }
+  });
+
+  it("fails open when the gate throws", async () => {
+    const t = setup(SK);
+    try {
+      t.setThrows(true);
+      assert.equal(await t.call("edit", { path: "a.py" }), undefined);
+    } finally { t.restore(); }
+  });
+
+  it("caps at maxSkillsPerTask and ignores manual skills", async () => {
+    const t = setup({ aa: { routePaths: "**/*.py" }, bb: { routePaths: "**/*.py" }, cc: { routePaths: "**/*.py" }, mm: { routePaths: "**/*.py", manual: true } }, 2);
+    try {
+      const r = await t.call("edit", { path: "a.py" });
+      assert.ok(r.reason.startsWith(`${SKILLS_CALL_MARKER} aa, bb\n`));
+      assert.ok(!r.reason.includes('name="cc"') && !r.reason.includes('name="mm"'));
+    } finally { t.restore(); }
+  });
+
+  it("no match returns undefined", async () => {
+    const t = setup(SK);
+    try {
+      assert.equal(await t.call("edit", { path: "a.md" }), undefined);
+      assert.equal(await t.call("bash", { command: "ls" }), undefined);
+    } finally { t.restore(); }
   });
 });

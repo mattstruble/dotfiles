@@ -33,7 +33,7 @@ optional model filter (the local [Kev decision server](../../../../README.md#kev
 inside a word matches any text; `-` matches a hyphen or a space (`git-push` matches `git push` and `git-push`). A
 word starting or ending with a non-word character (`.py`) drops the word boundary on that side. A word made only of
 `*` and `-`, or an empty spec, is invalid: the skill's keyword signal is disabled and one warning per process lists
-the skill. `route-paths` and `route-commands` are stored but not used yet.
+the skill. `route-paths` and `route-commands` drive the edit/command gate below.
 
 **Subagents.** On a `subagent` tool call each task text (single `task`, `tasks[]` items, `chain` steps including `parallel` items) is scored independently. Picked skill *names* are merged into the call's top-level `skill` field (existing array/CSV values preserved; `skill: false` disables routing); skill bodies are not injected.
 
@@ -49,6 +49,18 @@ strings, single- and double-quoted string contents, and `#` comments, then looks
 followed by optional global options and the subcommand `commit`. When the gate blocks, the block reason includes the
 full git-commit SKILL.md body behind the `[skill-router] git-commit skill loaded for this commit:` marker; the skill
 arrives in the blocked call's error result so the agent can apply it and retry without a separate read.
+
+**Edit/command gate.** An `edit`/`write` call whose path matches a skill's `metadata.route-paths`, or whose
+`then_run.command` (or a `bash` command) matches its `route-commands`, is blocked once so the agent receives the skill.
+The check runs after subagent routing and the commit gate; a real `git commit` is handled by the commit gate only.
+Matched skills that are not already in context (compaction-aware) are delivered, ordered by name and capped at
+`maxSkillsPerTask`. The block reason starts with `[skill-router] skills loaded for this call: <names>`, then the skill
+bodies; because it sits at position 0 of an error result, later calls see the skills as in context and pass. Pi
+appends tool results only after a whole assistant message's batch, so parallel sibling calls cannot see each other's
+blocks: the router keeps a per-turn set (cleared on `turn_start`), and a sibling needing only already-delivered skills
+gets a short `... delivered in a sibling call this turn; read it there, then retry.` block without bodies. The gate
+fails open: any error allows the call. It runs only in `inject` mode (`shadow` and `off` skip it), ignores manual
+skills, and applies in subagent and workflow children because they load this extension too.
 
 ## Configuration
 

@@ -195,6 +195,7 @@ const MIN_SCORE = 0.5;
 const CUSTOM_TYPE = "skill-router";
 const DECISION_ENTRY = "skill-router-decision";
 const GIT_COMMIT_SKILL_MARKER = "[skill-router] git-commit skill loaded for this commit:";
+const SKILLS_CALL_MARKER = "[skill-router] skills loaded for this call:";
 
 // ── Commit-gate command introspection ────────────────────────────────
 //
@@ -799,28 +800,26 @@ function isExplicitTurn(text: string, catalogNames: Set<string>): boolean {
 function scorePrompt(
   text: string,
   catalogNames: string[],
-  _catalogNameSet?: Set<string>,
-  catalog?: Map<string, CatalogEntry>,
+  _catalogNameSet: Set<string> | undefined,
+  catalog: Map<string, CatalogEntry>,
 ): Map<string, number> {
   const scores = new Map<string, number>();
   const truncated = text.slice(0, MAX_STATE_CHARS);
 
   // Named-skill rule: catalog name found in prompt → 1.0
   for (const name of catalogNames) {
-    if (catalog?.get(name)?.manual) continue;
+    if (catalog.get(name)?.manual) continue;
     if (buildNameRegex(name).test(truncated)) {
       scores.set(name, SCORE_NAMED);
     }
   }
 
   // Route-prompt rule: frontmatter keywords → 0.75 (manual skills never scored)
-  if (catalog) {
-    for (const name of catalogNames) {
-      const entry = catalog.get(name);
-      if (!entry || entry.manual || !entry.keywords) continue;
-      if (!scores.has(name) && entry.keywords.test(truncated)) {
-        scores.set(name, SCORE_ROUTE_PROMPT);
-      }
+  for (const name of catalogNames) {
+    const entry = catalog.get(name);
+    if (!entry || entry.manual || !entry.keywords) continue;
+    if (!scores.has(name) && entry.keywords.test(truncated)) {
+      scores.set(name, SCORE_ROUTE_PROMPT);
     }
   }
 
@@ -933,6 +932,12 @@ function skillsInContext(entries: any[]): Set<string> {
           if (block?.type === "text" && typeof block.text === "string") {
             if (block.text.startsWith(GIT_COMMIT_SKILL_MARKER)) {
               names.add("git-commit");
+            } else if (block.text.startsWith(SKILLS_CALL_MARKER)) {
+              const first = block.text.slice(SKILLS_CALL_MARKER.length).split("\n", 1)[0];
+              for (const n of first.split(",")) {
+                const name = n.trim();
+                if (name) names.add(name);
+              }
             }
           }
         }
@@ -1380,6 +1385,12 @@ export default function (pi: ExtensionAPI) {
   const catalogNames = [...catalog.values()].filter((e) => !e.manual).map((e) => e.name);
   const catalogNameSet = new Set(catalogNames);
   const namesOnlyBlock = buildNamesOnlyList(catalog);
+  const routeIndex = buildRouteIndex(catalog);
+  // Skills delivered by a block earlier in the current turn (siblings in one
+  // batch cannot see each other's results in the session).
+  const delivered = new Set<string>();
+
+  pi.on("turn_start", async () => { delivered.clear(); });
 
   // Inject skill directives and transform system prompt
   pi.on("before_agent_start", async (event, ctx) => {
@@ -1487,7 +1498,52 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
-  // Subagent routing + commit gate
+  // Edit/command gate: block the first matching call, deliver skill bodies.
+  // Fails open on any error.
+  function editCommandGate(event: any, ctx: any): { block: true; reason: string } | undefined {
+    try {
+      if (_config.mode !== "inject" || routeIndex.size === 0) return undefined;
+      const input = event.input ?? {};
+      const cmds: string[] = [];
+      let target: ReturnType<typeof resolveToolPath> | undefined;
+      if (event.toolName === "edit" || event.toolName === "write") {
+        if (typeof input.path === "string") target = resolveToolPath(input.path, ctx.cwd);
+        if (typeof input.then_run?.command === "string") cmds.push(input.then_run.command);
+      } else if (event.toolName === "bash") {
+        if (typeof input.command === "string") cmds.push(input.command);
+      } else {
+        return undefined;
+      }
+      const matched: string[] = [];
+      for (const [name, r] of routeIndex) {
+        if (!catalogNameSet.has(name)) continue;
+        if (target && r.paths && matchPath(r.paths, target.abs, target.root)) { matched.push(name); continue; }
+        if (r.commands && cmds.some((c) => matchCommand(r.commands!, c))) matched.push(name);
+      }
+      if (matched.length === 0) return undefined;
+      const inContext = skillsInContext(getContextEntries(ctx));
+      const candidates = matched.filter((n) => !inContext.has(n)).sort();
+      if (candidates.length === 0) return undefined;
+      const cap = _config.maxSkillsPerTask;
+      const fresh = candidates.filter((n) => !delivered.has(n)).slice(0, cap);
+      if (fresh.length === 0) {
+        return {
+          block: true,
+          reason: `[skill-router] ${candidates.slice(0, cap).join(", ")} delivered in a sibling call this turn; read it there, then retry.`,
+        };
+      }
+      const bodies = fresh.map((n) => formatSkillMessage(catalog.get(n)!));
+      for (const n of fresh) delivered.add(n);
+      return {
+        block: true,
+        reason: `${SKILLS_CALL_MARKER} ${fresh.join(", ")}\nApply the skill instructions below and retry.\n\n${bodies.join("\n\n")}`,
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
+  // Subagent routing + commit gate + edit/command gate
   pi.on("tool_call", async (event, ctx) => {
     // ── Subagent routing ──────────────────────────────────────────
     if (event.toolName === "subagent" && _config.mode !== "off") {
@@ -1508,10 +1564,10 @@ export default function (pi: ExtensionAPI) {
         const fused = (event.input as any)?.then_run?.command;
         if (typeof fused === "string") cmd = fused;
       }
-      if (!cmd || !isRealGitCommit(cmd)) return;
+      if (!cmd || !isRealGitCommit(cmd)) return editCommandGate(event, ctx);
 
-      // If catalog has no git-commit skill, the gate can never be satisfied; allow the command.
-      if (!catalog.has("git-commit")) return;
+      // If catalog has no (non-manual) git-commit skill, the gate can never be satisfied; allow the command.
+      if (!catalogNameSet.has("git-commit")) return;
 
       // Check if git-commit is in context from any source.
       // If session introspection throws, fail closed with a clear reason.
@@ -1591,5 +1647,6 @@ export {
   CUSTOM_TYPE,
   DECISION_ENTRY,
   GIT_COMMIT_SKILL_MARKER,
+  SKILLS_CALL_MARKER,
 };
 export type { CatalogEntry, RouterConfig, DeciderConfig, KevResult, KevFallbackResult };
