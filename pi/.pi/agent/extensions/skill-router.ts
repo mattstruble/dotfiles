@@ -210,7 +210,7 @@ const SKILLS_CALL_MARKER = "[skill-router] skills loaded for this call:";
  *   - # comments (outside quotes)
  * Returns the remaining text for command-position scanning.
  */
-function stripShellNonCommands(cmd: string): string {
+function stripShellNonCommands(cmd: string, quoteMarker = ""): string {
   // Phase 1: strip heredoc bodies.  We look for <<[-]?['"]?WORD['"]? and
   // remove everything from the next newline up to and including the line
   // matching the bare delimiter.
@@ -252,6 +252,7 @@ function stripShellNonCommands(cmd: string): string {
         j++;
       }
       i = j + 1;
+      out += quoteMarker;
       continue;
     }
     if (ch === "'" ) {
@@ -259,6 +260,7 @@ function stripShellNonCommands(cmd: string): string {
       const end = result.indexOf("'", i + 1);
       if (end === -1) { i++; continue; }
       i = end + 1;
+      out += quoteMarker;
       continue;
     }
     if (ch === '"') {
@@ -270,6 +272,7 @@ function stripShellNonCommands(cmd: string): string {
         j++;
       }
       i = j + 1;
+      out += quoteMarker;
       continue;
     }
     if (ch === "#") {
@@ -707,6 +710,76 @@ function resolveToolPath(rawPath: string, cwd: string): { abs: string; root?: st
     dir = parent;
   }
   return { abs };
+}
+
+const QUOTE_MARK = "\u0001";
+const REDIRECT_RE = /(\d*)(&>>?|>>?\|?)\s*(&?[^\s;&|<>()]*)/g;
+
+/** Raw file-write targets in a bash command, each with the plain `cd` dirs preceding it. */
+function bashWrites(command: string): Array<{ target: string; cds: string[] }> {
+  const out: Array<{ target: string; cds: string[] }> = [];
+  const stripped = stripShellNonCommands(command, QUOTE_MARK).replace(/>\|/g, ">");
+  const cds: string[] = [];
+  const add = (t: string) => {
+    // shortcut: quoted targets (contents stripped) are skipped
+    if (!t || t.includes(QUOTE_MARK) || t.startsWith("/dev/")) return;
+    out.push({ target: t, cds: [...cds] });
+  };
+  for (const seg0 of stripped.split(/[;\n]|&&|\|\||\|/)) {
+    for (const sub of seg0.split(/\(/)) {
+      const seg = sub.trim();
+      if (!seg) continue;
+      const redirs: string[] = [];
+      const body = seg.replace(REDIRECT_RE, (_m, fd: string, _op: string, tgt: string) => {
+        if (!fd && !tgt.startsWith("&")) redirs.push(tgt);
+        return " ";
+      });
+      const toks = stripCommandPrefixes(body.trim()).split(/\s+/).filter(Boolean);
+      const cmdName = toks[0];
+      if (cmdName === "cd" && toks.length === 2 && !redirs.length) {
+        if (!toks[1].includes(QUOTE_MARK)) cds.push(toks[1]);
+        continue;
+      }
+      if (cmdName === "tee") {
+        for (const t of toks.slice(1)) if (!t.startsWith("-")) add(t);
+      } else if (cmdName === "sed") {
+        let inPlace = false;
+        let scriptGiven = false;
+        const args: string[] = [];
+        const rest = toks.slice(1);
+        for (let k = 0; k < rest.length; k++) {
+          const t = rest[k];
+          if (t === "--") { args.push(...rest.slice(k + 1)); break; }
+          if (t === "-e" || t === "-f" || t === "--expression" || t === "--file") { scriptGiven = true; k++; continue; }
+          if (t.startsWith("--expression=") || t.startsWith("--file=")) { scriptGiven = true; continue; }
+          if (t === "--in-place" || t.startsWith("--in-place=")) { inPlace = true; continue; }
+          if (t.startsWith("--")) continue;
+          if (/^-[A-Za-z]+/.test(t) || t.startsWith("-i")) {
+            if (/^-[A-Za-z]*i/.test(t)) inPlace = true;
+            continue;
+          }
+          args.push(t);
+        }
+        if (inPlace) for (const t of args.slice(scriptGiven ? 0 : 1)) add(t);
+      }
+      for (const r of redirs) add(r);
+    }
+  }
+  return out;
+}
+
+/** Raw file-write targets (redirects, tee, sed -i) in a bash command. */
+function bashWriteTargets(command: string): string[] {
+  return bashWrites(command).map((w) => w.target);
+}
+
+/** bashWriteTargets resolved against cwd, following leading plain `cd` segments. */
+function bashWriteAbsTargets(command: string, cwd: string): Array<ReturnType<typeof resolveToolPath>> {
+  return bashWrites(command).map((w) => {
+    let dir = cwd;
+    for (const c of w.cds) dir = resolveToolPath(c, dir).abs;
+    return resolveToolPath(w.target, dir);
+  });
 }
 
 interface CommandMatcher { regexes: RegExp[] }
@@ -1495,11 +1568,15 @@ export default function (pi: ExtensionAPI) {
       const input = event.input ?? {};
       const cmds: string[] = [];
       let target: ReturnType<typeof resolveToolPath> | undefined;
+      let bashTargets: Array<ReturnType<typeof resolveToolPath>> = [];
       if (event.toolName === "edit" || event.toolName === "write") {
         if (typeof input.path === "string") target = resolveToolPath(input.path, ctx.cwd);
         if (typeof input.then_run?.command === "string") cmds.push(input.then_run.command);
       } else if (event.toolName === "bash") {
-        if (typeof input.command === "string") cmds.push(input.command);
+        if (typeof input.command === "string") {
+          cmds.push(input.command);
+          bashTargets = bashWriteAbsTargets(input.command, ctx.cwd);
+        }
       } else {
         return undefined;
       }
@@ -1507,6 +1584,7 @@ export default function (pi: ExtensionAPI) {
       for (const [name, r] of routeIndex) {
         if (!catalogNameSet.has(name)) continue;
         if (target && r.paths && matchPath(r.paths, target.abs, target.root)) { matched.push(name); continue; }
+        if (r.paths && bashTargets.some((t) => matchPath(r.paths!, t.abs, t.root))) { matched.push(name); continue; }
         if (r.commands && cmds.some((c) => matchCommand(r.commands!, c))) matched.push(name);
       }
       if (matched.length === 0) return undefined;
@@ -1613,6 +1691,8 @@ export {
   kevThenRules,
   routeSubagentSkills,
   stripShellNonCommands,
+  bashWriteTargets,
+  bashWriteAbsTargets,
   isRealGitCommit,
 
   isCodingTask,

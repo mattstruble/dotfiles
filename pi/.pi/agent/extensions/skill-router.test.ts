@@ -55,6 +55,8 @@ import skillRouter, {
   kevThenRules,
   routeSubagentSkills,
   stripShellNonCommands,
+  bashWriteTargets,
+  bashWriteAbsTargets,
   isRealGitCommit,
   validateDeciderUrl,
   isCodingTask,
@@ -3045,5 +3047,64 @@ describe("edit/command gate", () => {
       assert.equal(await t.call("edit", { path: "a.md" }), undefined);
       assert.equal(await t.call("bash", { command: "ls" }), undefined);
     } finally { t.restore(); }
+  });
+});
+
+describe("bashWriteTargets", () => {
+  it("finds redirect, tee and sed -i targets", () => {
+    assert.deepEqual(bashWriteTargets("cat > a.py <<'E'\nprint(1)\nE"), ["a.py"]);
+    assert.deepEqual(bashWriteTargets("echo x >> b.nix"), ["b.nix"]);
+    assert.deepEqual(bashWriteTargets("echo x >| b.nix"), ["b.nix"]);
+    assert.deepEqual(bashWriteTargets("cmd &> o.py"), ["o.py"]);
+    assert.deepEqual(bashWriteTargets("printf x | tee -a c.py"), ["c.py"]);
+    assert.deepEqual(bashWriteTargets("tee d.py e.py"), ["d.py", "e.py"]);
+    assert.deepEqual(bashWriteTargets("sudo tee --append d.py"), ["d.py"]);
+    assert.deepEqual(bashWriteTargets("sed -i 's/a/b/' e.py"), ["e.py"]);
+    assert.deepEqual(bashWriteTargets("sed -i.bak 's/a/b/' f.py g.py"), ["f.py", "g.py"]);
+    assert.deepEqual(bashWriteTargets("sed -Ei 's/a/b/' f.py"), ["f.py"]);
+    assert.deepEqual(bashWriteTargets("sed --in-place=.b 's/a/b/' f.py"), ["f.py"]);
+    assert.deepEqual(bashWriteTargets("sed -i -e 's/a/b/' f.py"), ["f.py"]);
+    assert.deepEqual(bashWriteTargets("sed -n 's/a/b/p' f.py"), []);
+    assert.deepEqual(bashWriteTargets("mkdir -p x && cat > src/x.py <<'E'\nhi\nE\nuv run pytest"), ["src/x.py"]);
+  });
+
+  it("ignores non-writes", () => {
+    for (const c of [
+      "cat <<'E'\necho > x.py\nE",
+      "echo 'a > x.py'", 'echo "a > x.py"', "ls # > x.py",
+      "cmd 2>&1", "cmd >/dev/null", "cmd > /dev/stderr", "cmd >&2", "cmd 2>/dev/null", "cmd 1>>x.log", "cmd 2> err.py", "cat < x.py", "cat <<E\nhi\nE",
+      'echo > "my file.py"', "tee 'q.py'",
+    ]) assert.deepEqual(bashWriteTargets(c), [], c);
+  });
+
+  it("resolves against cwd and a leading cd", () => {
+    const tmp = realpathSync(mkdtempSync(join(tmpdir(), "bash-writes-")));
+    mkdirSync(join(tmp, ".git"));
+    const [a] = bashWriteAbsTargets("cd pkg && cat > src/a.py <<'E'\nx\nE", tmp);
+    assert.deepEqual(a, { abs: join(tmp, "pkg/src/a.py"), root: tmp, rel: "pkg/src/a.py" });
+    assert.equal(bashWriteAbsTargets("echo > /abs/z.py", tmp)[0].abs, "/abs/z.py");
+  });
+});
+
+describe("edit/command gate: bash writes", () => {
+  it("blocks a heredoc write via bash, then passes once delivered", async () => {
+    const prev = _getConfig();
+    const dir = realpathSync(makeTmpCatalog({ "python-design": { routePaths: "**/*.py" } }));
+    const repo = realpathSync(mkdtempSync(join(tmpdir(), "bash-gate-")));
+    mkdirSync(join(repo, ".git"));
+    _setConfig({ ...prev, catalog: dir, mode: "inject" });
+    const handlers: Record<string, Function> = {};
+    skillRouter({ on: (n: string, h: Function) => { handlers[n] = h; } } as any);
+    _setConfig({ ...prev, catalog: dir, mode: "inject" });
+    let entries: any[] = [];
+    const ctx = { cwd: repo, sessionManager: { buildContextEntries: () => entries } };
+    try {
+      const command = "cd pkg && cat > src/a.py <<'E'\nprint(1)\nE";
+      const r = await handlers.tool_call({ toolName: "bash", input: { command } }, ctx);
+      assert.ok(r.block);
+      assert.ok(r.reason.startsWith(`${SKILLS_CALL_MARKER} python-design\n`));
+      entries = [{ type: "message", message: { role: "toolResult", isError: true, content: [{ type: "text", text: r.reason }] } }];
+      assert.equal(await handlers.tool_call({ toolName: "bash", input: { command } }, ctx), undefined);
+    } finally { _setConfig(prev); }
   });
 });

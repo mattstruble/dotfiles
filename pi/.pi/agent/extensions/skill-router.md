@@ -52,6 +52,9 @@ arrives in the blocked call's error result so the agent can apply it and retry w
 
 **Edit/command gate.** An `edit`/`write` call whose path matches a skill's `metadata.route-paths`, or whose
 `then_run.command` (or a `bash` command) matches its `route-commands`, is blocked once so the agent receives the skill.
+`bash` calls are also matched against `route-paths` by the files they write: `>`/`>>`/`>|`/`&>` redirect targets,
+`tee` arguments and `sed -i` file arguments (fd redirects, `/dev/*`, heredoc bodies, quoted text and comments are
+ignored; quoted targets are skipped). Targets resolve against the session cwd, following a leading plain `cd <dir>`.
 The check runs after subagent routing and the commit gate; a real `git commit` is handled by the commit gate only.
 Matched skills that are not already in context (compaction-aware) are delivered, ordered by name and capped at
 `maxSkillsPerTask`. The block reason starts with `[skill-router] skills loaded for this call: <names>`, then the skill
