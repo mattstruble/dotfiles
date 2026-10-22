@@ -43,6 +43,8 @@ in
 
       services.llm-wiki.remoteUrl = "git@github-llm-wiki:mattstruble/llm-wiki.git";
 
+      programs.obsidian.vaults.garden.target = "Documents/garden";
+
       home.file.".ssh/id_ed25519_mattstruble.pub".text =
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEL+QzypEEYDWtg6jJ1siaNho4ZdwsczWwTZWySAZdkm\n";
 
