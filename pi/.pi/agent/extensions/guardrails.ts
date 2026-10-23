@@ -70,7 +70,49 @@ export function bdInitBlockReason(command: string): string | undefined {
   return undefined;
 }
 
-/** Shared bash-command guards: force-push, doom loop, conventional commit, staged diff secrets, bd remember secrets. */
+const QUOTED = /'[^']*'|"(?:[^"\\]|\\.)*"/g;
+const SHELL_TARGET = /(^|[\s;&|(])(bash|sh|zsh|dash|ssh|eval)(\s|$)/;
+
+/**
+ * Drop text the shell never runs: single-quoted strings, double-quoted strings without substitutions,
+ * and bodies of quoted-delimiter heredocs (<<'EOF') not fed to a shell. Errs toward keeping text.
+ */
+function executedText(command: string): string {
+  const unquote = (t: string) => t.replace(QUOTED, (q) => (q[0] === '"' && /\$\(|`/.test(q) ? q : "''"));
+  const lines = command.split("\n");
+  const kept: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    kept.push(unquote(lines[i]));
+    const m = lines[i].match(/(?<!<)<<(?!<)-?\s*(['"])(\w+)\1/);
+    if (!m || SHELL_TARGET.test(unquote(lines[i].slice(0, m.index)))) continue;
+    const end = lines.findIndex((l, j) => j > i && l.replace(/^\t+/, "") === m[2]);
+    if (end > 0) i = end; // unterminated bodies are kept and scanned
+  }
+  return kept.join("\n");
+}
+
+const SECRET_PRINT = [
+  /(^|[\s;&|(])sops\s+(?:[^|;&\n]*\s)?(-d|--decrypt|decrypt|exec-env|exec-file)(\s|$)/,
+  /(^|[\s;&|(])op\s+(?:-[^|;&\n]*\s)?(read|inject)(\s|$)/,
+  /(^|[\s;&|(])op\s+[^|;&\n]*--reveal(\s|$)/,
+];
+
+/** Reason to block a bash command that would print decrypted secrets into the session, else undefined. */
+export function secretDecryptBlockReason(command: string): string | undefined {
+  // shortcut: regex over executed text; `bash -c '...'` strings, aliases and eval'd variables are accepted gaps.
+  let text: string;
+  try {
+    text = executedText(command);
+  } catch {
+    text = command; // fail closed: scan the raw command
+  }
+  if (SECRET_PRINT.some((re) => re.test(text))) {
+    return "Decrypted secrets would enter the session. sops keeps key names in plaintext, so read the encrypted file instead.";
+  }
+  return undefined;
+}
+
+/** Shared bash-command guards: force-push, doom loop, secret decrypt, conventional commit, staged diff secrets, bd remember secrets. */
 async function checkBashCommand(cmd: string, pi: ExtensionAPI): Promise<GuardResult> {
   // ── Doom loop breaker ──────────────────────────────────────────────────
   if (recentCommands.length === 3 && recentCommands.every((c) => c === cmd)) {
@@ -91,6 +133,10 @@ async function checkBashCommand(cmd: string, pi: ExtensionAPI): Promise<GuardRes
   // ── bd init / setup block ──────────────────────────────────────────────
   const bdReason = bdInitBlockReason(cmd);
   if (bdReason) return { block: true, reason: bdReason };
+
+  // ── Secret decrypt block ───────────────────────────────────────────────
+  const secretReason = secretDecryptBlockReason(cmd);
+  if (secretReason) return { block: true, reason: secretReason };
 
   // ── Conventional commit format enforcement ─────────────────────────────
   const commitMsgMatch = cmd.match(/git\s+commit\s+.*-m\s+["'](.+?)["']/);

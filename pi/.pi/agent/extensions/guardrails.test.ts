@@ -2,6 +2,7 @@ import { it } from "node:test";
 import * as assert from "node:assert/strict";
 import {
   bdInitBlockReason,
+  secretDecryptBlockReason,
   bdVerbs,
   createMcpGate,
   MCP_DECISION_EVENT,
@@ -176,4 +177,35 @@ it("a throwing listener does not break the prompt or the decision event", async 
   });
   assert.equal(await gate.request(UPDATE, "{}", async (_t, o) => o[0]), true);
   assert.deepEqual(seen, [MCP_PROMPT_EVENT, MCP_DECISION_EVENT]);
+});
+
+it("blocks commands that print decrypted secrets", () => {
+  for (const c of [
+    "sops --decrypt secrets.yaml",
+    "sops -d hosts/x/secrets.yaml | head",
+    "cd nix && sops --output-type json -d s.yaml",
+    "op read op://vault/item/field",
+    "X=$(op read op://v/i/f)",
+    'X="$(op read op://v/i/f)"',
+    "cat <<< hi\nsops -d s.yaml",
+    "echo $((1 << 2))\nsops -d s.yaml",
+    "echo \"it's\"; sops -d s.yaml; echo 'x'",
+    "cat <<EOF\n$(op read x)\nEOF",
+    "bash <<'EOF'\nsops -d x\nEOF",
+    "cat <<'EOF'\nunterminated\nsops -d x",
+    "sops decrypt s.yaml",
+    "sops exec-env s.yaml env",
+    "op --account a read op://v/i/f",
+    "op inject -i tpl",
+    "op item get x --reveal",
+  ]) {
+    assert.match(secretDecryptBlockReason(c) ?? "", /Decrypted secrets would enter the session/, c);
+  }
+});
+
+it("allows sops and op commands that do not decrypt", () => {
+  for (const c of ["sops --encrypt s.yaml", "sops updatekeys s.yaml", "grep -n sops nix/modules/sops.nix", "op whoami", "cat sops.yaml", "echo 'op read is blocked'", 'bd create -d "blocks sops --decrypt"',
+    "python3 - <<'EOF'\nprint('sops -d x')\nEOF\nls", "cat <<-'EOF'\n\tsops -d x\n\tEOF\nls", "x".repeat(1_000_000)]) {
+    assert.equal(secretDecryptBlockReason(c), undefined, c);
+  }
 });
