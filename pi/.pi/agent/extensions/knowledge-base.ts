@@ -208,6 +208,8 @@ export default function (pi: ExtensionAPI): void {
       if (matches.length === 0) return;
 
       const injection = formatMatches(matches);
+      // Returning systemPrompt forces the whole prompt, so pi drops other extensions' sections
+      // (Ponytail's always-on text). Kept on purpose: a held-out replay showed that text regresses approved turns.
       return { systemPrompt: event.systemPrompt + "\n\n" + injection };
     },
   );
