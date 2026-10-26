@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1";
+    # beads only: its dependencies can require a newer Go than nixpkgs-weekly ships.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -90,20 +92,11 @@
                     pi = inputs.llm-agents.packages.${system}.pi.override { useBun = false; };
                   })
                   (final: prev: {
-                    # ponytail: beads' postPatch bumps the go directive to the toolchain
-                    # version, which breaks module resolution on some commits. The Nix
-                    # toolchain (1.26.7) already satisfies go.mod (1.26.5), so drop it.
-                    beads = (import nixpkgs {
+                    # beads' own postPatch lowers go.mod to the toolchain, but its dependencies
+                    # (dolt) can still need a newer Go than nixpkgs-weekly, so build it on unstable.
+                    beads = (import inputs.nixpkgs-unstable {
                       inherit system;
-                      overlays = [
-                        inputs.beads.overlays.default
-                        (f: p: {
-                          beads-unwrapped = p.beads-unwrapped.override (prevArgs: {
-                            buildGoModule = args:
-                              prevArgs.buildGoModule (args // { postPatch = ""; });
-                          });
-                        })
-                      ];
+                      overlays = [ inputs.beads.overlays.default ];
                     }).beads;
                   })
                   (final: prev: {
