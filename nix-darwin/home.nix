@@ -535,6 +535,7 @@ in
             "prd-writing"
             "software-design"
             "skill-creator"
+            "technical-writing"
             "test-design"
             "test-driven-development"
           ];
