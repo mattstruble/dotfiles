@@ -100,6 +100,26 @@
                     }).beads;
                   })
                   (final: prev: {
+                    # bd refuses shared Dolt servers older than 2.6.0 (its embedded engine pin);
+                    # nixpkgs lags. Pinned to the tag bd's go.mod embeds; bump alongside beads.
+                    # dolt 2.6 needs Go 1.27, so build on unstable.
+                    dolt =
+                      let
+                        unstable = import inputs.nixpkgs-unstable { inherit system; };
+                      in
+                      (unstable.dolt.override { buildGoModule = unstable.buildGo127Module; }).overrideAttrs
+                        (old: rec {
+                          version = "2.6.0";
+                          src = unstable.fetchFromGitHub {
+                            owner = "dolthub";
+                            repo = "dolt";
+                            tag = "v${version}";
+                            hash = "sha256-eljRYO6YyhFaxmxuPifVxgtXYG4f8iysJFwBJVbuEoo=";
+                          };
+                          vendorHash = "sha256-Hr4bOkPGUQqO07PAey7GWCJ/1zBC9hIj4xzJGLh44jY=";
+                        });
+                  })
+                  (final: prev: {
                     # ponytail: recode 3.7.16 breaks on macOS iconv (duplicate aliases → fortune segfaults);
                     # 3.7.17 has the upstream workaround. Drop once nixpkgs ships >= 3.7.17.
                     recode = prev.recode.overrideAttrs (old: rec {
