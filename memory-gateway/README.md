@@ -25,3 +25,14 @@ Arms that fail to import or start are reported unhealthy; the server keeps runni
     uv sync --frozen
     uv run --frozen memory-gateway
     uv run --frozen pytest -q
+
+## LLM usage / cost
+
+Wiki (extractor) and Graphiti (Bedrock client proxy) append one line per LLM call to
+`state_dir/llm-usage.jsonl` (`{ts, arm, op, input_tokens, output_tokens, model}`); the eval
+cost tie-break reads it. Hindsight makes its LLM calls server-side, so it logs nothing there.
+Hindsight 1.1.0 exposes traced usage at `GET /v1/default/banks/{bank}/llm-requests/stats`
+(requires `HINDSIGHT_API_LLM_TRACE_ENABLED` on the server; limited to
+`HINDSIGHT_API_LLM_TRACE_RETENTION_DAYS`). `HindsightArm.usage()` returns
+`{input_tokens, output_tokens}` from it. If tracing is off, read Hindsight cost from AWS
+billing / CloudWatch Bedrock model-invocation metrics.

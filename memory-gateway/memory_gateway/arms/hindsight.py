@@ -122,3 +122,19 @@ class HindsightArm:
             )
             r.raise_for_status()
         return targets
+
+    async def usage(self, period: str = "30d") -> dict:
+        """LLM token totals from Hindsight's server-side request traces.
+
+        Needs HINDSIGHT_API_LLM_TRACE_ENABLED on the server; traces older than
+        its retention window are gone, so call this before they expire.
+        """
+        r = await self.client.get(
+            f"{self._bank_path}/llm-requests/stats", params={"period": period, "call_type": "llm"}
+        )
+        r.raise_for_status()
+        tokens = [b["tokens"] for b in r.json().get("buckets", [])]
+        return {
+            "input_tokens": sum(t.get("input") or 0 for t in tokens),
+            "output_tokens": sum(t.get("output") or 0 for t in tokens),
+        }

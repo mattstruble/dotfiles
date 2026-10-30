@@ -14,6 +14,7 @@ import numpy as np
 
 from ..config import Config
 from ..wiki.notes import chunk_note, current_notes, load_all
+from ..usage import record_response_usage
 from .base import IngestItem, Memory, count_tokens
 
 log = logging.getLogger(__name__)
@@ -349,6 +350,8 @@ class WikiArm:
                 tool_choice={"type": "tool", "name": "record_ops"},
                 messages=[{"role": "user", "content": prompt}],
             )
+            record_response_usage(self.state_dir, self.name, "extract", resp,
+                                  self.config.bedrock_model)
             for block in resp.content:
                 if getattr(block, "type", None) == "tool_use":
                     data = block.input

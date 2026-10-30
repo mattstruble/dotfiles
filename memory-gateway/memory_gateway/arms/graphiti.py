@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ..config import Config
+from ..usage import UsageRecordingClient
 from .base import IngestItem, Memory, count_tokens
 
 # Must be set before graphiti_core is imported (telemetry, module-level constants).
@@ -83,14 +84,17 @@ def _make_cross_encoder() -> Any:
     return PassthroughReranker()
 
 
-def _make_llm(config: Config) -> Any:
+def _make_llm(config: Config, state_dir: Path) -> Any:
     import anthropic
     from graphiti_core.llm_client.anthropic_client import AnthropicClient
     from graphiti_core.llm_client.config import LLMConfig
 
     return AnthropicClient(
         config=LLMConfig(model=config.bedrock_model, small_model=config.bedrock_model),
-        client=anthropic.AsyncAnthropicBedrock(aws_region=config.aws_region),
+        client=UsageRecordingClient(
+            anthropic.AsyncAnthropicBedrock(aws_region=config.aws_region),
+            state_dir, "graphiti", "graphiti",
+        ),
     )
 
 
@@ -106,7 +110,8 @@ class GraphitiArm:
         cross_encoder: Any = None,
     ):
         self.config = config
-        self.db_path = Path(state_dir) / "graphiti" / "graph.db"
+        self.state_dir = Path(state_dir)
+        self.db_path = self.state_dir / "graphiti" / "graph.db"
         self._llm_client = llm_client
         self._embedder = embedder
         self._cross_encoder = cross_encoder
@@ -133,7 +138,7 @@ class GraphitiArm:
         driver = FalkorDriver(falkor_db=AsyncFalkorDB(str(self.db_path)))
         self._graphiti = Graphiti(
             graph_driver=driver,
-            llm_client=self._llm_client or _make_llm(self.config),
+            llm_client=self._llm_client or _make_llm(self.config, self.state_dir),
             embedder=self._embedder or _make_embedder(),
             cross_encoder=self._cross_encoder or _make_cross_encoder(),
         )
