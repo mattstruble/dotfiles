@@ -1,3 +1,4 @@
+import hashlib
 import json
 from datetime import datetime, timezone
 
@@ -22,8 +23,12 @@ def item(**kw):
     return IngestItem(**d)
 
 
+def _entries(route):
+    return [json.loads(c.request.content)["items"][0] for c in route.calls]
+
+
 @respx.mock
-async def test_session_ingest_appends_to_session_document_with_project_tag(tmp_path):
+async def test_ingest_creates_immutable_document_with_provenance_and_project_tag(tmp_path):
     route = respx.post(f"{BANK}/memories").mock(return_value=httpx.Response(200, json={}))
 
     await arm(tmp_path).ingest(item())
@@ -31,19 +36,33 @@ async def test_session_ingest_appends_to_session_document_with_project_tag(tmp_p
     body = json.loads(route.calls[0].request.content)
     assert body["async"] is True
     (e,) = body["items"]
-    assert e["document_id"] == "session:s1" and e["update_mode"] == "append"
+    digest = hashlib.sha256(b"hello").hexdigest()
+    assert e["document_id"] == f"session:s1@20250102T000000Z#{digest[:8]}"
+    assert "update_mode" not in e
     assert e["tags"] == ["project:proj"] and e["context"] == "session"
+    assert e["metadata"] == {
+        "base_doc": "session:s1", "source": "session", "session_id": "s1",
+        "version_ts": "2025-01-02T00:00:00+00:00", "content_sha256": digest,
+    }
     assert e["content"] == "hello" and e["timestamp"].startswith("2025-01-02")
 
 
 @respx.mock
-async def test_seed_ingest_replaces_and_global_has_no_tags(tmp_path):
+async def test_global_item_has_no_tags_and_versions_get_unique_ids(tmp_path):
     route = respx.post(f"{BANK}/memories").mock(return_value=httpx.Response(200, json={}))
+    a = arm(tmp_path)
 
-    await arm(tmp_path).ingest(item(source="seed", project=None, doc_id="d1"))
+    await a.ingest(item(source="seed", project=None, doc_id="d1"))
+    await a.ingest(item(source="seed", project=None, doc_id="d1", text="v2"))
+    await a.ingest(item(source="retain", doc_id=None, text="x"))
+    await a.ingest(item(source="retain", doc_id=None, text="y"))
 
-    (e,) = json.loads(route.calls[0].request.content)["items"]
-    assert e["document_id"] == "d1" and "update_mode" not in e and "tags" not in e
+    e1, e2, e3, e4 = _entries(route)
+    assert "tags" not in e1 and "update_mode" not in e1
+    assert e1["document_id"].startswith("d1@") and e1["metadata"]["base_doc"] == "d1"
+    assert e1["document_id"] != e2["document_id"]
+    assert e3["document_id"].startswith("retain:s1@")
+    assert e3["document_id"] != e4["document_id"]
 
 
 @respx.mock

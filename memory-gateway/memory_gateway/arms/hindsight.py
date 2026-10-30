@@ -1,4 +1,5 @@
-from datetime import datetime
+import hashlib
+from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
@@ -56,14 +57,24 @@ class HindsightArm:
         return r
 
     async def ingest(self, item: IngestItem) -> None:
+        base = item.doc_id or f"{item.source}:{item.session_id}"
+        ts = item.timestamp
+        ts_utc = (ts.astimezone(timezone.utc) if ts.tzinfo else ts.replace(tzinfo=timezone.utc))
+        digest = hashlib.sha256(item.text.encode()).hexdigest()
         entry: dict = {
             "content": item.text,
-            "timestamp": item.timestamp.isoformat(),
+            "timestamp": ts.isoformat(),
             "context": item.source,
-            "document_id": item.doc_id or f"session:{item.session_id}",
+            # unique id per version: Hindsight never replaces or appends
+            "document_id": f"{base}@{ts_utc.strftime('%Y%m%dT%H%M%SZ')}#{digest[:8]}",
+            "metadata": {
+                "base_doc": base,
+                "source": item.source,
+                "session_id": str(item.session_id),
+                "version_ts": ts_utc.isoformat(),
+                "content_sha256": digest,
+            },
         }
-        if item.source == "session":
-            entry["update_mode"] = "append"
         if item.project:
             entry["tags"] = [f"project:{item.project}"]
         await self._post(
