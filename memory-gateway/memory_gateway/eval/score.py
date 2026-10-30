@@ -25,6 +25,7 @@ from ..config import Config, load_config
 MAX_LEAKS = 1
 START_BUDGET = 2000
 TOPUP_BUDGET = 1000
+MIN_HAND_SESSIONS = 10  # hand labels drive the rule only with at least this many labelled sessions
 EASE = ["hindsight", "wiki", "graphiti"]  # easiest to run first
 
 
@@ -197,11 +198,13 @@ def _parse_session(f: Path) -> dict:
         elif e.get("type") == "custom_message" and e.get("customType") == "knowledge-base":
             events.append(("kb", len(users), {"content": mine._blocks_text(e.get("content"))}))
     shadows, kb = [], []
+    kb_msgs = 0
     for kind, n, d in events:
         if kind == "kb":
             for line in d["content"].splitlines():
                 if line.startswith("- [["):
-                    kb.append({"turn": n, "text": line, "tokens": count_tokens(line)})
+                    kb.append({"turn": n, "msg": kb_msgs, "text": line, "tokens": count_tokens(line)})
+            kb_msgs += 1
         elif d.get("kind") != "subagent":
             prompt = (d.get("prompt") or "").strip()
             t = users.index(prompt) if prompt and prompt in users else n
@@ -219,6 +222,22 @@ def _note_text(wiki: Path, rel: str) -> str | None:
         return None
 
 
+def _cap_baseline(kb: list[dict]) -> list[dict]:
+    """First KB message gets START_BUDGET, each later one TOPUP_BUDGET; lines keep injected order,
+    and a message's lines past its budget are dropped."""
+    out, used, closed = [], {}, set()
+    for k in kb:
+        m = k["msg"]
+        if m in closed:
+            continue
+        if used.get(m, 0) + k["tokens"] > (START_BUDGET if m == 0 else TOPUP_BUDGET):
+            closed.add(m)
+            continue
+        used[m] = used.get(m, 0) + k["tokens"]
+        out.append(k)
+    return out
+
+
 async def relevance(judge, sessions: Path, wiki: Path, recall_log: Path, hand_labels: list[dict] | None = None,
                     arms: list[str] | None = None) -> dict:
     texts = _recall_log_texts(recall_log)
@@ -233,8 +252,9 @@ async def relevance(judge, sessions: Path, wiki: Path, recall_log: Path, hand_la
         if r["session_file"] in parsed:
             labels.setdefault(r["session_file"], {})[r["turn_index"]] = r["reads"]
     arm_names = arms or sorted({a for s in parsed.values() for sh in s["shadows"] for a in sh["ids"]})
-    groups = arm_names + ["baseline"]
-    acc = {g: {"labels": 0, "covered": 0, "tokens": 0, "irrelevant_tokens": 0, "sessions": 0, "budget_ok": True,
+    groups = arm_names + ["baseline", "baseline_uncapped"]  # uncapped is informational only
+    hand_sessions = auto_total = auto_kept = hand_added = 0
+    acc = {g: {"labels": 0, "covered": 0, "m_labels": 0, "m_covered": 0, "tokens": 0, "irrelevant_tokens": 0, "sessions": 0, "budget_ok": True,
                "missing_texts": 0} for g in groups}
 
     for sf, s in parsed.items():
@@ -245,21 +265,30 @@ async def relevance(judge, sessions: Path, wiki: Path, recall_log: Path, hand_la
             if t >= start:
                 for n in reads:
                     notes.setdefault(n, t)
+        merged = dict(notes)
+        has_hand = False
         for h in hand:
             if h.get("session_file") != sf:
                 continue
+            has_hand = True
             for sh in s["shadows"]:
                 if sh["turn"] == h.get("turn"):
                     for n in h.get("extra_relevant_notes") or []:
-                        notes.setdefault(n, sh["uturn"])
+                        merged.setdefault(n, sh["uturn"])
                     for n in h.get("irrelevant_notes") or []:
-                        notes.pop(n, None)
-        note_txt = {n: _note_text(wiki, n) for n in notes}
+                        merged.pop(n, None)
+        if has_hand:
+            hand_sessions += 1
+            auto_total += len(notes)
+            auto_kept += sum(1 for n in notes if n in merged)
+            hand_added += sum(1 for n in merged if n not in notes)
+        note_txt = {n: _note_text(wiki, n) for n in merged.keys() | notes.keys()}
         for g in groups:
             a = acc[g]
             a["sessions"] += 1
-            if g == "baseline":
-                mems = [{"turn": k["turn"], "text": k["text"], "tokens": k["tokens"]} for k in s["kb"]]
+            if g.startswith("baseline"):
+                kb = s["kb"] if g == "baseline_uncapped" else _cap_baseline(s["kb"])
+                mems = [{"turn": k["turn"], "text": k["text"], "tokens": k["tokens"]} for k in kb]
             else:
                 mems, seen = [], set()
                 for sh in s["shadows"]:
@@ -281,21 +310,43 @@ async def relevance(judge, sessions: Path, wiki: Path, recall_log: Path, hand_la
                 v = await judge("relevance", {"task": task[:1000], "memory": m["text"]})
                 if not v.get("relevant"):
                     a["irrelevant_tokens"] += m["tokens"]
-            for n, t in notes.items():
+            verdict: dict[str, bool] = {}
+            for n, t in merged.items() | notes.items():
                 if note_txt[n] is None:
                     continue
-                a["labels"] += 1
                 ms = [m["text"] for m in mems if m["turn"] <= t]
-                if ms and (await judge("coverage", {"note_path": n, "note": note_txt[n], "memories": ms})).get("covered"):
-                    a["covered"] += 1
+                verdict[(n, t)] = bool(ms) and bool(
+                    (await judge("coverage", {"note_path": n, "note": note_txt[n], "memories": ms})).get("covered"))
+            for n, t in notes.items():
+                if note_txt[n] is not None:
+                    a["labels"] += 1
+                    a["covered"] += verdict[(n, t)]
+            for n, t in merged.items():
+                if note_txt[n] is not None:
+                    a["m_labels"] += 1
+                    a["m_covered"] += verdict[(n, t)]
+    use_merged = hand_sessions >= MIN_HAND_SESSIONS
+    basis = "merged" if use_merged else "auto"
+    why = (f"hand labels exist for {hand_sessions} sessions (>= {MIN_HAND_SESSIONS})" if use_merged else
+           f"hand labels exist for only {hand_sessions} sessions (< {MIN_HAND_SESSIONS})")
+    agreement = auto_kept / auto_total if auto_total else None
+
+    def frac(c, n):
+        return c / n if n else None
+
     res = {}
     for g, a in acc.items():
-        res[g] = {"label_coverage": a["covered"] / a["labels"] if a["labels"] else None, "labels": a["labels"],
+        ca, cm = frac(a["covered"], a["labels"]), frac(a["m_covered"], a["m_labels"])
+        res[g] = {"label_coverage": cm if use_merged else ca, "coverage_auto": ca, "coverage_merged": cm,
+                  "labels": a["m_labels"] if use_merged else a["labels"], "labels_auto": a["labels"],
+                  "labels_merged": a["m_labels"], "coverage_basis": basis, "coverage_basis_reason": why,
+                  "label_agreement": agreement, "hand_added_notes": hand_added, "hand_sessions": hand_sessions,
                   "irrelevant_token_share": a["irrelevant_tokens"] / a["tokens"] if a["tokens"] else None,
                   "mean_injected_tokens": a["tokens"] / a["sessions"] if a["sessions"] else None,
                   "sessions": a["sessions"], "missing_texts": a["missing_texts"]}
-        if g != "baseline":
+        if g not in ("baseline", "baseline_uncapped"):
             res[g]["budget_ok"] = a["budget_ok"]
+    res["baseline_uncapped"]["informational"] = True
     base = res["baseline"]["label_coverage"]
     for g in arm_names:
         c = res[g]["label_coverage"]
@@ -332,13 +383,15 @@ def apply_rule(stale: dict, rel: dict, costs: dict) -> dict:
     carm = costs.get("arms", {})
     use_cost = bool(beating) and all(carm.get(a, {}).get("llm_tokens") is not None for a in beating)
 
+    # cost and ease are tie-breakers after coverage, per the decision note
     def key(a):
         ease = EASE.index(a) if a in EASE else len(EASE)
         return (-rel[a]["label_coverage"], carm[a]["llm_tokens"] if use_cost else 0, ease)
 
     ranking = sorted(beating, key=key)
     return {"winner": ranking[0] if ranking else None, "ranking": ranking, "passed_stale_gate": gated,
-            "beat_baseline": beating, "cost_used": use_cost}
+            "beat_baseline": beating, "cost_used": use_cost,
+            "coverage_basis": next((d.get("coverage_basis") for d in rel.values() if d.get("coverage_basis")), None)}
 
 
 def _pct(x):
@@ -351,13 +404,24 @@ def render(res: dict) -> str:
          "| arm | leaks | leak ids | current present | errors | pass |", "|---|---|---|---|---|---|"]
     for a, d in res["stale_gate"].items():
         L.append(f"| {a} | {d['leaks']} | {', '.join(d['leak_ids'])} | {_pct(d['current_present_rate'])} | {d['errors']} | {d['pass']} |")
-    L += ["", "## Relevance vs INDEX baseline", "",
+    any_rel = next(iter(res["relevance"].values()), {})
+    L += ["", "## Relevance vs INDEX baseline (baseline capped at 2000 start / 1000 per top-up)", "",
+          f"Rule coverage basis: {any_rel.get('coverage_basis', 'auto')} labels - "
+          f"{any_rel.get('coverage_basis_reason', 'no hand-label information')}. "
+          f"Hand labels are a cross-check; (merged) is used only with >= {MIN_HAND_SESSIONS} hand-labelled sessions.", "",
           "| arm | coverage | labels | irrelevant tokens | mean injected tokens | within budget | beats baseline |",
           "|---|---|---|---|---|---|---|"]
     for a, d in res["relevance"].items():
         mt = d["mean_injected_tokens"]
         L.append(f"| {a} | {_pct(d['label_coverage'])} | {d['labels']} | {_pct(d['irrelevant_token_share'])} | "
                  f"{'n/a' if mt is None else round(mt)} | {d.get('budget_ok', '-')} | {d.get('beats_baseline', '-')} |")
+    L += ["", "## Hand-label cross-check", "",
+          "| arm | coverage (auto only) | coverage (auto + hand) | label agreement | hand-added notes |",
+          "|---|---|---|---|---|"]
+    for a, d in res["relevance"].items():
+        name = f"{a} (uncapped, informational)" if a == "baseline_uncapped" else a
+        L.append(f"| {name} | {_pct(d.get('coverage_auto'))} | {_pct(d.get('coverage_merged'))} | "
+                 f"{_pct(d.get('label_agreement'))} | {d.get('hand_added_notes', 0)} |")
     L += ["", "## Cost (tie-breaker)", "", "| arm | deliveries | LLM tokens |", "|---|---|---|"]
     for a, d in res["cost"]["arms"].items():
         L.append(f"| {a} | {json.dumps(d['deliveries'])} | {d['llm_tokens'] if d['llm_tokens'] is not None else 'n/a'} |")

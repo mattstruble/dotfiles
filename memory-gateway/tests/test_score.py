@@ -123,15 +123,16 @@ async def test_relevance_vs_baseline_and_hand_labels(tmp_path):
     assert b["label_coverage"] == 0.0
     assert base["label_coverage"] == 0.5  # INDEX line mentions alpha
     assert not a["beats_baseline"]  # 0.5 is not > 0.5
-    # hand label drops beta -> only alpha labelled -> a covers 1.0 and beats baseline 1.0? equal -> no
+    # hand labels no longer change the primary score; merged view drops beta -> only alpha labelled
     hl = [{"session_file": str(f), "turn": 0, "irrelevant_notes": ["topics/beta.md"], "extra_relevant_notes": []}]
     res = await score.relevance(FakeJudge(), sessions, wiki, log, hand_labels=hl)
-    assert res["a"]["labels"] == 1 and res["a"]["label_coverage"] == 1.0
+    assert res["a"]["labels"] == 2 and res["a"]["label_coverage"] == 0.5
+    assert res["a"]["labels_merged"] == 1 and res["a"]["coverage_merged"] == 1.0
     # an extra hand-labelled note adds a label
     (wiki / "topics" / "gamma.md").write_text("gamma")
     hl = [{"session_file": str(f), "turn": 0, "extra_relevant_notes": ["topics/gamma.md"]}]
     res = await score.relevance(FakeJudge(), sessions, wiki, log, hand_labels=hl)
-    assert res["a"]["labels"] == 3
+    assert res["a"]["labels"] == 2 and res["a"]["labels_merged"] == 3
 
 
 async def test_relevance_budget_violation(tmp_path):
@@ -141,6 +142,55 @@ async def test_relevance_budget_violation(tmp_path):
     write_log(log, big=True)
     res = await score.relevance(FakeJudge(), sessions, wiki, log, hand_labels=[])
     assert res["a"]["budget_ok"] is False and res["a"]["beats_baseline"] is False
+
+
+def test_cap_baseline_start_and_topup(monkeypatch):
+    kb = [{"msg": m, "turn": 0, "text": f"l{m}{i}", "tokens": t}
+          for m, i, t in [(0, 0, 1500), (0, 1, 400), (0, 2, 300), (0, 3, 50), (1, 0, 600), (1, 1, 300), (1, 2, 200), (2, 0, 900)]]
+    kept = [k["text"] for k in score._cap_baseline(kb)]
+    assert kept == ["l00", "l01", "l10", "l11", "l20"]  # 2000 start (1500+400), 1000 top-up (600+300)
+
+
+async def test_relevance_baseline_capped_and_uncapped_informational(tmp_path):
+    sessions, wiki = tmp_path / "sessions", tmp_path / "wiki"
+    f = write_session(sessions, wiki)
+    rows = f.read_text().splitlines()
+    pad = "\n".join(f"- [[topics/x{i}.md|x{i}]] " + "word " * 600 for i in range(5))
+    kb = {"type": "custom_message", "customType": "knowledge-base",
+          "content": pad + "\n- [[topics/alpha.md|alpha]] — alpha thing\n"}
+    f.write_text("\n".join([json.dumps(kb)] + rows[1:]))
+    log = tmp_path / "recall-log.jsonl"
+    write_log(log)
+    res = await score.relevance(FakeJudge(), sessions, wiki, log, hand_labels=[])
+    assert res["baseline"]["mean_injected_tokens"] <= score.START_BUDGET
+    assert res["baseline"]["coverage_auto"] == 0.0  # alpha line fell past the budget
+    assert res["baseline_uncapped"]["coverage_auto"] == 0.5 and res["baseline_uncapped"]["informational"]
+
+
+async def test_hand_labels_cross_check_and_basis(tmp_path):
+    sessions, wiki = tmp_path / "sessions", tmp_path / "wiki"
+    f = write_session(sessions, wiki)
+    log = tmp_path / "recall-log.jsonl"
+    write_log(log)
+    (wiki / "topics" / "gamma.md").write_text("gamma")
+    hl = [{"session_file": str(f), "turn": 0, "irrelevant_notes": ["topics/beta.md"],
+           "extra_relevant_notes": ["topics/gamma.md"]}]
+    res = await score.relevance(FakeJudge(), sessions, wiki, log, hand_labels=hl)
+    a = res["a"]
+    assert a["coverage_auto"] == 0.5 and a["labels_auto"] == 2
+    assert a["labels_merged"] == 2 and a["coverage_merged"] == 0.5  # alpha + gamma; gamma uncovered
+    assert a["label_agreement"] == 0.5 and a["hand_added_notes"] == 1 and a["hand_sessions"] == 1
+    assert a["coverage_basis"] == "auto" and a["label_coverage"] == a["coverage_auto"]
+    monkeypatch_min = score.MIN_HAND_SESSIONS
+    score.MIN_HAND_SESSIONS = 1
+    try:
+        res = await score.relevance(FakeJudge(), sessions, wiki, log, hand_labels=hl)
+    finally:
+        score.MIN_HAND_SESSIONS = monkeypatch_min
+    assert res["a"]["coverage_basis"] == "merged" and res["a"]["labels"] == 2
+    out = score.render({"rule": score.apply_rule(st(a=True), res, {"arms": {}}), "stale_gate": st(a=True),
+                        "relevance": res, "cost": {"arms": {}, "judge": {}}})
+    assert "merged labels" in out and "label agreement" in out and "uncapped, informational" in out
 
 
 def st(**kw):
