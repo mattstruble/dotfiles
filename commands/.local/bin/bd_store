@@ -60,8 +60,8 @@ json_field() {
 row_count() {
   local n
   case "$1" in
-    embedded) n=$(dolt --data-dir "$2" sql -r csv -q "select count(*) from $3.issues" 2>/dev/null | sed -n '2p') ;;
-    server) n=$(dolt --host 127.0.0.1 --port "$port" --no-tls -u root --password '' sql -r csv -q "select count(*) from $2.issues" 2>/dev/null | sed -n '2p') ;;
+    embedded) n=$(dolt --data-dir "$2" sql -r csv -q "select count(*) from \`$3\`.issues" 2>/dev/null | sed -n '2p') ;;
+    server) n=$(dolt --host 127.0.0.1 --port "$port" --no-tls -u root --password '' sql -r csv -q "select count(*) from \`$2\`.issues" 2>/dev/null | sed -n '2p') ;;
   esac
   n=$(printf '%s' "$n" | tr -d '[:space:]')
   case "$n" in
