@@ -83,12 +83,11 @@ async def test_forget_invalidates_facts_behind_observations(tmp_path):
 
 @respx.mock
 async def test_start_creates_missing_bank(tmp_path):
-    respx.get(f"{BANK}/profile").mock(return_value=httpx.Response(404))
     put = respx.put(BANK).mock(return_value=httpx.Response(200, json={}))
 
     await arm(tmp_path).start()
 
-    assert put.called
+    assert put.called and json.loads(put.calls[0].request.content) == {}
 
 
 @respx.mock
@@ -96,7 +95,6 @@ async def test_404_on_retain_creates_bank_and_retries(tmp_path):
     route = respx.post(f"{BANK}/memories").mock(
         side_effect=[httpx.Response(404), httpx.Response(200, json={})]
     )
-    respx.get(f"{BANK}/profile").mock(return_value=httpx.Response(404))
     put = respx.put(BANK).mock(return_value=httpx.Response(200, json={}))
 
     await arm(tmp_path).ingest(item())

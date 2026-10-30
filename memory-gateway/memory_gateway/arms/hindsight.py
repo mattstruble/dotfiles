@@ -31,9 +31,8 @@ class HindsightArm:
         self._bank_path = f"{self.base}/v1/default/banks/{self.bank}"
 
     async def _ensure_bank(self) -> None:
-        r = await self.client.get(f"{self._bank_path}/profile")
-        if r.status_code == 404:
-            r = await self.client.put(self._bank_path, json={"name": self.bank})
+        # PUT is create-or-update (idempotent); the /profile endpoints are gone in 1.1.0
+        r = await self.client.put(self._bank_path, json={})
         r.raise_for_status()
 
     async def start(self) -> None:
