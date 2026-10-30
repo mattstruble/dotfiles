@@ -127,3 +127,112 @@ async def test_health_reflects_server_status(tmp_path):
     assert await arm(tmp_path).health() == "ok"
     h.mock(return_value=httpx.Response(503))
     assert (await arm(tmp_path).health()).startswith("error:")
+
+
+def _docs(*items):
+    return httpx.Response(200, json={"items": [
+        {"id": i, "document_metadata": {"base_doc": b, "version_ts": v}} for i, b, v in items
+    ]})
+
+
+@respx.mock
+async def test_history_all_paths_sorted_and_budgeted(tmp_path):
+    respx.get(f"{BANK}/documents").mock(return_value=_docs(
+        ("b@1#a", "b", "2025-01-01T00:00:00+00:00"),
+        ("b@2#c", "b", "2025-03-01T00:00:00+00:00"),
+        ("c@1#d", "c", "2025-01-01T00:00:00+00:00"),
+    ))
+
+    def recall(request):
+        if json.loads(request.content)["prefer_observations"]:
+            return httpx.Response(200, json={"results": [
+                {"id": "o1", "text": "obs now", "type": "observation"}]})
+        return httpx.Response(200, json={"results": [
+            {"id": "f1", "text": "old fact", "type": "world", "document_id": "b@1#a"},
+            {"id": "f2", "text": "current fact", "type": "world", "document_id": "b@2#c"},
+            {"id": "f3", "text": "unchanged", "type": "world", "document_id": "c@1#d"},
+            {"id": "o2", "text": "obs", "type": "observation"},
+        ]})
+
+    respx.post(f"{BANK}/memories/recall").mock(side_effect=recall)
+    lst = respx.get(f"{BANK}/memories/list").mock(return_value=httpx.Response(200, json={"items": [
+        {"id": "i1", "text": "bad fact", "invalidated_at": "2025-02-01T00:00:00+00:00"}]}))
+    respx.get(f"{BANK}/memories/o1/history").mock(return_value=httpx.Response(200, json=[
+        {"previous_text": "obs before", "changed_at": "2025-04-01T00:00:00+00:00"}]))
+
+    mems = await arm(tmp_path).history("proj", "q", 1000)
+
+    assert [m.id for m in mems] == ["o1@2025-04-01T00:00:00+00:00", "f1", "i1"]
+    assert mems[0].text == "[superseded 2025-04-01] obs before"
+    assert mems[1].text == "[superseded 2025-03-01] old fact"
+    assert mems[2].text.startswith("[invalidated 2025-02-01] ")
+    assert lst.calls[0].request.url.params["state"] == "invalidated"
+    small = await arm(tmp_path).history("proj", "q", mems[0].tokens)
+    assert [m.id for m in small] == [mems[0].id]
+
+
+@respx.mock
+async def test_source_uses_chunk(tmp_path):
+    respx.get(f"{BANK}/memories/m1").mock(return_value=httpx.Response(200, json={
+        "id": "m1", "type": "world", "document_id": "d@1#x", "chunk_id": "c1"}))
+    respx.get(f"{BANK}/documents/d@1#x").mock(return_value=httpx.Response(200, json={
+        "created_at": "2025-01-01T00:00:00Z", "original_text": "full",
+        "document_metadata": {"version_ts": "2025-01-02T00:00:00+00:00"}}))
+    respx.get("http://hs/v1/default/chunks/c1").mock(
+        return_value=httpx.Response(200, json={"chunk_text": "chunk"}))
+
+    rec = await arm(tmp_path).source("m1")
+
+    assert (rec.text, rec.source_ref) == ("chunk", "d@1#x")
+    assert rec.ts == datetime(2025, 1, 2, tzinfo=timezone.utc)
+
+
+@respx.mock
+async def test_source_falls_back_to_document_then_chunks(tmp_path):
+    respx.get(f"{BANK}/memories/m1").mock(return_value=httpx.Response(200, json={
+        "id": "m1", "document_id": "d1"}))
+    respx.get(f"{BANK}/memories/m2").mock(return_value=httpx.Response(200, json={
+        "id": "m2", "document_id": "d2"}))
+    respx.get(f"{BANK}/documents/d1").mock(return_value=httpx.Response(200, json={
+        "created_at": "2025-01-01T00:00:00Z", "original_text": "full"}))
+    respx.get(f"{BANK}/documents/d2").mock(return_value=httpx.Response(200, json={
+        "created_at": "2025-01-01T00:00:00Z", "original_text": None}))
+    respx.get(f"{BANK}/documents/d2/chunks").mock(return_value=httpx.Response(200, json={"items": [
+        {"chunk_index": 1, "chunk_text": "B"}, {"chunk_index": 0, "chunk_text": "A"}]}))
+
+    a = arm(tmp_path)
+    r1, r2 = await a.source("m1"), await a.source("m2")
+
+    assert r1.text == "full" and r1.ts == datetime(2025, 1, 1, tzinfo=timezone.utc)
+    assert r2.text == "A\nB"
+
+
+@respx.mock
+async def test_source_observation_recurses_to_first_source_fact_and_missing_is_none(tmp_path):
+    respx.get(f"{BANK}/memories/o").mock(return_value=httpx.Response(200, json={
+        "id": "o", "type": "observation", "document_id": None, "source_memory_ids": ["f"]}))
+    respx.get(f"{BANK}/memories/f").mock(return_value=httpx.Response(200, json={
+        "id": "f", "document_id": "d"}))
+    respx.get(f"{BANK}/documents/d").mock(return_value=httpx.Response(200, json={
+        "created_at": "2025-01-01T00:00:00Z", "original_text": "raw"}))
+    respx.get(f"{BANK}/memories/nope").mock(return_value=httpx.Response(404))
+
+    a = arm(tmp_path)
+    rec = await a.source("o")
+
+    assert (rec.memory_id, rec.source_ref, rec.text) == ("o", "d", "raw")
+    assert await a.source("nope") is None
+
+
+@respx.mock
+async def test_history_isolates_failing_paths(tmp_path):
+    respx.get(f"{BANK}/documents").mock(return_value=httpx.Response(500))
+    respx.post(f"{BANK}/memories/recall").mock(return_value=httpx.Response(200, json={"results": [
+        {"id": "o1", "text": "obs", "type": "observation"}]}))
+    respx.get(f"{BANK}/memories/list").mock(return_value=httpx.Response(200, json={"items": [
+        {"id": "i1", "text": "bad fact", "invalidated_at": "2025-02-01T00:00:00+00:00"}]}))
+    respx.get(f"{BANK}/memories/o1/history").mock(return_value=httpx.Response(500))
+
+    mems = await arm(tmp_path).history("proj", "q", 1000)
+
+    assert [m.id for m in mems] == ["i1"]
