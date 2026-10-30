@@ -9,7 +9,6 @@ import type {
   ExtensionAPI,
   SessionStartEvent,
   BeforeAgentStartEvent,
-  SessionBeforeCompactEvent,
   SessionCompactEvent,
   AgentSettledEvent,
 } from "@earendil-works/pi-coding-agent";
@@ -179,10 +178,70 @@ function formatMatches(matches: WikiEntry[]): string {
   return lines.join("\n");
 }
 
+// ── Injection state (pure helpers) ────────────────────────────────────────
+
+export const CUSTOM_TYPE = "knowledge-base";
+
+export interface SessionEntryLike {
+  type: string;
+  id?: string;
+  customType?: string;
+  details?: { keys?: string[] } | null;
+  firstKeptEntryId?: string;
+}
+
+/**
+ * Rebuild the set of injected entry keys from session entries (oldest first).
+ * A compaction entry drops keys from messages before its firstKeptEntryId,
+ * since those messages are no longer in context and may be re-injected.
+ */
+export function recoverInjectedKeys(sessionEntries: SessionEntryLike[]): Set<string> {
+  const seen: Array<string | undefined> = [];
+  let kept: Array<{ id?: string; keys: string[] }> = [];
+  for (const e of sessionEntries) {
+    if (e.type === "compaction") {
+      const idx = seen.indexOf(e.firstKeptEntryId);
+      kept = idx >= 0 ? kept.filter((k) => seen.indexOf(k.id) >= idx) : [];
+      continue;
+    }
+    seen.push(e.id);
+    if (e.type === "custom_message" && e.customType === CUSTOM_TYPE) {
+      kept.push({ id: e.id, keys: e.details?.keys ?? [] });
+    }
+  }
+  return new Set(kept.flatMap((k) => k.keys));
+}
+
+export interface InjectionResult {
+  message: { customType: string; content: string; display: boolean; details: { keys: string[] } };
+}
+
+/** Build the before_agent_start result; never includes systemPrompt. Mutates `injected`. */
+export function buildInjection(
+  prompt: string,
+  entries: WikiEntry[],
+  injected: Set<string>,
+): InjectionResult | undefined {
+  const fresh = matchEntries(prompt, entries).filter((m) => !injected.has(m.path));
+  if (fresh.length === 0) return undefined;
+  for (const m of fresh) injected.add(m.path);
+  return {
+    message: {
+      customType: CUSTOM_TYPE,
+      content: formatMatches(fresh),
+      display: false,
+      details: { keys: fresh.map((m) => m.path) },
+    },
+  };
+}
+
+export { parseIndex };
+
 // ── Extension ─────────────────────────────────────────────────────────────
 
 export default function (pi: ExtensionAPI): void {
   let entries: WikiEntry[] = [];
+  let injected = new Set<string>();
 
   function reload(): void {
     try {
@@ -193,49 +252,38 @@ export default function (pi: ExtensionAPI): void {
     }
   }
 
+  function recover(ctx: { sessionManager: { getEntries(): unknown[] } }): void {
+    injected = recoverInjectedKeys(ctx.sessionManager.getEntries() as SessionEntryLike[]);
+  }
+
   reload();
 
-  pi.on("session_start", async (_event: SessionStartEvent, _ctx) => {
+  pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
     reload();
+    recover(ctx);
   });
 
   pi.on(
     "before_agent_start",
-    async (event: BeforeAgentStartEvent, _ctx): Promise<{ systemPrompt: string } | void> => {
-      if (entries.length === 0) return;
-
-      const matches = matchEntries(event.prompt, entries);
-      if (matches.length === 0) return;
-
-      const injection = formatMatches(matches);
-      // Returning systemPrompt forces the whole prompt, so pi drops other extensions' sections
-      // (Ponytail's always-on text). Kept on purpose: a held-out replay showed that text regresses approved turns.
-      return { systemPrompt: event.systemPrompt + "\n\n" + injection };
+    async (event: BeforeAgentStartEvent, _ctx): Promise<InjectionResult | void> => {
+      // Matches go in as an appended custom message, never systemPrompt: a changing
+      // system prompt invalidates the provider prompt cache on most turns. Each entry
+      // is injected at most once per session so the earlier prefix never changes.
+      // Behavioural change: because systemPrompt is no longer returned, other
+      // extensions' sections (Ponytail's always-on text) are no longer stripped.
+      return buildInjection(event.prompt, entries, injected);
     },
   );
 
-  pi.on(
-    "session_before_compact",
-    async (event: SessionBeforeCompactEvent, _ctx) => {
-      if (entries.length === 0) return;
-      // On compaction, preserve just the awareness hint — not the full INDEX
-      const hint =
-        "Knowledge base available at ~/llm-wiki/INDEX.md — " +
-        `${entries.length} notes across topics, people, decisions, and orgs. ` +
-        "Use read tool to check INDEX.md when context about prior work is needed.";
-      const baseSummary = event.preparation?.previousSummary ?? "";
-      return {
-        compaction: {
-          summary: baseSummary ? `${baseSummary}\n\n${hint}` : hint,
-          firstKeptEntryId: event.preparation.firstKeptEntryId,
-          tokensBefore: event.preparation.tokensBefore,
-        },
-      };
-    },
-  );
+  // No session_before_compact handler on purpose. In pi's compact(), a `compaction`
+  // result from an extension REPLACES the generated summary (summary,
+  // firstKeptEntryId and tokensBefore are taken from it and the default summarizer
+  // is skipped), so the old handler dropped everything since the last compaction.
 
-  pi.on("session_compact", async (_event: SessionCompactEvent, _ctx) => {
+  pi.on("session_compact", async (_event: SessionCompactEvent, ctx) => {
     reload();
+    // Messages before firstKeptEntryId are gone from context: allow re-injection.
+    recover(ctx);
   });
 
   pi.on("agent_settled", async (_event: AgentSettledEvent, _ctx) => {
