@@ -141,8 +141,9 @@ in
     localPorts = lib.mkOption {
       type = lib.types.listOf lib.types.port;
       default = [
-        3308
-        8008
+        3308 # beads Dolt
+        8008 # Kev
+        8010 # memory-gateway (127.0.0.1)
       ];
       description = "Localhost ports the sandbox may connect to.";
     };
