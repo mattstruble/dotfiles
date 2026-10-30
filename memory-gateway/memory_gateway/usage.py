@@ -7,6 +7,7 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 USAGE_FILE = "llm-usage.jsonl"
+SAMPLING_PARAMS = ("temperature", "top_p", "top_k")
 
 
 def record_usage(state_dir, arm: str, op: str, input_tokens, output_tokens, model: str) -> None:
@@ -55,6 +56,10 @@ class _Messages:
         self._o = owner
 
     async def create(self, *args, **kwargs):
+        # anthropic SDK >=2.3 dropped these kwargs; Bedrock still accepts them in the body.
+        moved = {k: kwargs.pop(k) for k in SAMPLING_PARAMS if k in kwargs}
+        if moved:
+            kwargs["extra_body"] = {**(kwargs.get("extra_body") or {}), **moved}
         resp = await self._o._client.messages.create(*args, **kwargs)
         record_response_usage(self._o._state_dir, self._o._arm, self._o._op, resp,
                               kwargs.get("model", ""))

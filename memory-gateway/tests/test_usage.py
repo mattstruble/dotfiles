@@ -72,3 +72,32 @@ async def test_hindsight_usage_sums_trace_stats(tmp_path):
             {"tokens": {"input": 5, "output": 2}}, {"tokens": {"input": 1, "output": 1}}]}))
     arm = HindsightArm(Config(hindsight_url="http://hs"), tmp_path)
     assert await arm.usage() == {"input_tokens": 6, "output_tokens": 3}
+
+
+class Sdk23Client:
+    """messages.create with the anthropic 2.3 keyword-only signature (no sampling kwargs)."""
+
+    def __init__(self):
+        self.messages = self
+        self.kw = None
+
+    async def create(self, *, max_tokens, messages=None, model=None, system=None,
+                     extra_body=None, timeout=None):
+        self.kw = dict(max_tokens=max_tokens, model=model, system=system, extra_body=extra_body)
+        return SimpleNamespace(usage=SimpleNamespace(input_tokens=1, output_tokens=2))
+
+
+async def test_proxy_moves_sampling_params_to_extra_body(tmp_path):
+    inner = Sdk23Client()
+    proxy = UsageRecordingClient(inner, tmp_path, "graphiti", "graphiti")
+    await proxy.messages.create(model="m", max_tokens=5, system="s", temperature=0.3,
+                                top_p=0.9, top_k=40, extra_body={"x": 1})
+    assert inner.kw == dict(max_tokens=5, model="m", system="s",
+                            extra_body={"x": 1, "temperature": 0.3, "top_p": 0.9, "top_k": 40})
+
+
+async def test_proxy_leaves_extra_body_untouched_without_sampling(tmp_path):
+    inner = Sdk23Client()
+    proxy = UsageRecordingClient(inner, tmp_path, "graphiti", "graphiti")
+    await proxy.messages.create(model="m", max_tokens=5)
+    assert inner.kw["extra_body"] is None

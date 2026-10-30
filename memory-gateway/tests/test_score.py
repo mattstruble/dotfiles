@@ -258,3 +258,24 @@ async def test_report_end_to_end(tmp_path, eval_env):
     assert md.startswith("NO-WINNER")  # neither arm beats the baseline
     assert json.loads((eval_env / "report.json").read_text())["rule"]["winner"] is None
     assert res["stale_gate"]["a"]["pass"]
+
+
+async def test_bedrock_judge_sends_temperature_in_extra_body():
+    from types import SimpleNamespace
+
+    from memory_gateway.config import Config
+
+    seen = {}
+
+    class C:
+        def __init__(self):
+            self.messages = self
+
+        async def create(self, *, max_tokens, messages, model, system, tools, tool_choice,
+                         extra_body=None):
+            seen["extra_body"] = extra_body
+            return SimpleNamespace(content=[SimpleNamespace(type="tool_use", input={})], usage=None)
+
+    j = score.BedrockJudge(Config(), client=C())
+    await j(next(iter(score._SCHEMAS)), {})
+    assert seen["extra_body"] == {"temperature": 0}
