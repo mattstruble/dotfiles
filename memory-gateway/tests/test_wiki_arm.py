@@ -259,3 +259,30 @@ async def test_supersede_rewrites_malformed_old_note(tmp_path, source):
     text = (arm.shadow / "topics/bad.md").read_text()
     assert "status: superseded" in text and "superseded_by" in text and "alpha malformed body" in text
     assert "related" not in text
+
+
+async def test_history_and_source(tmp_path, source):
+    (source / "topics/pears.md").write_text(note(title="Pears", tags="[domain/other]", body="alpha pears are yellow."))
+    git(source, "commit", "-qam", "edit")
+    arm = make(tmp_path, source)
+    await arm.start()
+    hist = await arm.history(None, "alpha", 100000)
+    assert all(m.id.startswith("hist:") and m.text.startswith("[superseded ") for m in hist)
+    texts = " ".join(m.text for m in hist)
+    assert "alpha old decision" in texts and "alpha reversed" in texts and "alpha sb" in texts
+    assert "alpha gone decision" in texts and "alpha struck gone" in texts
+    assert "alpha pears are green." in texts
+    assert "alpha pears are yellow" not in texts
+    assert [m.ts for m in hist] == sorted((m.ts for m in hist), reverse=True)
+    assert all(m.source_ref == m.id[5:].rsplit("#", 1)[0] for m in hist)
+    small = await arm.history(None, "alpha", 20)
+    assert sum(m.tokens for m in small) <= 20
+    old = next(m for m in hist if "green" in m.text)
+    rec = await arm.source(old.id)
+    assert rec and "alpha pears are green." in rec.text and rec.source_ref == old.source_ref
+    cur = (await arm.recall(None, "alpha pears", 1000))[0]
+    rec = await arm.source(cur.id)
+    head = git(arm.shadow, "log", "-n1", "--format=%H", "--", cur.source_ref).strip()
+    assert rec and "yellow" in rec.text and rec.source_ref == f"{cur.source_ref}@{head}"
+    assert await arm.source("topics/nope.md#0") is None
+    assert await arm.source("hist:topics/pears.md@deadbeef#0") is None

@@ -13,9 +13,10 @@ import frontmatter
 import numpy as np
 
 from ..config import Config
+from ..wiki.history import history_rows
 from ..wiki.notes import chunk_note, current_notes, load_all, load_post
 from ..usage import record_response_usage
-from .base import IngestItem, Memory, count_tokens
+from .base import IngestItem, Memory, SourceRecord, count_tokens
 
 log = logging.getLogger(__name__)
 
@@ -134,6 +135,10 @@ class WikiArm:
                 CREATE TABLE IF NOT EXISTS chunks(
                   path TEXT, idx INTEGER, text TEXT, vec BLOB,
                   PRIMARY KEY(path, idx));
+                CREATE TABLE IF NOT EXISTS hnotes(path TEXT PRIMARY KEY, hash TEXT);
+                CREATE TABLE IF NOT EXISTS hist(
+                  path TEXT, commit_id TEXT, cdate TEXT, n INTEGER, text TEXT,
+                  vec BLOB, tags TEXT, PRIMARY KEY(path, commit_id, n));
                 """
             )
         return self._db
@@ -185,6 +190,110 @@ class WikiArm:
                 (n.path, h, n.updated, json.dumps(n.tags)),
             )
         db.commit()
+        await self._reindex_history()
+
+    async def _reindex_history(self) -> None:
+        def collect():
+            allnotes = load_all(self.shadow)
+            cur = {n.path for n in current_notes(allnotes)}
+            return allnotes, cur
+
+        allnotes, cur = await self._run(collect)
+        db = self._connect()
+        have = dict(db.execute("SELECT path, hash FROM hnotes"))
+        for p in set(have) - {n.path for n in allnotes}:
+            db.execute("DELETE FROM hnotes WHERE path=?", (p,))
+            db.execute("DELETE FROM hist WHERE path=?", (p,))
+        for n in allnotes:
+            is_cur = n.path in cur
+            h = hashlib.sha256(f"{is_cur}\n{n.raw}".encode()).hexdigest()
+            if have.get(n.path) == h:
+                continue
+            rows = await self._run(history_rows, self.shadow, n, is_cur)
+            vecs = await self._embed([r[3] for r in rows]) if rows else []
+            db.execute("DELETE FROM hist WHERE path=?", (n.path,))
+            for (commit, cdate, i, text), v in zip(rows, vecs):
+                db.execute(
+                    "INSERT INTO hist VALUES(?,?,?,?,?,?,?)",
+                    (n.path, commit, cdate, i, text, v.tobytes(), json.dumps(n.tags)),
+                )
+            db.execute("INSERT OR REPLACE INTO hnotes VALUES(?,?)", (n.path, h))
+        db.commit()
+
+    async def history(
+        self, project: str | None, query: str, budget_tokens: int
+    ) -> list[Memory]:
+        rows = self._connect().execute(
+            "SELECT path, commit_id, cdate, n, text, vec, tags FROM hist"
+        ).fetchall()
+        if not rows:
+            return []
+        q = (await self._embed([query]))[0]
+        qn = np.linalg.norm(q) or 1.0
+        scored = []
+        for path, commit, cdate, n, text, blob, tags in rows:
+            v = np.frombuffer(blob, dtype=np.float32)
+            score = float(v @ q / ((np.linalg.norm(v) or 1.0) * qn))
+            if project and f"domain/{project}" in json.loads(tags):
+                score += PROJECT_BOOST
+            scored.append((score, path, commit, cdate, n, text))
+        scored.sort(key=lambda r: -r[0])
+        picked: list[Memory] = []
+        used = 0
+        for _, path, commit, cdate, n, text in scored:
+            d = cdate[:10]
+            body = f"[superseded {d}] {text}"
+            t = count_tokens(body)
+            if used + t > budget_tokens:
+                continue
+            used += t
+            picked.append(
+                Memory(
+                    id=f"hist:{path}@{commit}#{n}",
+                    text=body,
+                    tokens=t,
+                    ts=datetime.fromisoformat(cdate),
+                    arm=self.name,
+                    source_ref=f"{path}@{commit}",
+                )
+            )
+            if used >= budget_tokens:
+                break
+        picked.sort(key=lambda m: m.ts, reverse=True)
+        return picked
+
+    async def source(self, memory_id: str) -> SourceRecord | None:
+        return await self._run(self._source, memory_id)
+
+    def _source(self, memory_id: str) -> SourceRecord | None:
+        try:
+            m = re.fullmatch(r"hist:(.+)@([0-9a-f]{7,64})#\d+", memory_id)
+            if m:
+                path, commit = m.group(1), m.group(2)
+                if not PATH_RE.match(path):
+                    return None
+                text = _git(self.shadow, "show", f"{commit}:{path}")
+                cdate = _git(self.shadow, "show", "-s", "--format=%cI", commit).strip()
+            else:
+                m = re.fullmatch(r"(.+)#\d+", memory_id)
+                if not m or not PATH_RE.match(m.group(1)):
+                    return None
+                path = m.group(1)
+                f = self.shadow / path
+                if not f.is_file():
+                    return None
+                text = f.read_text(encoding="utf-8")
+                commit, cdate = _git(
+                    self.shadow, "log", "-n1", "--format=%H %cI", "--", path
+                ).strip().split(" ", 1)
+        except (subprocess.CalledProcessError, ValueError, OSError):
+            return None
+        return SourceRecord(
+            memory_id=memory_id,
+            source_ref=f"{path}@{commit}",
+            text=text,
+            ts=datetime.fromisoformat(cdate),
+        )
 
     async def _ranked(self, project: str | None, query: str) -> list[dict]:
         rows = self._connect().execute(
