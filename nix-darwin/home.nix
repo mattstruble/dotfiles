@@ -246,6 +246,44 @@ in
         ".local/bin/vim_opener".source = mkLink "${path}/commands/.local/bin/vim_opener";
         ".local/bin/um".source = mkLink "${path}/commands/.local/bin/um";
 
+        # beads: one Dolt database per repo on the shared server, with the
+        # per-project beads dir under ~/.local/share/beads instead of in the
+        # repo. Repos keep their own issue prefix and Dolt history; nothing
+        # shows up in `git status`. bd_store is the policy (prefix rule,
+        # collision rule, seeding) and is runnable on its own to ask where a
+        # repo's tracker lives.
+        ".local/bin/bd_store".source = mkLink "${path}/commands/.local/bin/bd_store";
+
+        # Shadows the packaged bd — ~/.local/bin precedes ~/.nix-profile/bin in
+        # PATH — so shell, Make, and agent plugins all get store resolution
+        # without each carrying its own wrapper.
+        ".local/bin/bd" = {
+          text = ''
+            #!${pkgs.bash}/bin/bash
+            # bd_store seeds a new store by calling bd; _BD_WRAPPED stops that
+            # call from coming back here instead of resolving a store.
+            if [ -n "''${_BD_WRAPPED:-}" ]; then
+              exec ${pkgs.beads}/bin/bd "$@"
+            fi
+
+            _BD_WRAPPED=1
+            BD_REAL=${pkgs.beads}/bin/bd
+            export _BD_WRAPPED BD_REAL
+
+            # Ambient store selection is hostile here: BEADS_DIR can point at
+            # another project and BEADS_DOLT_SHARED_SERVER overrides the mode
+            # this repo's store pins.
+            unset BEADS_DIR BEADS_DOLT_SHARED_SERVER
+
+            store=$("''${HOME}/.local/bin/bd_store" 2>/dev/null) || store=""
+            # Empty outside a git repo: no store to resolve, so bd runs as-is.
+            [ -n "$store" ] && export BEADS_DIR="$store"
+
+            exec ${pkgs.beads}/bin/bd "$@"
+          '';
+          executable = true;
+        };
+
         # Ponytail: expose full repo so plugin's relative requires resolve
         ".local/share/ponytail".source = inputs.ponytail;
 
@@ -1449,7 +1487,10 @@ in
         TINC_USE_NIX = "yes";
         WORDCHARS = "";
         BEADS_SKIP_IDENTITY_CHECK = "1";
-        BEADS_DOLT_SHARED_SERVER = "1";
+        # BEADS_DOLT_SHARED_SERVER deliberately unset: each store pins
+        # dolt_mode = "server" in its own metadata.json. Exported globally it
+        # overrides that pin in every repo, which is how repos ended up asking
+        # the shared server for databases they never had.
       };
 
       shellAliases = {

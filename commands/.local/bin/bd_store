@@ -1,0 +1,237 @@
+#!/bin/bash
+# Resolve (and create on demand) the out-of-tree beads store for a repository,
+# or migrate a repo's legacy in-tree store into that layout.
+#
+#   bd_store            print the store path (the BEADS_DIR value) for this repo
+#   bd_store --migrate  move this repo's in-tree .beads onto the shared server
+#
+# Exits 1 outside a git repository so callers can fall back to plain bd.
+#
+# Each repo gets its own Dolt database on the shared Dolt server, so it keeps its
+# own issue namespace (its prefix and its Dolt history). Only the small
+# per-project beads dir lives here instead of in the repo, which is what keeps
+# .beads/, .beads.gate.lock and a generated .gitignore out of `git status`.
+#
+# Prefix rule: the repo directory basename, lowercased, with non-alphanumeric
+# characters collapsed to '-'. If that basename is already claimed by a different
+# repo, the prefix is qualified with the path under $HOME so two repos never
+# silently share one tracker.
+set -euo pipefail
+
+store_root="${BEADS_STORE_ROOT:-$HOME/.local/share/beads}"
+server_data="${BEADS_SERVER_DATA:-$HOME/.local/share/beads-dolt}"
+archive_root="${BEADS_ARCHIVE:-$HOME/.local/share/beads-migration}"
+port="${BEADS_DOLT_PORT:-3308}"
+service_label="com.user.beads-dolt-server"
+
+# This script decides the store itself, so ambient store selection must not leak
+# in: an inherited BEADS_DIR makes bd treat some other project's store as the
+# current one, and BEADS_DOLT_SHARED_SERVER overrides the per-store mode.
+unset BEADS_DIR BEADS_DOLT_SHARED_SERVER
+
+# Seeding calls bd directly. _BD_WRAPPED tells the bd wrapper in ~/.local/bin to
+# exec the packaged bd without resolving a store, which is what we want while
+# the store is still being created.
+export _BD_WRAPPED=1
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 1
+bd_bin="${BD_REAL:-bd}"
+
+slug() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' \
+    | sed -e 's/[^a-z0-9-]/-/g' -e 's/-\{2,\}/-/g' -e 's/^-*//' -e 's/-*$//'
+}
+
+prefix=$(slug "$(basename "$root")")
+store="$store_root/$prefix"
+
+if [ -f "$store/repo" ] && [ "$(cat "$store/repo")" != "$root" ]; then
+  prefix=$(slug "${root#"$HOME"/}")
+  store="$store_root/$prefix"
+fi
+
+json_field() {
+  sed -n "s/.*\"$2\"[[:space:]]*:[[:space:]]*\"\{0,1\}\([^\",}]*\)\"\{0,1\}.*/\1/p" "$1" | head -1
+}
+
+# Row count as a bare integer. dolt's default tabular output buries the value
+# between pipes, which parses as empty and would make any comparison of it
+# vacuously true.
+row_count() {
+  local n
+  case "$1" in
+    embedded) n=$(dolt --data-dir "$2" sql -r csv -q "select count(*) from $3.issues" 2>/dev/null | sed -n '2p') ;;
+    server) n=$(dolt --host 127.0.0.1 --port "$port" --no-tls -u root --password '' sql -r csv -q "select count(*) from $2.issues" 2>/dev/null | sed -n '2p') ;;
+  esac
+  n=$(printf '%s' "$n" | tr -d '[:space:]')
+  case "$n" in
+    '' | *[!0-9]*) return 1 ;;
+    *) printf '%s' "$n" ;;
+  esac
+}
+
+server_has_db() {
+  dolt --host 127.0.0.1 --port "$port" --no-tls -u root --password '' \
+    sql -q "select 1 from information_schema.tables where table_schema='$1' and table_name='issues'" 2>/dev/null |
+    grep -q 1
+}
+
+restart_server() {
+  launchctl kickstart -k "gui/$(id -u)/$service_label" 2>/dev/null || true
+  # The listener takes a moment to come back; without this the first bd call
+  # after a restart fails with a connection error.
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    dolt --host 127.0.0.1 --port "$port" --no-tls -u root --password '' \
+      sql -q "select 1" >/dev/null 2>&1 && return 0
+    sleep 1
+  done
+  return 1
+}
+
+# A repo that still has its own .beads must never be silently shadowed by an
+# empty out-of-tree store: that presents a populated tracker as an empty one,
+# which is indistinguishable from data loss.
+guard_in_tree() {
+  if [ -f "$root/.beads/metadata.json" ]; then
+    echo "bd_store: $root/.beads exists; refusing to shadow it with $store" >&2
+    echo "  Run: bd_store --migrate" >&2
+    exit 1
+  fi
+}
+
+resolve() {
+  if [ ! -f "$store/metadata.json" ]; then
+    if [ -d "$store" ] && [ -n "$(ls -A "$store" 2>/dev/null)" ]; then
+      echo "bd_store: $store exists but has no metadata.json; refusing to overwrite" >&2
+      exit 1
+    fi
+    # bd init ignores BEADS_DIR when deciding where to create the store, so seed
+    # it in a throwaway repo and move the result into place. --skip-agents and
+    # --skip-hooks stop bd from writing AGENTS.md/CLAUDE.md or git hooks; the
+    # real repo is never written to.
+    seed=$(mktemp -d)
+    trap 'rm -rf "$seed"' EXIT
+    git -C "$seed" init -q .
+    (
+      cd "$seed" &&
+        "$bd_bin" init --shared-server --external --server-port "$port" \
+          --skip-agents --skip-hooks --non-interactive -p "$prefix" >/dev/null
+    )
+    mkdir -p "$(dirname "$store")"
+    mv "$seed/.beads" "$store"
+    chmod 700 "$store"
+
+    # dolt_server_port in metadata.json is deprecated (cross-project leakage);
+    # the port file beside it is the primary source.
+    tmp="$store/metadata.json.tmp"
+    grep -v '"dolt_server_port"' "$store/metadata.json" >"$tmp" || true
+    mv "$tmp" "$store/metadata.json"
+    printf '%s' "$port" >"$store/dolt-server.port"
+    printf '%s\n' "$root" >"$store/repo"
+  fi
+  printf '%s\n' "$store"
+}
+
+migrate() {
+  in="$root/.beads"
+  if [ ! -f "$in/metadata.json" ]; then
+    echo "bd_store: $in has no metadata.json; nothing to migrate" >&2
+    exit 1
+  fi
+  if grep -q '"dolt_mode"[[:space:]]*:[[:space:]]*"server"' "$in/metadata.json"; then
+    echo "bd_store: $in already uses server mode; move it to $store by hand" >&2
+    exit 1
+  fi
+  if [ -f "$store/metadata.json" ]; then
+    echo "bd_store: $store already exists; refusing to overwrite it" >&2
+    exit 1
+  fi
+
+  db=$(json_field "$in/metadata.json" dolt_database)
+  project_id=$(json_field "$in/metadata.json" project_id)
+  if [ -z "$db" ] || [ -z "$project_id" ]; then
+    echo "bd_store: could not read dolt_database/project_id from $in/metadata.json" >&2
+    exit 1
+  fi
+  if [ ! -d "$in/embeddeddolt/$db" ]; then
+    echo "bd_store: $in/embeddeddolt/$db not found; only embedded stores are migratable" >&2
+    exit 1
+  fi
+  if [ -e "$server_data/$db" ]; then
+    echo "bd_store: $server_data/$db already exists; refusing to overwrite it" >&2
+    exit 1
+  fi
+
+  before=$(row_count embedded "$in/embeddeddolt" "$db") || {
+    echo "bd_store: could not count issues in the in-tree store; refusing to migrate" >&2
+    exit 1
+  }
+
+  # An embedded store and a server database share the <db>/.dolt layout, so the
+  # move is a directory copy. That also keeps Dolt commit history, which
+  # bd export --json does not carry.
+  cp -R "$in/embeddeddolt/$db" "$server_data/$db"
+  restart_server
+  if ! server_has_db "$db"; then
+    echo "bd_store: server did not register $db after restart; in-tree store untouched" >&2
+    exit 1
+  fi
+
+  mkdir -p "$store"
+  chmod 700 "$store"
+  cat >"$store/metadata.json" <<EOF
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "$db",
+  "project_id": "$project_id"
+}
+EOF
+  printf '%s' "$port" >"$store/dolt-server.port"
+  printf '%s\n' "$root" >"$store/repo"
+  if [ -f "$in/config.yaml" ]; then
+    cp "$in/config.yaml" "$store/config.yaml"
+  fi
+
+  # Schema comes up last so the copy stays byte-identical until it is proven
+  # readable; bd migrate schema is one-way, so the in-tree store stays as the
+  # fallback until the counts agree.
+  if ! BEADS_DIR="$store" "$bd_bin" migrate schema >/dev/null 2>&1; then
+    echo "bd_store: bd migrate schema failed against $store; in-tree store untouched" >&2
+    exit 1
+  fi
+
+  after=$(row_count server "$db") || {
+    echo "bd_store: could not count issues on the server; in-tree store untouched" >&2
+    exit 1
+  }
+  if [ "$before" != "$after" ]; then
+    echo "bd_store: issue count changed ($before -> $after); in-tree store untouched" >&2
+    exit 1
+  fi
+
+  # bd init writes a .gitignore into the repo. Only safe to remove when bd wrote
+  # it and nobody has added to it since.
+  gi="$root/.gitignore"
+  if [ -f "$gi" ] && [ "$(sed -n '1p' "$gi")" = "# Beads / Dolt files (added by bd init)" ] &&
+    ! git -C "$root" ls-files --error-unmatch .gitignore >/dev/null 2>&1; then
+    rm -f "$gi"
+  fi
+
+  mkdir -p "$archive_root/$prefix"
+  mv "$in" "$archive_root/$prefix/in-tree.beads"
+  rm -f "$root/.beads.gate.lock"
+
+  echo "migrated $prefix: $before issues, database $db"
+  echo "  store:  $store"
+  echo "  backup: $archive_root/$prefix/in-tree.beads"
+}
+
+case "${1:-}" in
+  --migrate | migrate) migrate ;;
+  *)
+    guard_in_tree
+    resolve
+    ;;
+esac
