@@ -13,7 +13,7 @@ import frontmatter
 import numpy as np
 
 from ..config import Config
-from ..wiki.notes import chunk_note, current_notes, load_all
+from ..wiki.notes import chunk_note, current_notes, load_all, load_post
 from ..usage import record_response_usage
 from .base import IngestItem, Memory, count_tokens
 
@@ -291,7 +291,7 @@ class WikiArm:
                     text = op.get("text")
                     if not p or not p.is_file() or not isinstance(text, str) or not text.strip():
                         raise ValueError("invalid append")
-                    post = frontmatter.load(p)
+                    post = load_post(p)
                     post.content = post.content.rstrip() + "\n\n" + text.strip()
                     post["updated"] = day
                     self._write(p, post)
@@ -302,7 +302,7 @@ class WikiArm:
                         raise ValueError("invalid supersede")
                     new_rel = op["new_path"][:-3]
                     reason = str(op.get("reason") or "").strip()
-                    post = frontmatter.load(old)
+                    post = load_post(old)
                     post["status"] = "superseded"
                     post["superseded_by"] = f"[[{new_rel}]]"
                     post["updated"] = day
@@ -313,7 +313,7 @@ class WikiArm:
                     )
                     self._write(old, post)
                     changed.append(op["old_path"])
-                    npost = frontmatter.load(new)
+                    npost = load_post(new)
                     if npost.get("type") == "decision" or "supersedes" in npost.metadata:
                         cur = list(npost.get("supersedes") or [])
                         link = f"[[{op['old_path'][:-3]}]]"
@@ -391,7 +391,7 @@ class WikiArm:
 
     def _strike(self, rel: str, chunk: str, query: str, reason: str) -> bool:
         p = self.shadow / rel
-        post = frontmatter.load(p)
+        post = load_post(p)
         paras = re.split(r"(\n\s*\n)", post.content)
         target = _words(query)
         best, best_score = -1, 0.0

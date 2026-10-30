@@ -230,3 +230,32 @@ async def test_forget_strikes_paragraph_in_matched_chunk_under_heading(tmp_path,
     assert ids == ["topics/z.md#0"]
     assert "# Fruit\n~~zebra stripes are black.~~ (retracted" in text
     assert "\nzebra stripes are white." in text and "~~zebra stripes are white" not in text
+
+
+BAD_FM = '---\ntitle: x\nrelated:\n  - "[[a]]"\n  "[[b]]"\n---\nalpha malformed body\n'
+
+
+async def test_malformed_frontmatter_is_indexed_and_start_survives(tmp_path, source, caplog):
+    (source / "topics/bad.md").write_text(BAD_FM)
+    git(source, "add", ".")
+    git(source, "commit", "-qm", "bad")
+    arm = make(tmp_path, source)
+    await arm.start()
+    assert await arm.health() == "ok"
+    mems = await arm.recall(None, "alpha malformed", 100000)
+    assert "topics/bad.md" in {m.source_ref for m in mems}
+    assert "unparsable frontmatter" in caplog.text
+
+
+async def test_supersede_rewrites_malformed_old_note(tmp_path, source):
+    (source / "topics/bad.md").write_text(BAD_FM)
+    git(source, "add", ".")
+    git(source, "commit", "-qm", "bad")
+    client = FakeClient([{"op": "supersede", "old_path": "topics/bad.md", "new_path": "topics/pears.md", "reason": "r"}])
+    arm = make(tmp_path, source, client=client)
+    await arm.start()
+    changed = arm._apply_ops(client.payload["ops"], item())
+    assert "topics/bad.md" in changed
+    text = (arm.shadow / "topics/bad.md").read_text()
+    assert "status: superseded" in text and "superseded_by" in text and "alpha malformed body" in text
+    assert "related" not in text

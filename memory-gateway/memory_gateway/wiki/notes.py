@@ -1,5 +1,6 @@
 """Wiki note parsing, current-only filtering and chunking."""
 
+import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -10,6 +11,8 @@ from ..arms.base import count_tokens
 
 NOTE_DIRS = ("decisions", "topics", "people", "orgs", "plans")
 MAX_CHUNK_TOKENS = 400
+log = logging.getLogger(__name__)
+_FM_BODY = re.compile(r"\A\ufeff?---\s*\n.*?\n---[ \t]*(?:\n|\Z)(.*)", re.DOTALL)
 _STRIKE = re.compile(r"~~.*?~~", re.DOTALL)
 _LINK = re.compile(r"\[\[([^\]|#]+)(?:[#|][^\]]*)?\]\]")
 
@@ -39,12 +42,26 @@ def _as_list(v: object) -> list:
     return list(v) if isinstance(v, (list, tuple)) else [v]
 
 
+def parse_post(raw: str, path: object = "") -> frontmatter.Post:
+    """Parse frontmatter; on malformed YAML warn and use empty metadata."""
+    try:
+        return frontmatter.loads(raw)
+    except Exception as e:  # yaml.YAMLError and friends
+        log.warning("wiki: unparsable frontmatter in %s: %s", path, e)
+        m = _FM_BODY.match(raw)
+        return frontmatter.Post((m.group(1) if m else raw).strip())
+
+
+def load_post(path: Path) -> frontmatter.Post:
+    return parse_post(path.read_text(encoding="utf-8"), path)
+
+
 def load_note(root: Path, rel: str) -> Note | None:
     try:
         raw = (root / rel).read_text(encoding="utf-8")
-        post = frontmatter.loads(raw)
     except (OSError, ValueError):
         return None
+    post = parse_post(raw, rel)
     meta = dict(post.metadata)
     return Note(
         path=rel,
