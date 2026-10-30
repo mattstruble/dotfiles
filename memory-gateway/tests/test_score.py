@@ -32,6 +32,15 @@ class FakeJudge:
         if kind == "coverage":
             key = payload["note"].split()[0]
             return {"covered": any(key in m for m in payload["memories"])}
+        if kind == "pick_current":
+            for i, m in enumerate(payload["memories"]):
+                if "CURRENT" in m:
+                    return {"found": True, "index": i}
+            return {"found": False, "index": -1}
+        if kind == "supports":
+            return {"supported": "BACKED" in payload["source"]}
+        if kind == "states_fact":
+            return {"stated": any("STALE" in m for m in payload["memories"])}
         return {"relevant": "junk" not in payload["memory"]}
 
 
@@ -252,6 +261,7 @@ async def test_report_end_to_end(tmp_path, eval_env):
     write_log(state / "recall-log.jsonl")
     (score.eval_dir() / "supersession_pairs.jsonl").write_text("\n".join(json.dumps(p) for p in PAIRS))
     mock_gateway({"a": {"q0": ["CURRENT"]}, "b": {"q0": ["CURRENT"]}})
+    mock_lineage({"a": {}, "b": {}}, {})
     cfg = Config(state_dir=str(state))
     res = await score.report(cfg, GW, score.CachedJudge(FakeJudge()), sessions, wiki)
     md = (eval_env / "report.md").read_text()
@@ -281,3 +291,80 @@ async def test_bedrock_judge_sends_no_sampling_params():
     j = score.BedrockJudge(Config(), client=C())
     await j(next(iter(score._SCHEMAS)), {})
     assert "extra_body" not in seen
+
+
+LPAIRS = [{"id": f"p{i:02d}", "project": None, "question": f"q{i}", "stale_fact": "s", "current_fact": "c"} for i in range(25)]
+
+
+def mock_lineage(hist, sources):
+    """hist: arm -> {query: texts}; sources: arm -> source dict or {'error': ..} (None -> null)."""
+    def history(request):
+        body = json.loads(request.content)
+        arm = body["arms"][0]
+        texts = hist[arm].get(body["query"], [])
+        return httpx.Response(200, json={"results": {arm: [{"id": "m", "text": t, "tokens": 5} for t in texts]}, "errors": {}})
+
+    def source(request):
+        body = json.loads(request.content)
+        s = sources.get(body["arm"])
+        if isinstance(s, dict) and "error" in s:
+            return httpx.Response(200, json={"arm": body["arm"], "source": None, "error": s["error"]})
+        return httpx.Response(200, json={"arm": body["arm"], "source": s, "error": None})
+
+    respx.post(f"{GW}/history").mock(side_effect=history)
+    respx.post(f"{GW}/source").mock(side_effect=source)
+
+
+def lin_setup(recall_ok=10):
+    qs = [p["question"] for p in score._sample_pairs(LPAIRS)]
+    assert len(qs) == 10 and len(set(qs)) == 10
+    return qs
+
+
+@respx.mock
+async def test_lineage_pass_and_sampling():
+    qs = lin_setup()
+    mock_gateway({"a": {q: ["CURRENT"] for q in qs}}, arms=("a",))
+    mock_lineage({"a": {q: ["STALE"] for q in qs}}, {"a": {"memory_id": "m", "source_ref": "r", "text": "BACKED", "ts": "t"}})
+    res = await score.lineage(GW, FakeJudge(), LPAIRS)
+    assert res["a"]["traced"] == 10 and res["a"]["replaced_found"] == 10 and res["a"]["pass"]
+    assert res["a"]["pair_ids"][0] == "p00" and res["a"]["pair_ids"][-1] >= "p20"  # spans the file
+
+
+@respx.mock
+async def test_lineage_fails_on_trace():
+    qs = lin_setup()
+    mock_gateway({"a": {q: ["CURRENT"] for q in qs[:8]}}, arms=("a",))  # 2 recalls miss -> traced 8
+    mock_lineage({"a": {q: ["STALE"] for q in qs}}, {"a": {"memory_id": "m", "source_ref": "r", "text": "BACKED", "ts": "t"}})
+    res = await score.lineage(GW, FakeJudge(), LPAIRS)
+    assert res["a"]["traced"] == 8 and not res["a"]["pass"]
+
+
+@respx.mock
+async def test_lineage_fails_on_unsupported_and_missing_source():
+    qs = lin_setup()
+    mock_gateway({"a": {q: ["CURRENT"] for q in qs}, "b": {q: ["CURRENT"] for q in qs}}, arms=("a", "b"))
+    mock_lineage({"a": {q: ["STALE"] for q in qs}, "b": {q: ["STALE"] for q in qs}},
+                 {"a": {"memory_id": "m", "source_ref": "r", "text": "unrelated", "ts": "t"}, "b": {"error": "gone"}})
+    res = await score.lineage(GW, FakeJudge(), LPAIRS)
+    assert res["a"]["traced"] == 0 and not res["a"]["pass"]
+    assert res["b"]["traced"] == 0 and not res["b"]["pass"]
+
+
+@respx.mock
+async def test_lineage_fails_on_history_without_stale():
+    qs = lin_setup()
+    mock_gateway({"a": {q: ["CURRENT"] for q in qs}}, arms=("a",))
+    mock_lineage({"a": {q: ["STALE"] for q in qs[:7]}}, {"a": {"memory_id": "m", "source_ref": "r", "text": "BACKED", "ts": "t"}})
+    res = await score.lineage(GW, FakeJudge(), LPAIRS)
+    assert res["a"]["traced"] == 10 and res["a"]["replaced_found"] == 7 and not res["a"]["pass"]
+
+
+def test_rule_requires_lineage_gate():
+    lin = {"hindsight": {"pass": False, "traced": 0, "replaced_found": 0, "pairs": 10, "errors": 0},
+           "wiki": {"pass": True, "traced": 10, "replaced_found": 10, "pairs": 10, "errors": 0}}
+    r = score.apply_rule(st(hindsight=True, wiki=True), rl(hindsight=0.9, wiki=0.5), {"arms": {}}, lin)
+    assert r["winner"] == "wiki" and r["passed_stale_gate"] == ["wiki"]
+    out = score.render({"rule": r, "stale_gate": st(wiki=True), "lineage": lin, "relevance": rl(wiki=0.5),
+                        "cost": {"arms": {}, "judge": {}}})
+    assert "## Lineage gate" in out

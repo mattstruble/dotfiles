@@ -1,9 +1,9 @@
 """Score the memory arms and apply the pre-registered winner rule.
 
-Usage: python -m memory_gateway.eval.score {stale-gate|relevance|cost|report}
+Usage: python -m memory_gateway.eval.score {stale-gate|lineage|relevance|cost|report}
 
 Rule (fixed in advance): an arm must pass the stale-leak gate (<= 1 leak across all
-supersession pairs); gated arms must beat the knowledge-base INDEX baseline on label
+supersession pairs) and the lineage gate (traced >= 9/10, replaced fact found >= 8/10); gated arms must beat the knowledge-base INDEX baseline on label
 coverage within the budgets (2000 at start + 1000 per top-up); remaining ties are broken
 by cost, then ease of running (hindsight before wiki before graphiti). Otherwise NO-WINNER.
 Data is read/written only under the eval dir and the gateway state dir.
@@ -25,6 +25,9 @@ from ..config import Config, load_config
 MAX_LEAKS = 1
 START_BUDGET = 2000
 TOPUP_BUDGET = 1000
+LINEAGE_SAMPLE = 10
+LINEAGE_TRACED_MIN = 0.9
+LINEAGE_REPLACED_MIN = 0.8
 MIN_HAND_SESSIONS = 10  # hand labels drive the rule only with at least this many labelled sessions
 EASE = ["hindsight", "wiki", "graphiti"]  # easiest to run first
 
@@ -48,6 +51,19 @@ _SCHEMAS = {
     "relevance": {
         "desc": "Decide whether the memory is relevant to the session's task.",
         "props": {"relevant": "boolean"},
+    },
+    "pick_current": {
+        "desc": "Given a current fact and a list of memories, pick the memory that states the current fact. "
+                "found = such a memory exists; index = its 0-based position in the list (-1 if none).",
+        "props": {"found": "boolean", "index": "integer"},
+    },
+    "supports": {
+        "desc": "Decide whether the source text supports the memory (the memory's claim is backed by the source).",
+        "props": {"supported": "boolean"},
+    },
+    "states_fact": {
+        "desc": "Decide whether some memory states the given fact (as a fact that was once held, current or not).",
+        "props": {"stated": "boolean"},
     },
 }
 
@@ -86,7 +102,8 @@ class BedrockJudge:
         self.last_usage = (getattr(u, "input_tokens", 0) or 0, getattr(u, "output_tokens", 0) or 0)
         for b in resp.content:
             if getattr(b, "type", None) == "tool_use":
-                return {k: bool(b.input.get(k)) for k in s["props"]}
+                return {k: (int(b.input.get(k, -1)) if t == "integer" else bool(b.input.get(k)))
+                        for k, t in s["props"].items()}
         raise ValueError("judge returned no tool output")
 
 
@@ -170,6 +187,71 @@ async def stale_gate(gateway_url: str, judge, pairs: list[dict] | None = None) -
         res[arm] = {"leaks": len(d["leak_ids"]), "leak_ids": d["leak_ids"], "errors": d["errors"], "pairs": n,
                     "current_present_rate": d["current"] / n if n else None,
                     "pass": bool(n) and d["errors"] == 0 and len(d["leak_ids"]) <= MAX_LEAKS}
+    return res
+
+
+# ── Lineage gate ────────────────────────────────────────────────────
+
+def _sample_pairs(pairs: list[dict], n: int = LINEAGE_SAMPLE) -> list[dict]:
+    """Deterministic sample: sorted by id, evenly spaced so it spans the file."""
+    ps = sorted(pairs, key=lambda p: str(p["id"]))
+    if len(ps) <= n:
+        return ps
+    return [ps[i * len(ps) // n] for i in range(n)]
+
+
+async def _memories(http, path: str, arm: str, p: dict) -> list[dict]:
+    r = await http.post(path, json={"project": p.get("project"), "query": p["question"],
+                                    "budget_tokens": START_BUDGET, "arms": [arm]})
+    body = r.json()
+    if arm in body.get("errors", {}) or arm not in body.get("results", {}):
+        raise RuntimeError(body.get("errors", {}).get(arm, "no result"))
+    return body["results"][arm]
+
+
+async def _trace(http, judge, arm: str, p: dict) -> bool:
+    mems = await _memories(http, "/recall", arm, p)
+    if not mems:
+        return False
+    v = await judge("pick_current", {"current_fact": p["current_fact"], "memories": [m["text"] for m in mems]})
+    i = v.get("index")
+    if not v.get("found") or not isinstance(i, int) or not 0 <= i < len(mems):
+        return False
+    r = await http.post("/source", json={"arm": arm, "memory_id": mems[i]["id"]})
+    body = r.json()
+    src = body.get("source")
+    if body.get("error") or not src or not src.get("text"):
+        return False
+    v = await judge("supports", {"memory": mems[i]["text"], "source": src["text"]})
+    return bool(v.get("supported"))
+
+
+async def _replaced(http, judge, arm: str, p: dict) -> bool:
+    mems = await _memories(http, "/history", arm, p)
+    if not mems:
+        return False
+    v = await judge("states_fact", {"fact": p["stale_fact"], "memories": [m["text"] for m in mems]})
+    return bool(v.get("stated"))
+
+
+async def lineage(gateway_url: str, judge, pairs: list[dict] | None = None) -> dict:
+    pairs = pairs if pairs is not None else _jsonl(eval_dir() / "supersession_pairs.jsonl")
+    sample = _sample_pairs(pairs)
+    n = len(sample)
+    res = {}
+    async with httpx.AsyncClient(base_url=gateway_url, timeout=120) as http:
+        arms = list((await http.get("/health")).json().get("arms", {}))
+        for arm in arms:
+            d = {"traced": 0, "replaced_found": 0, "errors": 0}
+            for p in sample:
+                for key, fn in (("traced", _trace), ("replaced_found", _replaced)):
+                    try:
+                        d[key] += bool(await fn(http, judge, arm, p))
+                    except (httpx.HTTPError, ValueError, KeyError, RuntimeError, TypeError, AttributeError):
+                        d["errors"] += 1
+            res[arm] = {**d, "pairs": n, "pair_ids": [p["id"] for p in sample],
+                        "pass": bool(n) and d["traced"] >= LINEAGE_TRACED_MIN * n
+                        and d["replaced_found"] >= LINEAGE_REPLACED_MIN * n}
     return res
 
 
@@ -377,8 +459,8 @@ def cost(state_dir: Path, judge_spend: dict | None = None) -> dict:
 
 # ── Rule + report ───────────────────────────────────────────────────
 
-def apply_rule(stale: dict, rel: dict, costs: dict) -> dict:
-    gated = [a for a, d in stale.items() if d["pass"]]
+def apply_rule(stale: dict, rel: dict, costs: dict, lineage: dict | None = None) -> dict:
+    gated = [a for a, d in stale.items() if d["pass"] and (lineage is None or lineage.get(a, {}).get("pass"))]
     beating = [a for a in gated if rel.get(a, {}).get("beats_baseline")]
     carm = costs.get("arms", {})
     use_cost = bool(beating) and all(carm.get(a, {}).get("llm_tokens") is not None for a in beating)
@@ -389,7 +471,7 @@ def apply_rule(stale: dict, rel: dict, costs: dict) -> dict:
         return (-rel[a]["label_coverage"], carm[a]["llm_tokens"] if use_cost else 0, ease)
 
     ranking = sorted(beating, key=key)
-    return {"winner": ranking[0] if ranking else None, "ranking": ranking, "passed_stale_gate": gated,
+    return {"winner": ranking[0] if ranking else None, "ranking": ranking, "passed_stale_gate": gated, "passed_lineage_gate": None if lineage is None else [a for a, d in lineage.items() if d["pass"]],
             "beat_baseline": beating, "cost_used": use_cost,
             "coverage_basis": next((d.get("coverage_basis") for d in rel.values() if d.get("coverage_basis")), None)}
 
@@ -404,6 +486,11 @@ def render(res: dict) -> str:
          "| arm | leaks | leak ids | current present | errors | pass |", "|---|---|---|---|---|---|"]
     for a, d in res["stale_gate"].items():
         L.append(f"| {a} | {d['leaks']} | {', '.join(d['leak_ids'])} | {_pct(d['current_present_rate'])} | {d['errors']} | {d['pass']} |")
+    if res.get("lineage"):
+        L += ["", "## Lineage gate (traced >= 9/10, replaced fact found >= 8/10)", "",
+              "| arm | traced | replaced found | pairs | errors | pass |", "|---|---|---|---|---|---|"]
+        for a, d in res["lineage"].items():
+            L.append(f"| {a} | {d['traced']} | {d['replaced_found']} | {d['pairs']} | {d['errors']} | {d['pass']} |")
     any_rel = next(iter(res["relevance"].values()), {})
     L += ["", "## Relevance vs INDEX baseline (baseline capped at 2000 start / 1000 per top-up)", "",
           f"Rule coverage basis: {any_rel.get('coverage_basis', 'auto')} labels - "
@@ -432,9 +519,11 @@ def render(res: dict) -> str:
 
 async def report(config: Config, gateway_url: str, judge, sessions: Path, wiki: Path) -> dict:
     stale = await stale_gate(gateway_url, judge)
+    lin = await lineage(gateway_url, judge)
     rel = await relevance(judge, sessions, wiki, config.state_path / "recall-log.jsonl", arms=list(stale))
     costs = cost(config.state_path, judge.spend() if hasattr(judge, "spend") else None)
-    res = {"stale_gate": stale, "relevance": rel, "cost": costs, "rule": apply_rule(stale, rel, costs)}
+    res = {"stale_gate": stale, "lineage": lin, "relevance": rel, "cost": costs,
+           "rule": apply_rule(stale, rel, costs, lin)}
     d = eval_dir()
     (d / "report.json").write_text(json.dumps(res, indent=2))
     (d / "report.md").write_text(render(res))
@@ -443,7 +532,7 @@ async def report(config: Config, gateway_url: str, judge, sessions: Path, wiki: 
 
 def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(prog="memory_gateway.eval.score")
-    p.add_argument("command", choices=["stale-gate", "relevance", "cost", "report"])
+    p.add_argument("command", choices=["stale-gate", "lineage", "relevance", "cost", "report"])
     p.add_argument("--gateway")
     p.add_argument("--wiki")
     p.add_argument("--sessions", default="~/.pi/agent/sessions")
@@ -458,6 +547,8 @@ def main(argv: list[str] | None = None) -> None:
     judge = make_judge(cfg)
     if a.command == "stale-gate":
         out = asyncio.run(stale_gate(url, judge))
+    elif a.command == "lineage":
+        out = asyncio.run(lineage(url, judge))
     elif a.command == "relevance":
         out = asyncio.run(relevance(judge, sessions, wiki, cfg.state_path / "recall-log.jsonl"))
     else:
