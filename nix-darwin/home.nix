@@ -338,6 +338,8 @@ in
         ".pi/workflows/saved/orchestrator_audit.js".source =
           "${inputs.skills-mattstruble}/orchestrator/references/audit.js";
 
+        # Written as a real file by home.activation.piSettings so pi and its extensions can persist state.
+        ".pi/agent/settings.json".enable = false;
       };
 
     activation.setupDockerCliPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -386,6 +388,21 @@ in
         NODE_EXTRA_CA_CERTS="${ca-bundle_crt}" PATH="${pkgs.nodejs}/bin:${pkgs.git}/bin:$PATH" \
           "${pkgs.coreutils}/bin/timeout" 300 ${pkgs.pi}/bin/pi update --extensions ||
           echo "WARNING: pi update --extensions failed or timed out; run it manually" >&2
+      fi
+    '';
+
+    # Nix-managed keys win on every switch; keys written at runtime (e.g. pi-effort's
+    # per-model levels) survive. Runs before piInstallPackages, which also writes the file.
+    activation.piSettings = lib.hm.dag.entryBetween [ "piInstallPackages" ] [ "linkGeneration" ] ''
+      settings="$HOME/.pi/agent/settings.json"
+      if [ -z "''${DRY_RUN:-}" ]; then
+        mkdir -p "$(dirname "$settings")"
+        if [ -L "$settings" ] || [ ! -f "$settings" ]; then
+          rm -f "$settings"
+          echo '{}' >"$settings"
+        fi
+        ${pkgs.jq}/bin/jq --slurpfile nix ${config.home.file.".pi/agent/settings.json".source} \
+          '. * $nix[0]' "$settings" >"$settings.tmp" && mv "$settings.tmp" "$settings" || rm -f "$settings.tmp"
       fi
     '';
 
