@@ -28,8 +28,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Pinned to a rev, not a branch. bd refuses to open a database whose schema
+    # is ahead of its own, and bringing a store up to date is one-way, so an
+    # unpinned input lets a routine flake update leave every tracker unreadable
+    # (it did: stores were at v67, the binary moved to v74). To bump: back up
+    # ~/.local/share/beads-dolt, update this rev, then `bd migrate schema`.
     beads = {
-      url = "github:gastownhall/beads";
+      url = "github:gastownhall/beads/1337d99d5979646d0f7871afad4bce988f24183f";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
