@@ -135,6 +135,64 @@ async def test_forget_invalidates_without_deleting(config, tmp_path):
     assert rows[0]["i"] and rows[0]["x"]
 
 
+async def test_history_returns_superseded_only(config, tmp_path):
+    arm = make_arm(config, tmp_path)
+    await arm.start()
+    old = await add_edge(arm, "proj", FACT_TEA)
+    await add_edge(arm, "proj", FACT_VIM)
+    await arm._graphiti.driver.clone("proj").execute_query(
+        "MATCH ()-[e:RELATES_TO {uuid: $u}]->() SET e.invalid_at = $t",
+        u=old.uuid,
+        t=datetime(2025, 2, 3, tzinfo=timezone.utc),
+    )
+
+    got = await arm.history("proj", "alice", 10_000)
+
+    assert [m.id for m in got] == [old.uuid]
+    assert got[0].text.startswith("[superseded 2025-02-03] ") and FACT_TEA in got[0].text
+    assert got[0].tokens == count_tokens(got[0].text)
+    assert await arm.history("proj", "alice", 1) == []
+
+
+async def test_source_returns_latest_episode(config, tmp_path):
+    from graphiti_core.nodes import EpisodicNode, EpisodeType
+
+    arm = make_arm(config, tmp_path)
+    await arm.start()
+    edge = await add_edge(arm, "proj", FACT_TEA)
+    driver = arm._graphiti.driver.clone("proj")
+    eps = []
+    for day, text in [(1, "first"), (5, "second")]:
+        ep = EpisodicNode(
+            name=f"ep{day}",
+            group_id="proj",
+            source=EpisodeType.text,
+            source_description="seed",
+            content=text,
+            valid_at=datetime(2025, 1, day, tzinfo=timezone.utc),
+        )
+        await ep.save(driver)
+        eps.append(ep.uuid)
+    await driver.execute_query(
+        "MATCH ()-[e:RELATES_TO {uuid: $u}]->() SET e.episodes = $eps",
+        u=edge.uuid,
+        eps=eps,
+    )
+
+    rec = await arm.source(edge.uuid)
+
+    assert rec.text == "second" and rec.source_ref == "ep5"
+    assert rec.ts == datetime(2025, 1, 5, tzinfo=timezone.utc)
+    assert await arm.source("missing") is None
+
+
+async def test_source_none_without_episodes(config, tmp_path):
+    arm = make_arm(config, tmp_path)
+    await arm.start()
+    edge = await add_edge(arm, "proj", FACT_TEA)
+    assert await arm.source(edge.uuid) is None
+
+
 @live
 async def test_live_supersession(config, tmp_path):
     arm = GraphitiArm(config, tmp_path)
@@ -152,3 +210,8 @@ async def test_live_supersession(config, tmp_path):
     )
 
     assert "Berlin" in facts and "Paris" not in facts
+
+    hist = await arm.history("proj", "Where does Alice live?", 1000)
+    assert any("Paris" in m.text and m.text.startswith("[superseded ") for m in hist)
+    src = await arm.source(hist[0].id)
+    assert src is not None and src.text in {t for _, t in episodes}

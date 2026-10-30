@@ -9,7 +9,7 @@ from typing import Any
 
 from ..config import Config
 from ..usage import UsageRecordingClient
-from .base import IngestItem, Memory, count_tokens
+from .base import IngestItem, Memory, SourceRecord, count_tokens
 
 # Must be set before graphiti_core is imported (telemetry, module-level constants).
 os.environ["GRAPHITI_TELEMETRY_ENABLED"] = "false"
@@ -40,6 +40,19 @@ def current_only_filters() -> Any:
 
     null = [[DateFilter(comparison_operator=ComparisonOperator.is_null)]]
     return SearchFilters(expired_at=null, invalid_at=null)
+
+
+def superseded_filters() -> list[Any]:
+    """Two filters (graphiti ANDs across fields, so OR is done by merging results):
+    edges with invalid_at set, and edges with expired_at set."""
+    from graphiti_core.search.search_filters import (
+        ComparisonOperator,
+        DateFilter,
+        SearchFilters,
+    )
+
+    not_null = [[DateFilter(comparison_operator=ComparisonOperator.is_not_null)]]
+    return [SearchFilters(invalid_at=not_null), SearchFilters(expired_at=not_null)]
 
 
 def _make_embedder() -> Any:
@@ -205,3 +218,67 @@ class GraphitiArm:
                 )
                 ids.append(edge.uuid)
         return ids
+
+    async def history(
+        self, project: str | None, query: str, budget_tokens: int
+    ) -> list[Memory]:
+        edges: dict[str, Any] = {}
+        for f in superseded_filters():
+            for edge in await self._graphiti.search(
+                query,
+                group_ids=recall_group_ids(project),
+                num_results=20,
+                search_filter=f,
+            ):
+                edges.setdefault(edge.uuid, edge)
+
+        def when(e: Any) -> datetime:
+            return e.invalid_at or e.expired_at
+
+        out: list[Memory] = []
+        used = 0
+        for edge in sorted(edges.values(), key=when, reverse=True):
+            text = f"[superseded {when(edge).date().isoformat()}] {edge.fact}"
+            n = count_tokens(text)
+            if used + n > budget_tokens:
+                continue
+            used += n
+            out.append(
+                Memory(
+                    id=edge.uuid,
+                    text=text,
+                    tokens=n,
+                    ts=when(edge),
+                    arm=self.name,
+                    source_ref=edge.group_id,
+                )
+            )
+        return out
+
+    async def _graph_names(self) -> list[str]:
+        try:
+            names = await self._graphiti.driver.client.list_graphs()
+        except Exception:
+            names = []
+        return list(dict.fromkeys([*names, GLOBAL_GROUP]))
+
+    async def source(self, memory_id: str) -> SourceRecord | None:
+        from graphiti_core.edges import EntityEdge
+        from graphiti_core.nodes import EpisodicNode
+
+        for group in await self._graph_names():
+            driver = self._graphiti.driver.clone(group)
+            try:
+                edge = await EntityEdge.get_by_uuid(driver, memory_id)
+            except Exception:
+                continue
+            if not edge.episodes:
+                return None
+            nodes = await EpisodicNode.get_by_uuids(driver, list(edge.episodes))
+            if not nodes:
+                return None
+            ep = max(nodes, key=lambda n: n.valid_at)
+            return SourceRecord(
+                memory_id=memory_id, source_ref=ep.name, text=ep.content, ts=ep.valid_at
+            )
+        return None
