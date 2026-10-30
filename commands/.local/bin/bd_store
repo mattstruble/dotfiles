@@ -2,7 +2,10 @@
 # Resolve (and create on demand) the out-of-tree beads store for a repository,
 # or migrate a repo's legacy in-tree store into that layout.
 #
-#   bd_store            print the store path (the BEADS_DIR value) for this repo
+#   bd_store            print the store path (the BEADS_DIR value) for this repo,
+#                       creating the store if it does not exist yet
+#   bd_store --lookup   print the store path only if the store already exists;
+#                       exit 1 otherwise, never creating one
 #   bd_store --migrate  move this repo's in-tree .beads onto the shared server
 #
 # Exits 1 outside a git repository so callers can fall back to plain bd.
@@ -241,6 +244,11 @@ EOF
 
 case "${1:-}" in
   --migrate | migrate) migrate ;;
+  --lookup)
+    guard_in_tree
+    [ -f "$store/metadata.json" ] || exit 1
+    printf '%s\n' "$store"
+    ;;
   *)
     guard_in_tree
     resolve

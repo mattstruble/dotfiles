@@ -65,7 +65,7 @@ export function bdVerbs(command: string): string[] {
 export function bdInitBlockReason(command: string): string | undefined {
   const verbs = bdVerbs(command);
   if (verbs.includes("init") || verbs.includes("setup")) {
-    return "beads.ts initializes repos automatically on the first bd write; never run bd init or bd setup.";
+    return "bd creates each repo's tracker automatically (bd_store) on the first bd write; never run bd init or bd setup.";
   }
   return undefined;
 }

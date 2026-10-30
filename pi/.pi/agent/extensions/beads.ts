@@ -1,8 +1,10 @@
 // beads — Pi extension
 // Automatic bd prime context injection on session start and after compaction.
-// One database per repo on the shared Dolt server, discovered from .beads/.
-// BEADS_DIR is unset for every call (it would override discovery). Repos are
-// initialized lazily on the first bd write.
+// One database per repo on the shared Dolt server; bd_store owns where each
+// repo's store lives. The bd wrapper creates a missing store on any call, so
+// this extension only calls bd once a store exists (bd_store --lookup) and
+// creates the store itself on the agent's first bd write. Repos that never get
+// a ticket never get a database.
 
 import type {
   ExtensionAPI,
@@ -11,14 +13,11 @@ import type {
   SessionBeforeCompactEvent,
   SessionCompactEvent,
 } from "@earendil-works/pi-coding-agent";
-import { basename, dirname } from "node:path";
-import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { bdVerbs } from "./guardrails.ts";
 
-/** bd database prefix for a repo directory. */
-export function derivePrefix(dir: string): string {
-  return basename(dir).toLowerCase().replace(/[^a-z0-9-]/g, "-");
-}
+const BD_STORE = join(homedir(), ".local", "bin", "bd_store");
 
 /** True when the command runs a bd verb that writes (create, q, remember, import). */
 export function isBdWrite(command: string): boolean {
@@ -64,6 +63,13 @@ function slimPrime(raw: string): string {
 export default function (pi: ExtensionAPI): void {
   let primeCache = "";
   let hasBeads = false;
+  let hasStore = false;
+
+  /** True when the cwd's repo already has a store; never creates one. */
+  async function storeExists(cwd: string): Promise<boolean> {
+    const result = await pi.exec(BD_STORE, ["--lookup"], { cwd, timeout: 5000 });
+    return result.code === 0 && Boolean(result.stdout?.trim());
+  }
 
   // pi.exec has no env option; unset BEADS_DIR via env(1).
   function runBd(args: string[], cwd: string, timeout: number) {
@@ -81,7 +87,8 @@ export default function (pi: ExtensionAPI): void {
 
   pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
     try {
-      await runPrime(ctx.cwd);
+      hasStore = await storeExists(ctx.cwd);
+      if (hasStore) await runPrime(ctx.cwd);
       hasBeads = primeCache.length > 0;
     } catch {
       hasBeads = false;
@@ -131,30 +138,17 @@ export default function (pi: ExtensionAPI): void {
     await runPrime(ctx.cwd);
   });
 
-  // ponytail: init targets the session cwd's repo, not a `cd` target inside the command.
+  // ponytail: the store is created for the session cwd's repo, not a `cd` target inside the command.
   pi.on("tool_call", async (event, ctx) => {
-    if (event.toolName !== "bash") return;
+    if (event.toolName !== "bash" || hasStore) return;
     try {
       const command = String((event.input as { command?: unknown }).command ?? "");
       if (!isBdWrite(command)) return;
-      const git = await pi.exec(
-        "git",
-        ["rev-parse", "--path-format=absolute", "--git-common-dir"],
-        { cwd: ctx.cwd, timeout: 5000 },
-      );
-      const common = git.stdout?.trim();
-      if (git.code !== 0 || !common) return;
-      const main = dirname(common);
-      if (existsSync(`${main}/.beads`)) return;
-      const init = await runBd(
-        ["init", "--shared-server", "--external", "--stealth", "--non-interactive", "--init-if-missing", "-p", derivePrefix(main)],
-        main,
-        30000,
-      );
-      if (init.code === 0) {
-        await runPrime(ctx.cwd);
-        hasBeads = primeCache.length > 0;
-      }
+      const create = await pi.exec(BD_STORE, [], { cwd: ctx.cwd, timeout: 30000 });
+      if (create.code !== 0) return;
+      hasStore = true;
+      await runPrime(ctx.cwd);
+      hasBeads = primeCache.length > 0;
     } catch {
       // never block the tool call
     }
