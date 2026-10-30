@@ -743,11 +743,10 @@ in
                 "preflight.ts"
                 "statusline.ts"
               ]
-          )
-          // {
-            # Upstream ponytail pi-extension (directory with index.js)
-            ponytail = config.lib.file.mkOutOfStoreSymlink "${home}/.local/share/ponytail/pi-extension";
-          };
+          );
+        # The upstream ponytail pi-extension is not loaded: its always-on system-prompt
+        # section regressed approved turns in a replay. ponytail-skills.ts keeps its
+        # skills available on demand.
         packages = [
           "npm:@gotgenes/pi-permission-system"
           "npm:@narumitw/pi-caffeinate"
