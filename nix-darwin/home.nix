@@ -512,6 +512,7 @@ in
     ./modules/beads-server.nix
     ./modules/ebook-mcp.nix
     ./modules/kev-server.nix
+    ./modules/memory-eval.nix
     ./modules/llm-wiki.nix
     ./modules/neovim-treesitter.nix
     ./modules/opencode-profiles.nix
@@ -709,6 +710,7 @@ in
               })
               [
                 "skill-router.ts"
+                "memory.ts"
                 "skills-picker.ts"
                 "guardrails.ts"
                 "tool-shelf.ts"
@@ -1644,6 +1646,11 @@ in
   };
 
   services.kev-server.enable = true;
+  services.memory-eval = {
+    # hostname is the hosts/ directory name, hence the ".system" suffix.
+    enable = hostname == "lm-mstruble.system";
+    sourceDir = "${path}/memory-gateway";
+  };
 
   targets.darwin = {
     defaults = {
