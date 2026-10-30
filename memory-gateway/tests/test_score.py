@@ -260,7 +260,7 @@ async def test_report_end_to_end(tmp_path, eval_env):
     assert res["stale_gate"]["a"]["pass"]
 
 
-async def test_bedrock_judge_sends_temperature_in_extra_body():
+async def test_bedrock_judge_sends_no_sampling_params():
     from types import SimpleNamespace
 
     from memory_gateway.config import Config
@@ -272,10 +272,12 @@ async def test_bedrock_judge_sends_temperature_in_extra_body():
             self.messages = self
 
         async def create(self, *, max_tokens, messages, model, system, tools, tool_choice,
-                         extra_body=None):
-            seen["extra_body"] = extra_body
+                         **kw):
+            assert "temperature" not in kw
+            assert "temperature" not in (kw.get("extra_body") or {})
+            seen.update(kw)
             return SimpleNamespace(content=[SimpleNamespace(type="tool_use", input={})], usage=None)
 
     j = score.BedrockJudge(Config(), client=C())
     await j(next(iter(score._SCHEMAS)), {})
-    assert seen["extra_body"] == {"temperature": 0}
+    assert "extra_body" not in seen

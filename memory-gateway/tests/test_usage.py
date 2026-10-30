@@ -87,17 +87,19 @@ class Sdk23Client:
         return SimpleNamespace(usage=SimpleNamespace(input_tokens=1, output_tokens=2))
 
 
-async def test_proxy_moves_sampling_params_to_extra_body(tmp_path):
+async def test_proxy_drops_sampling_params(tmp_path):
     inner = Sdk23Client()
     proxy = UsageRecordingClient(inner, tmp_path, "graphiti", "graphiti")
+    eb = {"x": 1, "temperature": 0.1, "top_k": 3}
     await proxy.messages.create(model="m", max_tokens=5, system="s", temperature=0.3,
-                                top_p=0.9, top_k=40, extra_body={"x": 1})
-    assert inner.kw == dict(max_tokens=5, model="m", system="s",
-                            extra_body={"x": 1, "temperature": 0.3, "top_p": 0.9, "top_k": 40})
+                                top_p=0.9, top_k=40, extra_body=eb)
+    assert inner.kw == dict(max_tokens=5, model="m", system="s", extra_body={"x": 1})
+    assert eb == {"x": 1, "temperature": 0.1, "top_k": 3}
 
 
-async def test_proxy_leaves_extra_body_untouched_without_sampling(tmp_path):
+async def test_proxy_omits_empty_extra_body(tmp_path):
     inner = Sdk23Client()
     proxy = UsageRecordingClient(inner, tmp_path, "graphiti", "graphiti")
-    await proxy.messages.create(model="m", max_tokens=5)
+    await proxy.messages.create(model="m", max_tokens=5, temperature=0,
+                                extra_body={"temperature": 0})
     assert inner.kw["extra_body"] is None
