@@ -7,6 +7,9 @@
 #
 # Exits 1 outside a git repository so callers can fall back to plain bd.
 #
+# Worktrees resolve to their main checkout, so every worktree of a repo shares
+# that repo's tracker instead of getting one named after the worktree.
+#
 # Each repo gets its own Dolt database on the shared Dolt server, so it keeps its
 # own issue namespace (its prefix and its Dolt history). Only the small
 # per-project beads dir lives here instead of in the repo, which is what keeps
@@ -34,7 +37,15 @@ unset BEADS_DIR BEADS_DOLT_SHARED_SERVER
 # the store is still being created.
 export _BD_WRAPPED=1
 
-root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 1
+# --git-common-dir is the main checkout's .git from any of its worktrees, where
+# --show-toplevel would name the worktree itself. Submodules have their common
+# dir under the superproject's .git/modules, so they keep their own toplevel.
+common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || exit 1
+if [ "$(basename "$common")" = .git ]; then
+  root=$(dirname "$common")
+else
+  root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 1
+fi
 bd_bin="${BD_REAL:-bd}"
 
 slug() {
