@@ -1,5 +1,6 @@
 import json
 import os
+import sqlite3
 import stat
 import subprocess
 
@@ -114,3 +115,27 @@ def test_non_ascii_path_and_invalid_utf8(tmp_path):
     route = respx.post(f"{GW}/ingest").mock(return_value=httpx.Response(202, json={}))
     seed.run(GW, r, [], None, None, False)
     assert [json.loads(c.request.content)["doc_id"] for c in route.calls] == ["wiki:caf\u00e9.md", "wiki:bin.md"]
+
+
+@respx.mock
+def test_arms_subset_forwarded_and_resume_is_arm_aware(wiki):
+    route = respx.post(f"{GW}/ingest").mock(return_value=httpx.Response(202, json={}))
+    assert seed.run(GW, wiki, [], None, None, False, ["hindsight"])["sent"] == 4
+    assert all(json.loads(c.request.content)["arms"] == ["hindsight"] for c in route.calls)
+    assert seed.run(GW, wiki, [], None, None, False, ["hindsight"])["sent"] == 0
+    # other arm set and default are not skipped
+    assert seed.run(GW, wiki, [], None, None, False, ["graphiti"])["sent"] == 4
+    assert seed.run(GW, wiki, [], None, None, False)["sent"] == 4
+    assert "arms" not in json.loads(route.calls.last.request.content)
+    assert seed.run(GW, wiki, [], None, None, False)["sent"] == 0
+
+
+def test_progress_db_migrates_legacy_rows_as_all(eval_env):
+    eval_env.mkdir(parents=True, exist_ok=True)
+    old = sqlite3.connect(eval_env / "seed-progress.sqlite")
+    old.execute("CREATE TABLE sent (doc_id TEXT, commit_ref TEXT, PRIMARY KEY (doc_id, commit_ref))")
+    old.execute("INSERT INTO sent VALUES ('d', 'c')")
+    old.commit()
+    old.close()
+    db = seed._progress_db()
+    assert db.execute("SELECT doc_id, commit_ref, arms FROM sent").fetchall() == [("d", "c", "all")]

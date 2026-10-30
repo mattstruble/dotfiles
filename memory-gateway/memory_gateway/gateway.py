@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .arms import load_arm
-from .arms.base import Arm, IngestItem, Memory
+from .arms.base import Arm, IngestItem, Memory, SourceRecord
 from .config import Config
 from .queue import DurableQueue
 
@@ -18,6 +18,14 @@ log = logging.getLogger("memory_gateway")
 def _memory_json(m: Memory) -> dict:
     d = asdict(m)
     d["ts"] = m.ts.isoformat() if m.ts else None
+    return d
+
+
+def _source_json(s: SourceRecord | None) -> dict | None:
+    if s is None:
+        return None
+    d = asdict(s)
+    d["ts"] = s.ts.isoformat() if s.ts else None
     return d
 
 
@@ -113,8 +121,8 @@ class Gateway:
         await self._ensure_started(name)
         await arm.ingest(item)
 
-    def ingest(self, item: IngestItem) -> int:
-        return self.queue.enqueue(item, self.enabled)
+    def ingest(self, item: IngestItem, arms: list[str] | None = None) -> int:
+        return self.queue.enqueue(item, self.enabled if arms is None else arms)
 
     async def health(self) -> dict:
         async def one(name: str) -> str:
@@ -148,6 +156,17 @@ class Gateway:
     async def recall(
         self, project: str | None, query: str, budget_tokens: int, names: list[str] | None
     ) -> dict:
+        return await self._query("recall", project, query, budget_tokens, names)
+
+    async def history(
+        self, project: str | None, query: str, budget_tokens: int, names: list[str] | None
+    ) -> dict:
+        return await self._query("history", project, query, budget_tokens, names)
+
+    async def _query(
+        self, kind: str, project: str | None, query: str, budget_tokens: int,
+        names: list[str] | None,
+    ) -> dict:
         chosen, errors = self._select(names)
         results: dict[str, list[Memory]] = {}
         latency: dict[str, float] = {}
@@ -155,9 +174,14 @@ class Gateway:
         async def one(name: str) -> None:
             t0 = time.monotonic()
             try:
+                method = getattr(self.arms[name], kind, None)
+                if method is None:
+                    errors[name] = "unsupported"
+                    return
+
                 async def call() -> list[Memory]:
                     await self._ensure_started(name)
-                    return await self.arms[name].recall(project, query, budget_tokens)
+                    return await method(project, query, budget_tokens)
 
                 mems = await asyncio.wait_for(call(), self.config.arm_timeout_s)
                 kept: list[Memory] = []
@@ -176,11 +200,12 @@ class Gateway:
                 latency[name] = round(time.monotonic() - t0, 4)
 
         await asyncio.gather(*(one(n) for n in chosen))
-        self._log_recall(project, query, budget_tokens, names, results, errors, latency)
+        self._log_recall(kind, project, query, budget_tokens, names, results, errors, latency)
         return {"results": results, "errors": errors}
 
-    def _log_recall(self, project, query, budget, names, results, errors, latency) -> None:
+    def _log_recall(self, kind, project, query, budget, names, results, errors, latency) -> None:
         entry = {
+            "kind": kind,
             "ts": datetime.now(timezone.utc).isoformat(),
             "request": {
                 "project": project,
@@ -202,6 +227,42 @@ class Gateway:
         }
         with self.recall_log.open("a") as f:
             f.write(json.dumps(entry) + "\n")
+
+    async def source(self, arm: str, memory_id: str) -> dict:
+        source: SourceRecord | None = None
+        error: str | None = None
+        t0 = time.monotonic()
+        if arm in self.load_errors:
+            error = f"arm unavailable: {self.load_errors[arm]}"
+        elif arm not in self.arms:
+            error = "unknown arm"
+        else:
+            method = getattr(self.arms[arm], "source", None)
+            if method is None:
+                error = "unsupported"
+            else:
+                try:
+                    async def call() -> SourceRecord | None:
+                        await self._ensure_started(arm)
+                        return await method(memory_id)
+
+                    source = await asyncio.wait_for(call(), self.config.arm_timeout_s)
+                except asyncio.TimeoutError:
+                    error = f"timeout after {self.config.arm_timeout_s}s"
+                except Exception as e:  # noqa: BLE001
+                    error = f"{type(e).__name__}: {e}"
+        out = {"arm": arm, "source": _source_json(source), "error": error}
+        entry = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "kind": "source",
+            "request": {"arm": arm, "memory_id": memory_id},
+            "source": out["source"],
+            "error": error,
+            "latency_s": round(time.monotonic() - t0, 4),
+        }
+        with self.recall_log.open("a") as f:
+            f.write(json.dumps(entry) + "\n")
+        return out
 
     async def forget(self, project: str | None, text: str, reason: str) -> dict:
         out: dict[str, list[str]] = {}

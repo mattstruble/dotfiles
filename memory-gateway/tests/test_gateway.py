@@ -1,9 +1,11 @@
 import asyncio
 import json
+from datetime import datetime, timezone
 
 import httpx
 
 from memory_gateway import arms
+from memory_gateway.arms.base import Memory, SourceRecord
 from memory_gateway.app import create_app
 from memory_gateway.config import Config, ensure_state_dir
 from memory_gateway.gateway import Gateway
@@ -160,3 +162,55 @@ async def test_arm_with_missing_module_is_unhealthy_not_fatal(config, tmp_path, 
 def test_state_dir_is_private(tmp_path):
     p = ensure_state_dir(Config(state_dir=str(tmp_path / "s")))
     assert p.stat().st_mode & 0o777 == 0o700
+
+
+class LineageArm(FakeArm):
+    async def history(self, project, query, budget_tokens):
+        return [Memory("old-1", "old fact", 3, None, self.name)]
+
+    async def source(self, memory_id):
+        if memory_id == "missing":
+            return None
+        return SourceRecord(memory_id, "ref", "raw text", datetime(2025, 1, 1, tzinfo=timezone.utc))
+
+
+async def test_history_and_source_with_unsupported_fallback_and_logging(config, tmp_path):
+    g = gw(config, tmp_path, {"l": LineageArm("l"), "plain": FakeArm("plain")})
+    out = await g.history("p", "q", 100, None)
+    assert [m.id for m in out["results"]["l"]] == ["old-1"]
+    assert out["errors"] == {"plain": "unsupported"}
+
+    s = await g.source("l", "x")
+    assert s["source"]["text"] == "raw text" and s["source"]["ts"].startswith("2025-01-01")
+    assert s["error"] is None
+    assert (await g.source("l", "missing")) == {"arm": "l", "source": None, "error": None}
+    assert (await g.source("plain", "x"))["error"] == "unsupported"
+    assert (await g.source("nope", "x"))["error"] == "unknown arm"
+    await g.recall("p", "q", 100, ["l"])
+
+    lines = [json.loads(x) for x in (tmp_path / "recall-log.jsonl").read_text().splitlines()]
+    assert [x["kind"] for x in lines] == ["history", "source", "source", "source", "source", "recall"]
+    assert lines[1]["request"] == {"arm": "l", "memory_id": "x"}
+    g.queue.close()
+
+
+async def test_http_history_source_and_ingest_arms(config, tmp_path):
+    a, b = LineageArm("a"), FakeArm("b")
+    app = create_app(gw(config, tmp_path, {"a": a, "b": b}))
+    async with app.router.lifespan_context(app):
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+            r = await c.post("/history", json={"query": "q", "budget_tokens": 50})
+            assert r.json()["results"]["a"][0]["id"] == "old-1"
+            assert r.json()["errors"] == {"b": "unsupported"}
+            r = await c.post("/source", json={"arm": "a", "memory_id": "m"})
+            assert r.json()["source"]["source_ref"] == "ref"
+
+            body = {"session_id": "s", "source": "seed", "timestamp": "2025-01-01T00:00:00Z", "text": "x"}
+            assert (await c.post("/ingest", json={**body, "arms": ["zzz"]})).status_code == 422
+            assert (await c.post("/ingest", json={**body, "arms": ["a"]})).status_code == 202
+            await wait_for(lambda: len(a.ingested) == 1)
+            await asyncio.sleep(0.2)
+            assert b.ingested == []
+            assert (await c.post("/ingest", json=body)).status_code == 202
+            await wait_for(lambda: len(a.ingested) == 2 and len(b.ingested) == 1)

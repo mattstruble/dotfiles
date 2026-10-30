@@ -28,6 +28,16 @@ class Memory:
     source_ref: str | None = None
 
 
+@dataclass
+class SourceRecord:
+    """Raw input text (episode/document/note version) a fact was extracted from."""
+
+    memory_id: str
+    source_ref: str | None
+    text: str
+    ts: datetime | None
+
+
 class Arm(Protocol):
     name: str
 
@@ -48,3 +58,15 @@ class Arm(Protocol):
     async def forget(self, project: str | None, text: str, reason: str) -> list[str]:
         """Mark matching facts superseded (never delete); return ids."""
         ...
+
+    # Optional lineage methods. Arms may omit them; the gateway looks them up with
+    # getattr and reports "unsupported" when absent.
+    #
+    # async def history(
+    #     self, project: str | None, query: str, budget_tokens: int
+    # ) -> list[Memory]:
+    #     """Facts relevant to `query` that are superseded/invalidated/no longer
+    #     current (the complement of recall), most recent first."""
+    #
+    # async def source(self, memory_id: str) -> SourceRecord | None:
+    #     """Raw input text the fact `memory_id` was extracted from, or None."""
