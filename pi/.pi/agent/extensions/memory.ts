@@ -115,7 +115,9 @@ export function stripInjected(text: string): string {
   return text
     .replace(/<private>[\s\S]*?<\/private>/gi, "")
     .replace(/<available_skills>[\s\S]*?<\/available_skills>/g, "")
-    .replace(/<skill name=[^>]*>[\s\S]*?<\/skill>/g, "");
+    .replace(/<skill name=[^>]*>[\s\S]*?<\/skill>/g, "")
+    .replace(/<memory\b[^>]*>[\s\S]*?<\/memory>/gi, "")
+    .replace(/<memory\b[^>]*>[\s\S]*$/i, "");
 }
 
 const DERIVED_CUSTOM_TYPES = new Set(["skill-router", "knowledge-base", "memory", "memory-ingest", "memory-shadow"]);
@@ -199,6 +201,10 @@ export function serializeEntries(entries: any[], context: any[] = entries): stri
     } else if (m.role === "toolResult") {
       const rp = reads.get(m.toolCallId);
       if (m.toolName === "read" && rp !== undefined && isDerivedReadPath(rp)) continue;
+      if (m.toolName === "memory_recall") {
+        blocks.push(`[tool result memory_recall ${ts}]\ntool memory_recall: [recalled memories omitted]`);
+        continue;
+      }
       const t = truncate(redact(stripInjected(contentText(m.content))).trim(), RESULT_MAX);
       if (t) blocks.push(`[tool result ${m.toolName ?? ""} ${ts}]\n${t}`);
     }

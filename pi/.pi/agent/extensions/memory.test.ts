@@ -169,6 +169,25 @@ describe("stripping and serialisation", () => {
     assert.ok(out.includes("REALCODE"));
     assert.ok(isDerivedReadPath("~/llm-wiki/x.md"));
   });
+  it("strips <memory> blocks from all serialised text", () => {
+    assert.equal(stripInjected("a <memory>m1</memory> b <memory>\nm2\n</memory> c <memory>open").replace(/\s+/g, " ").trim(), "a b c");
+    const out = serializeEntries([
+      msg("u", "user", "hi <memory>RECALLU</memory> there"),
+      msg("a", "assistant", [
+        { type: "text", text: "ok <memory>RECALLA</memory>" },
+        { type: "toolCall", id: "t", name: "subagent", arguments: { task: "do it\n\n<memory>\nRECALLT\n</memory>" } },
+        { type: "toolCall", id: "t2", name: "subagent", arguments: { task: "do it\n<memory>RECALLX" } },
+      ]),
+      msg("r", "toolResult", [{ type: "text", text: "out <memory>RECALLR</memory>" }], { toolName: "bash", toolCallId: "q" }),
+    ]);
+    assert.ok(!out.includes("RECALL"));
+    assert.ok(out.includes("hi") && out.includes("do it") && out.includes("out"));
+  });
+  it("omits memory_recall results entirely", () => {
+    const out = serializeEntries([msg("r", "toolResult", [{ type: "text", text: "RECALLED fact without tags" }], { toolName: "memory_recall", toolCallId: "q" })]);
+    assert.ok(!out.includes("RECALLED"));
+    assert.ok(out.includes("tool memory_recall: [recalled memories omitted]"));
+  });
   it("redacts in serialised output", () => {
     const out = serializeEntries([msg("u", "user", "my password=abc12345 ok")]);
     assert.ok(!out.includes("abc12345"));
