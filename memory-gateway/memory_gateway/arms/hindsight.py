@@ -4,6 +4,7 @@ import logging
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 import httpx
 
@@ -24,6 +25,10 @@ def _parse_ts(s: str | None) -> datetime | None:
         return None
 
 
+def _q(x) -> str:
+    return quote(str(x), safe="")
+
+
 class HindsightArm:
     name = "hindsight"
 
@@ -36,7 +41,7 @@ class HindsightArm:
         self.bank = config.hindsight_bank
         self.base = config.hindsight_url.rstrip("/")
         self.client = client or httpx.AsyncClient(timeout=30.0)
-        self._bank_path = f"{self.base}/v1/default/banks/{self.bank}"
+        self._bank_path = f"{self.base}/v1/default/banks/{_q(self.bank)}"
         self._doc_lock = asyncio.Lock()
         self._doc_cache: tuple[float, dict[str, tuple[str, datetime | None]], dict[str, datetime]] | None = None
 
@@ -140,7 +145,7 @@ class HindsightArm:
         targets = list(dict.fromkeys(targets))
         for memory_id in targets:
             r = await self.client.patch(
-                f"{self._bank_path}/memories/{memory_id}",
+                f"{self._bank_path}/memories/{_q(memory_id)}",
                 json={"state": "invalidated", "reason": reason},
             )
             r.raise_for_status()
@@ -234,7 +239,7 @@ class HindsightArm:
                 add(m["id"], "invalidated", m["text"], ts, m.get("document_id"))
 
         async def obs_history(oid: str) -> None:
-            r = await self.client.get(f"{self._bank_path}/memories/{oid}/history")
+            r = await self.client.get(f"{self._bank_path}/memories/{_q(oid)}/history")
             if r.status_code == 404:
                 return
             r.raise_for_status()
@@ -284,7 +289,7 @@ class HindsightArm:
         return r.json()
 
     async def source(self, memory_id: str, _depth: int = 0) -> SourceRecord | None:
-        mem = await self._get_json(f"{self._bank_path}/memories/{memory_id}")
+        mem = await self._get_json(f"{self._bank_path}/memories/{_q(memory_id)}")
         if mem is None:
             return None
         doc_id = mem.get("document_id")
@@ -294,15 +299,15 @@ class HindsightArm:
                 rec = await self.source(srcs[0], _depth + 1)
                 return SourceRecord(memory_id, rec.source_ref, rec.text, rec.ts) if rec else None
             return None
-        doc = await self._get_json(f"{self._bank_path}/documents/{doc_id}") or {}
+        doc = await self._get_json(f"{self._bank_path}/documents/{_q(doc_id)}") or {}
         text = None
         if mem.get("chunk_id"):
-            chunk = await self._get_json(f"{self.base}/v1/default/chunks/{mem['chunk_id']}")
+            chunk = await self._get_json(f"{self.base}/v1/default/chunks/{_q(mem['chunk_id'])}")
             text = (chunk or {}).get("chunk_text")
         if not text:
             text = doc.get("original_text")
         if not text:
-            chunks = await self._get_json(f"{self._bank_path}/documents/{doc_id}/chunks")
+            chunks = await self._get_json(f"{self._bank_path}/documents/{_q(doc_id)}/chunks")
             items = sorted((chunks or {}).get("items", []), key=lambda c: c.get("chunk_index", 0))
             text = "\n".join(c.get("chunk_text", "") for c in items) or None
         if not text:

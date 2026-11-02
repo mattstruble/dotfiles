@@ -1,5 +1,6 @@
 import hashlib
 import json
+import urllib.parse
 from datetime import datetime, timezone
 
 import httpx
@@ -175,7 +176,7 @@ async def test_history_all_paths_sorted_and_budgeted(tmp_path):
 async def test_source_uses_chunk(tmp_path):
     respx.get(f"{BANK}/memories/m1").mock(return_value=httpx.Response(200, json={
         "id": "m1", "type": "world", "document_id": "d@1#x", "chunk_id": "c1"}))
-    respx.get(f"{BANK}/documents/d@1#x").mock(return_value=httpx.Response(200, json={
+    respx.get(f"{BANK}/documents/d%401%23x").mock(return_value=httpx.Response(200, json={
         "created_at": "2025-01-01T00:00:00Z", "original_text": "full",
         "document_metadata": {"version_ts": "2025-01-02T00:00:00+00:00"}}))
     respx.get("http://hs/v1/default/chunks/c1").mock(
@@ -185,6 +186,25 @@ async def test_source_uses_chunk(tmp_path):
 
     assert (rec.text, rec.source_ref) == ("chunk", "d@1#x")
     assert rec.ts == datetime(2025, 1, 2, tzinfo=timezone.utc)
+
+
+@respx.mock
+async def test_source_encodes_ids_in_paths(tmp_path):
+    did = "wiki:decisions/x.md@20261030T181053Z#2df7ffba"
+    cid = "memory-eval_wiki:decisions/x.md@2026#2df7ffba_2"
+    q = lambda x: urllib.parse.quote(x, safe="")
+    respx.get(f"{BANK}/memories/m1").mock(return_value=httpx.Response(200, json={
+        "id": "m1", "type": "world", "document_id": did, "chunk_id": cid}))
+    d = respx.get(f"{BANK}/documents/{q(did)}").mock(return_value=httpx.Response(200, json={
+        "created_at": "2025-01-01T00:00:00Z", "original_text": "full"}))
+    c = respx.get(f"http://hs/v1/default/chunks/{q(cid)}").mock(
+        return_value=httpx.Response(200, json={"chunk_text": "chunk"}))
+
+    rec = await arm(tmp_path).source("m1")
+
+    assert rec.text == "chunk"
+    assert d.called and c.called
+    assert "%2F" in str(c.calls[0].request.url) and "%23" in str(d.calls[0].request.url)
 
 
 @respx.mock
