@@ -37,6 +37,16 @@ PATH_RE = re.compile(
     r"^(decisions|topics|people|orgs|plans)/[A-Za-z0-9][A-Za-z0-9_\-]*\.md$"
 )
 
+def _shape(op: str, props: dict, required: list[str]) -> dict:
+    return {
+        "type": "object",
+        "properties": {"op": {"const": op}, **props},
+        "required": ["op", *required],
+        "additionalProperties": False,
+    }
+
+
+_S = {"type": "string"}
 EXTRACT_TOOL = {
     "name": "record_ops",
     "description": "Record durable wiki operations. Empty ops when nothing durable.",
@@ -46,19 +56,24 @@ EXTRACT_TOOL = {
             "ops": {
                 "type": "array",
                 "items": {
-                    "type": "object",
-                    "properties": {
-                        "op": {"enum": ["create", "append", "supersede"]},
-                        "path": {"type": "string"},
-                        "type": {"type": "string"},
-                        "title": {"type": "string"},
-                        "body": {"type": "string"},
-                        "text": {"type": "string"},
-                        "old_path": {"type": "string"},
-                        "new_path": {"type": "string"},
-                        "reason": {"type": "string"},
-                    },
-                    "required": ["op"],
+                    "anyOf": [
+                        _shape(
+                            "create",
+                            {"path": _S, "title": _S, "body": _S, "type": _S},
+                            ["path", "title", "body"],
+                        ),
+                        _shape("append", {"path": _S, "text": _S}, ["path", "text"]),
+                        _shape(
+                            "revise",
+                            {"path": _S, "body": _S, "reason": _S},
+                            ["path", "body", "reason"],
+                        ),
+                        _shape(
+                            "supersede",
+                            {"old_path": _S, "new_path": _S, "reason": _S},
+                            ["old_path", "new_path", "reason"],
+                        ),
+                    ]
                 },
             }
         },
@@ -68,9 +83,17 @@ EXTRACT_TOOL = {
 EXTRACT_SYSTEM = (
     "You maintain a markdown wiki of durable knowledge (decisions, facts, "
     "preferences). Given new text and related existing notes, call record_ops "
-    "with create/append/supersede operations. Paths look like topics/<slug>.md "
-    "(folders: decisions, topics, people, orgs, plans). Use supersede when the "
-    "new text replaces an existing note. Return empty ops if nothing is durable."
+    "with operations. Paths look like topics/<slug>.md (folders: decisions, "
+    "topics, people, orgs, plans). Operations:\n"
+    "- create {path, title, body, type?}: a NEW note at a path that does not exist.\n"
+    "- append {path, text}: add a paragraph to an EXISTING note.\n"
+    "- revise {path, body, reason}: replace the whole body of an EXISTING note "
+    "with its new current content; the previous version stays in git history.\n"
+    "- supersede {old_path, new_path, reason}: mark an EXISTING note as replaced "
+    "by another EXISTING note; create the new note earlier in the same batch if "
+    "needed.\n"
+    "Ops apply in the order given. Never target moc/ or INDEX.md. Return empty "
+    "ops if nothing is durable."
 )
 
 
@@ -363,6 +386,39 @@ class WikiArm:
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(frontmatter.dumps(post, sort_keys=False) + "\n", encoding="utf-8")
 
+    def _normalise(self, op: dict) -> dict:
+        kind = op.get("op")
+        new: dict | None = None
+        p = self._safe(op.get("path"))
+        if kind == "create" and p is not None:
+            if p.exists():
+                new = {**op, "op": "revise"}
+            elif not op.get("body") and isinstance(op.get("text"), str):
+                new = {**op, "body": op["text"]}
+                new.pop("text")
+                log.info("wiki: normalised op create -> create (text as body)")
+        elif kind == "append" and p is not None and not p.exists():
+            title = op["path"].rsplit("/", 1)[1][:-3].replace("-", " ").replace("_", " ")
+            new = {
+                "op": "create",
+                "path": op["path"],
+                "title": title,
+                "body": op.get("text"),
+            }
+        elif (
+            kind == "supersede"
+            and p is not None
+            and op.get("body")
+            and not op.get("old_path")
+            and not op.get("new_path")
+        ):
+            new = {**op, "op": "revise"}
+        if new is None:
+            return op
+        if new["op"] != kind:
+            log.info("wiki: normalised op %s -> %s", kind, new["op"])
+        return new
+
     def _apply_ops(self, ops: list, item: IngestItem) -> list[str]:
         day = item.timestamp.date().isoformat()
         changed: list[str] = []
@@ -370,6 +426,7 @@ class WikiArm:
             if not isinstance(op, dict):
                 log.warning("wiki: non-dict op ignored")
                 continue
+            op = self._normalise(op)
             kind = op.get("op")
             try:
                 if kind == "create":
@@ -402,6 +459,16 @@ class WikiArm:
                         raise ValueError("invalid append")
                     post = load_post(p)
                     post.content = post.content.rstrip() + "\n\n" + text.strip()
+                    post["updated"] = day
+                    self._write(p, post)
+                    changed.append(op["path"])
+                elif kind == "revise":
+                    p = self._safe(op.get("path"))
+                    body = op.get("body")
+                    if not p or not p.is_file() or not isinstance(body, str) or not body.strip():
+                        raise ValueError("invalid revise")
+                    post = load_post(p)
+                    post.content = body.strip()
                     post["updated"] = day
                     self._write(p, post)
                     changed.append(op["path"])

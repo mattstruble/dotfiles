@@ -286,3 +286,70 @@ async def test_history_and_source(tmp_path, source):
     assert rec and "yellow" in rec.text and rec.source_ref == f"{cur.source_ref}@{head}"
     assert await arm.source("topics/nope.md#0") is None
     assert await arm.source("hist:topics/pears.md@deadbeef#0") is None
+
+
+async def _ingest_ops(tmp_path, source, ops):
+    arm = make(tmp_path, source, FakeClient(ops))
+    await arm.start()
+    await arm.ingest(item())
+    return arm
+
+
+def test_schema_anyof_four_variants():
+    from memory_gateway.arms.wiki import EXTRACT_TOOL
+
+    variants = EXTRACT_TOOL["input_schema"]["properties"]["ops"]["items"]["anyOf"]
+    assert [v["properties"]["op"]["const"] for v in variants] == [
+        "create", "append", "revise", "supersede",
+    ]
+    assert all(v["additionalProperties"] is False and "op" in v["required"] for v in variants)
+
+
+async def test_revise_keeps_history(tmp_path, source):
+    arm = await _ingest_ops(tmp_path, source, [
+        {"op": "revise", "path": "topics/pears.md", "body": "alpha pears are yellow.", "reason": "r"},
+        {"op": "revise", "path": "decisions/gone.md", "body": "alpha gone revised", "reason": "r"},
+    ])
+    text = (arm.shadow / "topics/pears.md").read_text()
+    assert "alpha pears are yellow." in text and "green" not in text
+    assert "updated: '2026-05-05'" in text or "updated: 2026-05-05" in text
+    assert "title: Pears" in text
+    assert "status: active" in (arm.shadow / "decisions/gone.md").read_text()
+    assert "alpha pears are green." in git(arm.shadow, "show", "HEAD~1:topics/pears.md")
+    await arm._reindex_history()
+    hist = await arm.history(None, "alpha pears green", 100000)
+    assert any("alpha pears are green." in m.text for m in hist)
+
+
+async def test_normalise_observed_shapes(tmp_path, source, caplog):
+    import logging
+
+    caplog.set_level(logging.INFO, logger="memory_gateway.arms.wiki")
+    arm = await _ingest_ops(tmp_path, source, [
+        {"op": "supersede", "path": "topics/pears.md", "title": "P", "body": "alpha pears rewritten", "reason": "r"},
+        {"op": "create", "path": "topics/apples.md", "title": "A", "body": "apples rewritten"},
+        {"op": "create", "path": "topics/kiwi.md", "title": "Kiwi", "text": "kiwis are fuzzy"},
+        {"op": "append", "path": "topics/new-thing.md", "text": "brand new thing"},
+        {"op": "append", "path": "moc/aip-MOC.md", "text": "nav"},
+    ])
+    sh = arm.shadow
+    assert "alpha pears rewritten" in (sh / "topics/pears.md").read_text()
+    assert "apples rewritten" in (sh / "topics/apples.md").read_text()
+    assert "kiwis are fuzzy" in (sh / "topics/kiwi.md").read_text()
+    nt = (sh / "topics/new-thing.md").read_text()
+    assert "brand new thing" in nt and "title: new thing" in nt
+    assert not (sh / "moc/aip-MOC.md").exists()
+    msgs = [r.getMessage() for r in caplog.records]
+    assert "wiki: normalised op supersede -> revise" in msgs
+    assert "wiki: normalised op create -> revise" in msgs
+    assert "wiki: normalised op append -> create" in msgs
+    assert any("rejected op" in m and "moc/" in m for m in msgs)
+
+
+async def test_create_then_supersede_in_one_batch(tmp_path, source):
+    arm = await _ingest_ops(tmp_path, source, [
+        {"op": "create", "path": "decisions/fresh.md", "title": "Fresh", "body": "zebra", "type": "decision"},
+        {"op": "supersede", "old_path": "decisions/gone.md", "new_path": "decisions/fresh.md", "reason": "r"},
+    ])
+    assert "status: superseded" in (arm.shadow / "decisions/gone.md").read_text()
+    assert "[[decisions/gone]]" in (arm.shadow / "decisions/fresh.md").read_text()
