@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import logging
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,6 +15,33 @@ from .base import IngestItem, Memory, SourceRecord, count_tokens
 log = logging.getLogger(__name__)
 
 MAX_HISTORY_OBSERVATIONS = 5
+DUP_COSINE = 0.9
+LATEST_FACT_PAGES = 5
+
+
+def _norm(text: str) -> str:
+    return " ".join(text.lower().split())
+
+
+def _cosine(a, b) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    na = sum(x * x for x in a) ** 0.5
+    nb = sum(y * y for y in b) ** 0.5
+    return dot / (na * nb) if na and nb else 0.0
+
+
+class _FastEmbed:
+    def __init__(self) -> None:
+        self._model = None
+        self._lock = threading.Lock()
+
+    def __call__(self, texts: list[str]) -> list[list[float]]:
+        with self._lock:  # one lazy load; serialises model use across threads
+            if self._model is None:
+                from fastembed import TextEmbedding
+
+                self._model = TextEmbedding("BAAI/bge-small-en-v1.5")
+            return [v.tolist() for v in self._model.embed(texts)]
 
 
 def _parse_ts(s: str | None) -> datetime | None:
@@ -37,7 +65,11 @@ class HindsightArm:
         config: Config,
         state_dir: Path,
         client: httpx.AsyncClient | None = None,
+        embedder=None,
     ):
+        self._embed = embedder or _FastEmbed()
+        self._latest_facts: dict[str, list[str]] = {}
+        self._latest_vecs: dict[str, list[list[float]]] = {}
         self.bank = config.hindsight_bank
         self.base = config.hindsight_url.rstrip("/")
         self.client = client or httpx.AsyncClient(timeout=30.0)
@@ -200,7 +232,55 @@ class HindsightArm:
             if len(items) < limit:
                 break
         self._doc_cache = (now, docs, latest)
+        self._latest_facts = {}
+        self._latest_vecs = {}
         return docs, latest
+
+    async def _latest_version_facts(self, base: str, docs: dict, latest: dict) -> list[str]:
+        """Fact texts of the newest version of base_doc (cached with the document cache)."""
+        if base in self._latest_facts:
+            return self._latest_facts[base]
+        doc_ids = [d for d, (b, ts) in docs.items() if b == base and ts == latest[base]]
+        texts: list[str] = []
+        for doc_id in doc_ids:
+            offset, limit = 0, 200
+            for _ in range(LATEST_FACT_PAGES):
+                r = await self.client.get(
+                    f"{self._bank_path}/memories/list",
+                    params={"document_id": doc_id, "limit": limit, "offset": offset},
+                )
+                r.raise_for_status()
+                items = r.json().get("items", [])
+                # server-side filter may be ignored: re-check client-side
+                texts.extend(
+                    m["text"] for m in items if m.get("document_id") == doc_id and m.get("text")
+                )
+                offset += limit
+                if len(items) < limit:
+                    break
+        self._latest_facts[base] = texts
+        return texts
+
+    async def _embed_texts(self, texts: list[str]) -> list[list[float]]:
+        return await asyncio.get_running_loop().run_in_executor(None, self._embed, texts)
+
+    async def _restated_flags(self, base: str, latest_texts: list[str], cands: list[str]) -> list[bool]:
+        """Per candidate: restated by a latest-version fact. Latest vectors are cached per
+        base_doc; all candidates needing embedding go through one batch call."""
+        if not latest_texts:
+            return [False] * len(cands)
+        latest_norm = {_norm(t) for t in latest_texts}
+        flags = [_norm(c) in latest_norm for c in cands]
+        todo = [i for i, f in enumerate(flags) if not f]
+        if not todo:
+            return flags
+        if base not in self._latest_vecs:
+            self._latest_vecs[base] = await self._embed_texts(latest_texts)
+        vecs = await self._embed_texts([cands[i] for i in todo])
+        latest_vecs = self._latest_vecs[base]
+        for i, v in zip(todo, vecs):
+            flags[i] = any(_cosine(v, lv) >= DUP_COSINE for lv in latest_vecs)
+        return flags
 
     async def history(
         self, project: str | None, query: str, budget_tokens: int
@@ -219,13 +299,20 @@ class HindsightArm:
             recalled = await self._recall(
                 project, query, budget_tokens, prefer_observations=False
             )
+            by_base: dict[str, list[dict]] = {}
             for res in recalled:
                 if res.get("type") not in ("world", "experience"):
                     continue
                 info = docs.get(res.get("document_id") or "")
                 if not info or not info[1] or info[0] not in latest or latest[info[0]] <= info[1]:
                     continue
-                add(res["id"], "superseded", res["text"], latest[info[0]], res.get("document_id"))
+                by_base.setdefault(info[0], []).append(res)
+            for base, cands in by_base.items():
+                latest_texts = await self._latest_version_facts(base, docs, latest)
+                flags = await self._restated_flags(base, latest_texts, [c["text"] for c in cands])
+                for res, restated in zip(cands, flags):
+                    if not restated:
+                        add(res["id"], "superseded", res["text"], latest[base], res.get("document_id"))
 
         async def path_b() -> None:
             # invalidated facts matching the query

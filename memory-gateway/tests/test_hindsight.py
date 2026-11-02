@@ -167,7 +167,7 @@ async def test_history_all_paths_sorted_and_budgeted(tmp_path):
     assert mems[0].text == "[superseded 2025-04-01] obs before"
     assert mems[1].text == "[superseded 2025-03-01] old fact"
     assert mems[2].text.startswith("[invalidated 2025-02-01] ")
-    assert lst.calls[0].request.url.params["state"] == "invalidated"
+    assert any(c.request.url.params.get("state") == "invalidated" for c in lst.calls)
     small = await arm(tmp_path).history("proj", "q", mems[0].tokens)
     assert [m.id for m in small] == [mems[0].id]
 
@@ -256,3 +256,53 @@ async def test_history_isolates_failing_paths(tmp_path):
     mems = await arm(tmp_path).history("proj", "q", 1000)
 
     assert [m.id for m in mems] == ["i1"]
+
+
+def _fake_embed(texts):
+    # "alpha" variants are near-identical, anything else orthogonal
+    def v(t):
+        if "alpha" in t:
+            return [1.0, 0.1 if "restated" in t else 0.0, 0.0]
+        return [0.0, 1.0, 0.0] if "beta" in t else [0.0, 0.0, 1.0]
+
+    _fake_embed.calls.append(list(texts))
+    return [v(t) for t in texts]
+
+
+_fake_embed.calls = []
+
+
+@respx.mock
+async def test_history_drops_facts_restated_in_latest_version_and_keeps_changed(tmp_path):
+    respx.get(f"{BANK}/documents").mock(return_value=_docs(
+        ("b@1#a", "b", "2025-01-01T00:00:00+00:00"),
+        ("b@2#c", "b", "2025-03-01T00:00:00+00:00"),
+    ))
+    respx.post(f"{BANK}/memories/recall").mock(return_value=httpx.Response(200, json={"results": [
+        {"id": "same", "text": "Alpha fact", "type": "world", "document_id": "b@1#a"},
+        {"id": "near", "text": "alpha fact restated", "type": "world", "document_id": "b@1#a"},
+        {"id": "gone", "text": "beta fact", "type": "world", "document_id": "b@1#a"},
+    ]}))
+
+    def lst(request):
+        if request.url.params.get("document_id") == "b@2#c":
+            return httpx.Response(200, json={"items": [
+                {"id": "n1", "text": "alpha  fact", "document_id": "b@2#c"},
+                {"id": "n2", "text": "gamma new", "document_id": "b@2#c"},
+            ]})
+        return httpx.Response(200, json={"items": []})
+
+    route = respx.get(f"{BANK}/memories/list").mock(side_effect=lst)
+    a = HindsightArm(Config(hindsight_url="http://hs"), tmp_path, embedder=_fake_embed)
+    _fake_embed.calls.clear()
+
+    mems = await a.history("proj", "q", 1000)
+    await a.history("proj", "q", 1000)
+    # latest facts embedded once (cached); candidates batched in one call per history()
+    assert len(_fake_embed.calls) == 3
+    assert _fake_embed.calls[0] == ["alpha  fact", "gamma new"]
+    assert _fake_embed.calls[1] == ["alpha fact restated", "beta fact"]
+
+    assert [m.id for m in mems] == ["gone"]
+    # latest-version facts fetched once per base_doc (cached)
+    assert sum(c.request.url.params.get("document_id") == "b@2#c" for c in route.calls) == 1
