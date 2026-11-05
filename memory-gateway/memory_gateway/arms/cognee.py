@@ -41,6 +41,7 @@ import hashlib
 import logging
 import re
 import time
+from collections import OrderedDict
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
@@ -56,6 +57,7 @@ COGNIFY_INTERVAL_S = 60.0
 COGNIFY_MAX_PENDING = 20
 GLOBAL_DATASET = "global"
 SEARCH_TOP_K = 15
+CHUNK_CACHE_MAX = 5000
 _DOC_TS = re.compile(r"@(\d{8}T\d{6}Z)#")
 
 
@@ -72,6 +74,34 @@ def _q(x) -> str:
 def _doc_ts(name: str | None) -> datetime | None:
     m = _DOC_TS.search(name or "")
     return datetime.strptime(m[1], "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc) if m else None
+
+
+def _epoch_ms(v) -> datetime | None:
+    try:
+        return datetime.fromtimestamp(int(v) / 1000, tz=timezone.utc)
+    except (TypeError, ValueError, OverflowError, OSError):
+        return None
+
+
+def _score(chunk: dict) -> float | None:
+    try:
+        return float(chunk["score"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _flatten(body, ds_id: str) -> list[tuple[str, dict]]:
+    """Accept a flat chunk list or the grouped ``[{dataset_id, search_result}]`` shape."""
+    out: list[tuple[str, dict]] = []
+    for el in body if isinstance(body, list) else []:
+        if not isinstance(el, dict):
+            continue
+        if "search_result" in el:
+            gid = str(el.get("dataset_id") or ds_id)
+            out.extend((gid, c) for c in el.get("search_result") or [] if isinstance(c, dict))
+        else:
+            out.append((ds_id, el))
+    return out
 
 
 class CogneeArm:
@@ -92,7 +122,7 @@ class CogneeArm:
         self._running: set[asyncio.Task] = set()
         self.cognify_timeout_s = config.ingest_timeout_s
         self._locks: dict[str, asyncio.Lock] = {}
-        self._chunks: dict[str, tuple[str, str, str | None]] = {}
+        self._chunks: OrderedDict[str, tuple[str, str, str | None]] = OrderedDict()
 
     async def start(self) -> None:
         return None
@@ -222,47 +252,54 @@ class CogneeArm:
         names = [n for n in dict.fromkeys([dataset_name(project), GLOBAL_DATASET]) if n in known]
         if not names:
             return []
-        r = await self.client.post(
-            f"{self.base}/api/v1/search",
-            json={
-                "search_type": "CHUNKS",
-                "query": query,
-                "dataset_ids": [known[n] for n in names],
-                "top_k": SEARCH_TOP_K,
-            },
-        )
-        if r.status_code == 404:
-            return []
-        r.raise_for_status()
-        order = {known[n]: i for i, n in enumerate(names)}
-        groups = sorted(r.json(), key=lambda g: order.get(g.get("dataset_id"), len(order)))
         out: list[Memory] = []
         seen: set[str] = set()
         used = 0
-        for group in groups:
-            for chunk in group.get("search_result") or []:
-                if not isinstance(chunk, dict) or not chunk.get("text"):
+        for n in names:
+            ds_id = known[n]
+            r = await self.client.post(
+                f"{self.base}/api/v1/search",
+                json={
+                    "search_type": "CHUNKS",
+                    "query": query,
+                    "dataset_ids": [ds_id],
+                    "top_k": SEARCH_TOP_K,
+                },
+            )
+            if r.status_code == 404:
+                continue
+            r.raise_for_status()
+            chunks = _flatten(r.json(), ds_id)
+            chunks.sort(key=lambda c: (c[1].get("score") is None, -(_score(c[1]) or 0.0)))
+            for chunk_ds, chunk in chunks:
+                if not chunk.get("text") or chunk.get("id") is None:
                     continue
                 cid = str(chunk["id"])
-                n = count_tokens(chunk["text"])
-                if cid in seen or used + n > budget_tokens:
+                tok = count_tokens(chunk["text"])
+                if cid in seen or used + tok > budget_tokens:
                     continue
                 seen.add(cid)
-                used += n
+                used += tok
                 doc_name = chunk.get("document_name")
                 if chunk.get("document_id"):
-                    self._chunks[cid] = (group["dataset_id"], str(chunk["document_id"]), doc_name)
+                    self._remember(cid, (chunk_ds, str(chunk["document_id"]), doc_name))
                 out.append(
                     Memory(
                         id=cid,
                         text=chunk["text"],
-                        tokens=n,
-                        ts=_doc_ts(doc_name),
+                        tokens=tok,
+                        ts=_doc_ts(doc_name) or _epoch_ms(chunk.get("created_at")),
                         arm=self.name,
                         source_ref=doc_name,
                     )
                 )
         return out
+
+    def _remember(self, cid: str, ref: tuple[str, str, str | None]) -> None:
+        self._chunks[cid] = ref
+        self._chunks.move_to_end(cid)
+        while len(self._chunks) > CHUNK_CACHE_MAX:
+            self._chunks.popitem(last=False)
 
     async def forget(self, project: str | None, text: str, reason: str) -> list[str]:
         log.warning(

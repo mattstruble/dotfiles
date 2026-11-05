@@ -125,21 +125,77 @@ async def test_cognify_polls_until_complete(tmp_path):
     assert st.call_count == 2
 
 
+REAL_FLAT = {
+    "id": "0fef7c0b-1111", "type": "IndexSchema", "text": "Smoke test: hello",
+    "document_id": "98d96de5-2222", "document_name": "retain:smoke@20261105T212141Z#85adcbd0",
+    "chunk_index": "0", "score": "0.35", "created_at": "1793913704135",
+}
+
+
+def search_by_ds(by_ds):
+    def handler(request):
+        ds = json.loads(request.content)["dataset_ids"][0]
+        return httpx.Response(200, json=by_ds.get(ds, []))
+    return respx.post(f"{URL}/api/v1/search").mock(side_effect=handler)
+
+
 @respx.mock
-async def test_recall_searches_project_and_global_context_only(tmp_path):
+async def test_recall_one_search_per_dataset_grouped_shape(tmp_path):
     mock_pipeline()
-    route = respx.post(f"{URL}/api/v1/search").mock(return_value=httpx.Response(200, json=[
-        {"dataset_id": "id-glob", "search_result": [chunk("g1", "global fact")]},
-        {"dataset_id": "id-proj", "search_result": [chunk("p1", "proj fact"), chunk("g1", "dup")]},
-    ]))
+    route = search_by_ds({
+        "id-glob": [{"dataset_id": "id-glob", "search_result": [chunk("g1", "global fact")]}],
+        "id-proj": [{"dataset_id": "id-proj",
+                     "search_result": [chunk("p1", "proj fact"), chunk("g1", "dup")]}],
+    })
 
     mems = await arm(tmp_path).recall("proj", "q", 1000)
 
-    sent = json.loads(route.calls[0].request.content)
-    assert sent["search_type"] == "CHUNKS" and sent["dataset_ids"] == ["id-proj", "id-glob"]
+    sent = [json.loads(c.request.content) for c in route.calls]
+    assert [s["dataset_ids"] for s in sent] == [["id-proj"], ["id-glob"]]
+    assert all(s["search_type"] == "CHUNKS" for s in sent)
     assert [m.id for m in mems] == ["p1", "g1"]  # project first, deduped
     assert mems[0].source_ref == "d@20250102T000000Z#abcd1234"
     assert mems[0].ts == datetime(2025, 1, 2, tzinfo=timezone.utc) and mems[0].arm == "cognee"
+
+
+@respx.mock
+async def test_recall_parses_flat_payload_and_orders_by_score(tmp_path):
+    mock_pipeline()
+    low = {**REAL_FLAT, "id": "low", "score": "0.10", "text": "low"}
+    nodoc = {**REAL_FLAT, "id": "g", "document_name": "plain", "text": "glob"}
+    search_by_ds({"id-proj": [low, REAL_FLAT], "id-glob": [nodoc]})
+
+    mems = await arm(tmp_path).recall("proj", "q", 1000)
+
+    assert [m.id for m in mems] == ["0fef7c0b-1111", "low", "g"]
+    assert mems[0].ts == datetime(2026, 11, 5, 21, 21, 41, tzinfo=timezone.utc)
+    assert mems[2].ts == datetime.fromtimestamp(1793913704.135, tz=timezone.utc)
+
+
+@respx.mock
+async def test_source_resolves_dataset_for_each_dataset(tmp_path):
+    mock_pipeline()
+    g = {**REAL_FLAT, "id": "gc", "document_id": "gdoc", "text": "glob"}
+    search_by_ds({"id-proj": [REAL_FLAT], "id-glob": [g]})
+    rp = respx.get(f"{URL}/api/v1/datasets/id-proj/data/98d96de5-2222/raw").mock(
+        return_value=httpx.Response(200, text="proj doc"))
+    rg = respx.get(f"{URL}/api/v1/datasets/id-glob/data/gdoc/raw").mock(
+        return_value=httpx.Response(200, text="glob doc"))
+    a = arm(tmp_path)
+    await a.recall("proj", "q", 1000)
+
+    assert (await a.source("0fef7c0b-1111")).text == "proj doc"
+    assert (await a.source("gc")).text == "glob doc"
+    assert rp.called and rg.called
+
+
+@respx.mock
+async def test_chunk_cache_is_lru_capped(tmp_path):
+    import memory_gateway.arms.cognee as mod
+    a = arm(tmp_path)
+    for i in range(mod.CHUNK_CACHE_MAX + 10):
+        a._remember(str(i), ("d", "x", None))
+    assert len(a._chunks) == mod.CHUNK_CACHE_MAX and "0" not in a._chunks and "5009" in a._chunks
 
 
 @respx.mock
@@ -151,6 +207,7 @@ async def test_recall_skips_missing_datasets(tmp_path):
 
     await arm(tmp_path).recall("proj", "q", 100)
 
+    assert route.call_count == 1
     assert json.loads(route.calls[0].request.content)["dataset_ids"] == ["id-glob"]
 
 
