@@ -44,6 +44,13 @@ def fake_llm():
 def test_group_id_mapping():
     assert group_id_for("proj") == "proj"
     assert group_id_for(None) == "global"
+
+
+def test_group_id_sanitised():
+    assert group_id_for("ml.aip-bot") == "ml_aip-bot"
+    assert group_id_for("a/b c") == "a_b_c"
+    assert group_id_for("café") == "caf_"
+    assert recall_group_ids("ml.aip-bot") == ["ml_aip-bot", "global"]
     assert recall_group_ids("proj") == ["proj", "global"]
     assert recall_group_ids(None) == ["global"]
 

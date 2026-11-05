@@ -3,6 +3,7 @@ Claude on Bedrock for extraction, local fastembed embeddings."""
 
 import asyncio
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -22,7 +23,9 @@ FORGET_TOP_K = 5
 
 
 def group_id_for(project: str | None) -> str:
-    return project or GLOBAL_GROUP
+    if not project:
+        return GLOBAL_GROUP
+    return re.sub(r"[^A-Za-z0-9_-]", "_", project)
 
 
 def recall_group_ids(project: str | None) -> list[str]:
