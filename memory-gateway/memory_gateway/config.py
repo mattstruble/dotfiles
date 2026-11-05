@@ -14,6 +14,7 @@ class Config(BaseModel):
     hindsight_bank: str = "memory-eval"
     bedrock_model: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     aws_region: str = "us-east-1"
+    cognee_url: str = "http://127.0.0.1:8012"
     wiki_source: str = "~/llm-wiki"
     arm_timeout_s: float = 20.0
     ingest_timeout_s: float = 300.0

@@ -7,6 +7,7 @@ from .base import Arm
 REGISTRY: dict[str, str] = {
     "hindsight": "memory_gateway.arms.hindsight:HindsightArm",
     "graphiti": "memory_gateway.arms.graphiti:GraphitiArm",
+    "cognee": "memory_gateway.arms.cognee:CogneeArm",
     "wiki": "memory_gateway.arms.wiki:WikiArm",
 }
 
