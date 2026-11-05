@@ -346,6 +346,20 @@ async def test_normalise_observed_shapes(tmp_path, source, caplog):
     assert any("rejected op" in m and "moc/" in m for m in msgs)
 
 
+async def test_dotted_path_slugified(tmp_path, source, caplog):
+    import logging
+
+    caplog.set_level(logging.INFO, logger="memory_gateway.arms.wiki")
+    arm = await _ingest_ops(tmp_path, source, [
+        {"op": "create", "path": "plans/ml.aip-bot-Support_nov5.md", "title": "T", "body": "dotted body"},
+        {"op": "append", "path": "moc/ml.x.md", "text": "nav"},
+    ])
+    assert "dotted body" in (arm.shadow / "plans/ml-aip-bot-support_nov5.md").read_text()
+    assert not list(arm.shadow.glob("moc/ml*"))
+    msgs = [r.getMessage() for r in caplog.records]
+    assert "wiki: normalised path plans/ml.aip-bot-Support_nov5.md -> plans/ml-aip-bot-support_nov5.md" in msgs
+
+
 async def test_create_then_supersede_in_one_batch(tmp_path, source):
     arm = await _ingest_ops(tmp_path, source, [
         {"op": "create", "path": "decisions/fresh.md", "title": "Fresh", "body": "zebra", "type": "decision"},

@@ -386,7 +386,26 @@ class WikiArm:
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(frontmatter.dumps(post, sort_keys=False) + "\n", encoding="utf-8")
 
+    @staticmethod
+    def _slugify_path(rel: object) -> object:
+        if not isinstance(rel, str) or PATH_RE.match(rel):
+            return rel
+        folder, sep, name = rel.partition("/")
+        if not sep or folder not in FOLDER_TYPE or "/" in name or not name.endswith(".md"):
+            return rel
+        slug = re.sub(r"[^a-z0-9_-]+", "-", name[:-3].lower()).strip("-")
+        out = f"{folder}/{slug}.md"
+        if not slug or not PATH_RE.match(out):
+            return rel
+        log.info("wiki: normalised path %s -> %s", rel, out)
+        return out
+
     def _normalise(self, op: dict) -> dict:
+        for key in ("path", "old_path", "new_path"):
+            if key in op:
+                fixed = self._slugify_path(op[key])
+                if fixed != op[key]:
+                    op = {**op, key: fixed}
         kind = op.get("op")
         new: dict | None = None
         p = self._safe(op.get("path"))
