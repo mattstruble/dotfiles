@@ -338,6 +338,10 @@ in
           SYSTEM_ROOT_DIRECTORY = "${cgDir}/system";
           ENABLE_BACKEND_ACCESS_CONTROL = "false";
           TELEMETRY_DISABLED = "1";
+          # Cognee defaults both to 1<<35 (32 GiB); cap the buffer pool on this 24 GB host.
+          KUZU_BUFFER_POOL_SIZE = "2147483648"; # 1<<31 (2 GiB)
+          # Mapping limit (address space), not disk use; 32 GiB was hit at ~400 docs.
+          KUZU_MAX_DB_SIZE = "274877906944"; # 1<<38 (256 GiB)
           LITELLM_LOG = "ERROR";
           LLM_PROVIDER = "bedrock";
           LLM_MODEL = "bedrock/${cfg.bedrockModel}";
