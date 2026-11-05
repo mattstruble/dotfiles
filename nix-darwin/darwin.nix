@@ -107,6 +107,7 @@ in
       "1password"
       "aerospace"
       "alfred"
+      "finicky"
       "flux-app"
       "font-iosevka-nerd-font"
       "kitty"

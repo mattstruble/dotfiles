@@ -528,6 +528,7 @@ in
     ./modules/aws.nix
     ./modules/beads-server.nix
     ./modules/ebook-mcp.nix
+    ./modules/finicky.nix
     ./modules/kev-server.nix
     ./modules/memory-eval.nix
     ./modules/llm-wiki.nix
@@ -546,6 +547,15 @@ in
   ];
 
   programs = {
+
+    finicky = {
+      enable = true;
+      apps = [
+        "notion"
+        "slack"
+        "zoom"
+      ];
+    };
 
     ai-agents = {
       enable = true;
