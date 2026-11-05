@@ -105,6 +105,11 @@
                     }).beads;
                   })
                   (final: prev: {
+                    # weekly's mcp-nixos 3.0.2 builds fastmcp-slim against mcp v2, which is marked
+                    # broken; unstable pins mcp_1. Drop once nixpkgs-weekly carries that fix.
+                    mcp-nixos = (import inputs.nixpkgs-unstable { inherit system; }).mcp-nixos;
+                  })
+                  (final: prev: {
                     # bd refuses shared Dolt servers older than 2.6.0 (its embedded engine pin);
                     # nixpkgs lags. Pinned to the tag bd's go.mod embeds; bump alongside beads.
                     # dolt 2.6 needs Go 1.27, so build on unstable.
