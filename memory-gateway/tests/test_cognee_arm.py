@@ -49,6 +49,8 @@ def test_registry_and_dataset_names(tmp_path):
     assert isinstance(load_arm("cognee", Config(), tmp_path), CogneeArm)
     assert dataset_name(None) == "global"
     assert dataset_name("a/b c:d") == "project_a_b_c_d"
+    assert dataset_name("ml.aip-bot") == "project_ml_aip-bot"
+    assert dataset_name("a b.c") == "project_a_b_c"
 
 
 @respx.mock

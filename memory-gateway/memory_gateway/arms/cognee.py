@@ -29,8 +29,8 @@ gap. ``history`` is not defined: the TEMPORAL search type answers time-scoped
 questions over events and does not surface superseded facts or older document
 versions.
 
-Dataset names are ``project_<sanitised project>`` or ``global`` (``[A-Za-z0-9_.-]``
-only; cognee dataset names end up in storage paths, so ``:`` is avoided).
+Dataset names are ``project_<sanitised project>`` or ``global`` (``[A-Za-z0-9_-]``
+only; cognee rejects dots and spaces, and names end up in storage paths).
 
 LLM usage: cognee's REST responses carry no token counts, so nothing is written
 to llm-usage.jsonl for this arm; its cost comes from Bedrock metrics.
@@ -64,7 +64,7 @@ _DOC_TS = re.compile(r"@(\d{8}T\d{6}Z)#")
 def dataset_name(project: str | None) -> str:
     if project is None:
         return GLOBAL_DATASET
-    return "project_" + re.sub(r"[^A-Za-z0-9_.-]", "_", project)
+    return "project_" + re.sub(r"[^A-Za-z0-9_-]", "_", project)
 
 
 def _q(x) -> str:
