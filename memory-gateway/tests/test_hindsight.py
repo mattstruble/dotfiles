@@ -349,3 +349,60 @@ async def test_latest_only_off_is_unfiltered(tmp_path):
     out = await arm(tmp_path, hindsight_latest_only=False).recall(None, "q", 100)
     assert [m.id for m in out] == ["a"]
     assert json.loads(route.calls[0].request.content)["max_tokens"] == 100
+
+
+def _obs_setup(obs, mems):
+    respx.get(f"{BANK}/documents").mock(return_value=_docs(
+        ("old", "wiki:n", "2025-01-01T00:00:00+00:00"),
+        ("new", "wiki:n", "2025-02-01T00:00:00+00:00"),
+        ("sess", "session:s", "2025-01-01T00:00:00+00:00"),
+    ))
+    respx.post(f"{BANK}/memories/recall").mock(return_value=httpx.Response(200, json={"results": [
+        {"id": o, "text": o, "type": "observation"} for o in obs]}))
+    routes = {}
+    for mid, body in mems.items():
+        if isinstance(body, Exception):
+            routes[mid] = respx.get(f"{BANK}/memories/{mid}").mock(side_effect=body)
+        else:
+            routes[mid] = respx.get(f"{BANK}/memories/{mid}").mock(return_value=body)
+    return routes
+
+
+def _m(**kw):
+    return httpx.Response(200, json=kw)
+
+
+@respx.mock
+async def test_observation_superseded_dropped_others_kept(tmp_path):
+    _obs_setup(["o_old", "o_mix", "o_sess", "o_none"], {
+        "o_old": _m(source_memory_ids=["f1"]),
+        "o_mix": _m(source_memory_ids=["f1", "f2"]),
+        "o_sess": _m(source_memory_ids=["f3"]),
+        "o_none": _m(source_memory_ids=[]),
+        "f1": _m(document_id="old"),
+        "f2": _m(document_id="new"),
+        "f3": _m(document_id="sess"),
+    })
+    out = await arm(tmp_path).recall(None, "q", 100)
+    assert [m.id for m in out] == ["o_mix", "o_sess", "o_none"]
+
+
+@respx.mock
+async def test_observation_lookup_error_keeps_and_caches(tmp_path):
+    routes = _obs_setup(["o1", "o2"], {
+        "o1": httpx.ConnectError("boom"),
+        "o2": _m(source_fact_ids=["f1"]),
+        "f1": _m(document_id="old"),
+    })
+    a = arm(tmp_path)
+    assert [m.id for m in await a.recall(None, "q", 100)] == ["o1"]
+    await a.recall(None, "q", 100)
+    assert routes["o2"].call_count == 1  # verdict cached
+
+
+@respx.mock
+async def test_observation_lookups_skipped_when_flag_off(tmp_path):
+    routes = _obs_setup(["o1"], {"o1": _m(source_memory_ids=["f1"]), "f1": _m(document_id="old")})
+    out = await arm(tmp_path, hindsight_latest_only=False).recall(None, "q", 100)
+    assert [m.id for m in out] == ["o1"]
+    assert routes["o1"].call_count == 0

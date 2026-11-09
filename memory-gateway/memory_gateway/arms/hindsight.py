@@ -77,6 +77,8 @@ class HindsightArm:
         self.client = client or httpx.AsyncClient(timeout=30.0)
         self._bank_path = f"{self.base}/v1/default/banks/{_q(self.bank)}"
         self._doc_lock = asyncio.Lock()
+        self._obs_cache: dict[str, bool] = {}
+        self._obs_sem = asyncio.Semaphore(8)
         self._doc_cache: tuple[float, dict[str, tuple[str, datetime | None]], dict[str, datetime]] | None = None
 
     async def _ensure_bank(self) -> None:
@@ -161,6 +163,33 @@ class HindsightArm:
         base, ts = info
         return not (ts and base in latest and latest[base] > ts)
 
+    async def _obs_superseded(self, obs_id: str, docs: dict, latest: dict) -> bool:
+        """True iff the observation has sources, all from non-latest wiki versions."""
+        if obs_id in self._obs_cache:
+            return self._obs_cache[obs_id]
+        try:
+            async with self._obs_sem:
+                mem = await self._get_json(f"{self._bank_path}/memories/{_q(obs_id)}") or {}
+                srcs = mem.get("source_memory_ids") or mem.get("source_fact_ids") or []
+                facts = await asyncio.gather(
+                    *(self._get_json(f"{self._bank_path}/memories/{_q(f)}") for f in srcs)
+                )
+            verdict = bool(srcs)
+            for fact in facts:
+                info = docs.get((fact or {}).get("document_id"))
+                if not info or not info[0].startswith("wiki:"):
+                    verdict = False
+                    break
+                base, ts = info
+                if not (ts and base in latest and latest[base] > ts):
+                    verdict = False
+                    break
+        except Exception as e:
+            log.debug("hindsight observation lookup failed for %s: %s", obs_id, e)
+            return False
+        self._obs_cache[obs_id] = verdict
+        return verdict
+
     async def recall(
         self, project: str | None, query: str, budget_tokens: int
     ) -> list[Memory]:
@@ -170,6 +199,11 @@ class HindsightArm:
             results = await self._recall(project, query, 2 * budget_tokens)
             docs, latest = await self._documents()
             results = [r for r in results if self._is_current(r, docs, latest)]
+            obs = [r for r in results if r.get("type") == "observation" and not r.get("document_id")]
+            if obs:
+                stale = await asyncio.gather(*(self._obs_superseded(r["id"], docs, latest) for r in obs))
+                dropped = {id(r) for r, st in zip(obs, stale) if st}
+                results = [r for r in results if id(r) not in dropped]
         else:
             results = await self._recall(project, query, budget_tokens)
         for res in results:
@@ -256,6 +290,7 @@ class HindsightArm:
         self._doc_cache = (now, docs, latest)
         self._latest_facts = {}
         self._latest_vecs = {}
+        self._obs_cache = {}
         return docs, latest
 
     async def _latest_version_facts(self, base: str, docs: dict, latest: dict) -> list[str]:
