@@ -13,8 +13,8 @@ from memory_gateway.config import Config
 BANK = "http://hs/v1/default/banks/memory-eval"
 
 
-def arm(tmp_path):
-    return HindsightArm(Config(hindsight_url="http://hs"), tmp_path)
+def arm(tmp_path, **kw):
+    return HindsightArm(Config(hindsight_url="http://hs", **kw), tmp_path)
 
 
 def item(**kw):
@@ -75,7 +75,7 @@ async def test_recall_filters_by_project_tag_and_respects_budget(tmp_path):
         ]})
     )
 
-    out = await arm(tmp_path).recall("proj", "q", 10)
+    out = await arm(tmp_path, hindsight_latest_only=False).recall("proj", "q", 10)
 
     body = json.loads(route.calls[0].request.content)
     assert body["tags"] == ["project:proj"] and body["tags_match"] == "any"
@@ -306,3 +306,46 @@ async def test_history_drops_facts_restated_in_latest_version_and_keeps_changed(
     assert [m.id for m in mems] == ["gone"]
     # latest-version facts fetched once per base_doc (cached)
     assert sum(c.request.url.params.get("document_id") == "b@2#c" for c in route.calls) == 1
+
+
+def _latest_setup(results):
+    respx.get(f"{BANK}/documents").mock(return_value=_docs(
+        ("old", "n", "2025-01-01T00:00:00+00:00"),
+        ("new", "n", "2025-02-01T00:00:00+00:00"),
+    ))
+    return respx.post(f"{BANK}/memories/recall").mock(
+        return_value=httpx.Response(200, json={"results": results})
+    )
+
+
+@respx.mock
+async def test_latest_only_drops_old_keeps_latest_observation_and_unknown(tmp_path):
+    route = _latest_setup([
+        {"id": "a", "text": "old", "document_id": "old"},
+        {"id": "b", "text": "new", "document_id": "new"},
+        {"id": "c", "text": "obs", "type": "observation"},
+        {"id": "d", "text": "unk", "document_id": "mystery"},
+    ])
+    out = await arm(tmp_path).recall(None, "q", 100)
+    assert [m.id for m in out] == ["b", "c", "d"]
+    assert json.loads(route.calls[0].request.content)["max_tokens"] == 200
+
+
+@respx.mock
+async def test_latest_only_caps_budget_after_filtering(tmp_path):
+    _latest_setup([
+        {"id": "a", "text": "x" * 400, "document_id": "old"},
+        {"id": "b", "text": "abcdefgh", "document_id": "new"},
+        {"id": "c", "text": "abcdefgh", "document_id": "new"},
+    ])
+    out = await arm(tmp_path).recall(None, "q", 3)
+    assert [m.id for m in out] == ["b"]
+
+
+@respx.mock
+async def test_latest_only_off_is_unfiltered(tmp_path):
+    route = respx.post(f"{BANK}/memories/recall").mock(return_value=httpx.Response(
+        200, json={"results": [{"id": "a", "text": "old", "document_id": "old"}]}))
+    out = await arm(tmp_path, hindsight_latest_only=False).recall(None, "q", 100)
+    assert [m.id for m in out] == ["a"]
+    assert json.loads(route.calls[0].request.content)["max_tokens"] == 100

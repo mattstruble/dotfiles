@@ -71,6 +71,8 @@ class HindsightArm:
         self._latest_facts: dict[str, list[str]] = {}
         self._latest_vecs: dict[str, list[list[float]]] = {}
         self.bank = config.hindsight_bank
+        self._latest_only = config.hindsight_latest_only
+        self._warned_unknown = False
         self.base = config.hindsight_url.rstrip("/")
         self.client = client or httpx.AsyncClient(timeout=30.0)
         self._bank_path = f"{self.base}/v1/default/banks/{_q(self.bank)}"
@@ -145,12 +147,32 @@ class HindsightArm:
         r = await self._post(f"{self._bank_path}/memories/recall", payload)
         return r.json().get("results", [])
 
+    def _is_current(self, res: dict, docs: dict, latest: dict) -> bool:
+        """False only when the result's document has a newer version of the same note."""
+        doc_id = res.get("document_id")
+        if not doc_id:
+            return True
+        info = docs.get(doc_id)
+        if info is None:
+            if not self._warned_unknown:
+                self._warned_unknown = True
+                log.debug("hindsight recall: document %s not in listing; keeping", doc_id)
+            return True
+        base, ts = info
+        return not (ts and base in latest and latest[base] > ts)
+
     async def recall(
         self, project: str | None, query: str, budget_tokens: int
     ) -> list[Memory]:
         out: list[Memory] = []
         used = 0
-        for res in await self._recall(project, query, budget_tokens):
+        if self._latest_only:
+            results = await self._recall(project, query, 2 * budget_tokens)
+            docs, latest = await self._documents()
+            results = [r for r in results if self._is_current(r, docs, latest)]
+        else:
+            results = await self._recall(project, query, budget_tokens)
+        for res in results:
             text = res["text"]
             n = count_tokens(text)
             if used + n > budget_tokens:

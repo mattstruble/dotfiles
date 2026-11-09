@@ -12,6 +12,7 @@ class Config(BaseModel):
     arms: list[str] = Field(default_factory=lambda: ["hindsight", "graphiti", "wiki"])
     hindsight_url: str = "http://127.0.0.1:8011"
     hindsight_bank: str = "memory-eval"
+    hindsight_latest_only: bool = True
     bedrock_model: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     aws_region: str = "us-east-1"
     cognee_url: str = "http://127.0.0.1:8012"
