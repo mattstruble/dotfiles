@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import re
 import time
 from contextlib import suppress
 from dataclasses import asdict
@@ -50,6 +51,8 @@ class Gateway:
         self._started: set[str] = set()
         self._start_errors: dict[str, str] = {}
         self._tasks: list[asyncio.Task] = []
+        self._exclude = [re.compile(p, re.IGNORECASE) for p in config.exclude_patterns]
+        self.excluded_total = 0
         if arms is not None:
             self.arms = dict(arms)
             self.enabled = list(arms)
@@ -122,7 +125,18 @@ class Gateway:
         await arm.ingest(item)
 
     def ingest(self, item: IngestItem, arms: list[str] | None = None) -> int:
-        return self.queue.enqueue(item, self.enabled if arms is None else arms)
+        targets = self.enabled if arms is None else arms
+        hit = next((rx for rx in self._exclude if rx.search(item.text)), None)
+        if hit is not None:
+            targets = []
+        else:
+            sources = self.config.arm_sources
+            targets = [a for a in targets if a not in sources or item.source in sources[a]]
+        item_id = self.queue.enqueue(item, targets)
+        if hit is not None:
+            self.excluded_total += 1
+            log.info("gateway: excluded item %s (pattern %s)", item_id, hit.pattern)
+        return item_id
 
     async def health(self) -> dict:
         async def one(name: str) -> str:
@@ -139,6 +153,7 @@ class Gateway:
             "ok": True,
             "arms": dict(zip(self.enabled, statuses)),
             "queue_depth": self.queue.depth(),
+            "excluded_total": self.excluded_total,
         }
 
     def _select(self, names: list[str] | None) -> tuple[list[str], dict[str, str]]:

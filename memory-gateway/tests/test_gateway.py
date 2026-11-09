@@ -214,3 +214,35 @@ async def test_http_history_source_and_ingest_arms(config, tmp_path):
             assert b.ingested == []
             assert (await c.post("/ingest", json=body)).status_code == 202
             await wait_for(lambda: len(a.ingested) == 2 and len(b.ingested) == 1)
+
+
+def _rows(g):
+    return g.queue._db.execute("SELECT item_id, arm FROM deliveries").fetchall()
+
+
+async def test_arm_sources_filter_and_unlisted_arm_gets_all(config, tmp_path):
+    config = config.model_copy(update={"arm_sources": {"a": ["session", "retain"]}})
+    g = gw(config, tmp_path, {"a": FakeArm("a"), "b": FakeArm("b")})
+    s = g.ingest(make_item("x", source="session"))
+    d = g.ingest(make_item("y", source="seed"))
+    assert sorted(_rows(g)) == [(s, "a"), (s, "b"), (d, "b")]
+    g.queue.close()
+
+
+async def test_explicit_arms_intersect_arm_sources(config, tmp_path):
+    config = config.model_copy(update={"arm_sources": {"a": ["session"]}})
+    g = gw(config, tmp_path, {"a": FakeArm("a"), "b": FakeArm("b")})
+    i = g.ingest(make_item("x", source="seed"), ["a", "b"])
+    assert _rows(g) == [(i, "b")]
+    g.queue.close()
+
+
+async def test_excluded_item_journaled_without_deliveries(config, tmp_path):
+    config = config.model_copy(update={"exclude_patterns": ["memory-EVAL"]})
+    g = gw(config, tmp_path, {"a": FakeArm("a")})
+    g.ingest(make_item("about the memory-eval run"))
+    g.ingest(make_item("normal"))
+    assert g.queue._db.execute("SELECT COUNT(*) FROM items").fetchone()[0] == 2
+    assert len(_rows(g)) == 1
+    assert (await g.health())["excluded_total"] == 1
+    g.queue.close()

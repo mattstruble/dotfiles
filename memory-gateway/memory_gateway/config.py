@@ -17,6 +17,8 @@ class Config(BaseModel):
     aws_region: str = "us-east-1"
     cognee_url: str = "http://127.0.0.1:8012"
     wiki_source: str = "~/llm-wiki"
+    arm_sources: dict[str, list[str]] = Field(default_factory=dict)
+    exclude_patterns: list[str] = Field(default_factory=list)
     arm_timeout_s: float = 20.0
     ingest_timeout_s: float = 300.0
 

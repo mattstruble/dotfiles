@@ -37,11 +37,11 @@ class FakeArm:
         return [f"{self.name}-0"]
 
 
-def make_item(text="hi", session="s1"):
+def make_item(text="hi", session="s1", source="session"):
     return IngestItem(
         project="p",
         session_id=session,
-        source="session",
+        source=source,
         timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc),
         text=text,
     )
