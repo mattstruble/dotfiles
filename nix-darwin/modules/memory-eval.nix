@@ -183,7 +183,9 @@ let
     state_dir = gwDir;
     arms = cfg.arms;
     hindsight_url = "http://127.0.0.1:${toString cfg.hindsightPort}";
-    hindsight_bank = "memory-eval";
+    hindsight_bank = "memory-sessions";
+    arm_sources = { hindsight = [ "session" "retain" ]; };
+    exclude_patterns = cfg.excludePatterns;
     bedrock_model = cfg.bedrockModel;
     aws_region = cfg.awsRegion;
     cognee_url = "http://127.0.0.1:${toString cfg.cogneePort}";
@@ -245,8 +247,28 @@ in
 
     arms = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "hindsight" "graphiti" "wiki" "cognee" ];
+      default = [ "hindsight" "graphiti" ];
       description = "Memory arms enabled in the gateway.";
+    };
+
+    excludePatterns = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [
+        "memory[-_]gateway"
+        "memory[-_]eval"
+        "supersession_pairs"
+        "strict_judge"
+        "scratch_hindsight"
+        "calibration-(sheet|labels|cases)"
+        "hindsight_twoway"
+      ];
+      description = "Regex patterns excluding content from memory ingestion.";
+    };
+
+    cognee.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Run the cognee launchd agent (large memory footprint).";
     };
 
     mode = lib.mkOption {
@@ -257,7 +279,7 @@ in
 
     injectArm = lib.mkOption {
       type = lib.types.str;
-      default = "hindsight";
+      default = "graphiti";
       description = "Arm whose results are injected when mode = inject.";
     };
 
@@ -276,7 +298,7 @@ in
       lib.hm.dag.entryBetween [ "setupLaunchAgents" ] [ "writeBoundary" ] ''
         if [ -z "''${DRY_RUN:-}" ]; then
           echo "memory-eval: syncing venvs (best-effort, 600s timeout)..."
-          for s in "${hsSync}" "${cgSync}" "${gwSync}"; do
+          for s in "${hsSync}" ${lib.optionalString cfg.cognee.enable "${cgSync}"} "${gwSync}"; do
             rc=0
             "${pkgs.coreutils}/bin/timeout" 600 "$s" activation || rc=$?
             if [ "$rc" -ne 0 ]; then
@@ -320,7 +342,7 @@ in
     # the "bedrock/" model prefix (passed through to LiteLLM) and whether
     # EMBEDDING_DIMENSIONS is required for fastembed (set anyway); LITELLM_LOG
     # and AWS_PROFILE are read by litellm/boto3, not cognee.
-    launchd.agents.cognee = {
+    launchd.agents.cognee = lib.mkIf cfg.cognee.enable {
       enable = true;
       config = {
         Label = "com.user.cognee";
