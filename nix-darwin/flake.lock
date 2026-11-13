@@ -575,11 +575,11 @@
     "skills-mattstruble": {
       "flake": false,
       "locked": {
-        "lastModified": 1794598946,
-        "narHash": "sha256-8C+0x/b3R6ze6lulzykR7VhDbfAYV05QHH0qM271D1E=",
+        "lastModified": 1794603459,
+        "narHash": "sha256-m1z8Qrd1dvHc87w39cK+Vmbh6Cz9tjlLaUbps4F0llA=",
         "owner": "mattstruble",
         "repo": "skills",
-        "rev": "cfd2b7dcd418bda11a179fcf0dc0045d5beedaf0",
+        "rev": "ec8c029b9a72f5ed36a683ffcedd046897418116",
         "type": "github"
       },
       "original": {
