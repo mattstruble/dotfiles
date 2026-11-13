@@ -613,11 +613,11 @@
     "skills-mattstruble": {
       "flake": false,
       "locked": {
-        "lastModified": 1792784785,
-        "narHash": "sha256-L++qz6WwkU+ZfmsbvQ3dlDumNGkPUwx6PYYPXvkgLWw=",
+        "lastModified": 1794598946,
+        "narHash": "sha256-8C+0x/b3R6ze6lulzykR7VhDbfAYV05QHH0qM271D1E=",
         "owner": "mattstruble",
         "repo": "skills",
-        "rev": "6f146b652254f1077b27f0ea593465f8581c7766",
+        "rev": "cfd2b7dcd418bda11a179fcf0dc0045d5beedaf0",
         "type": "github"
       },
       "original": {

@@ -218,7 +218,15 @@ in
             modelMap = {
               default = "mjolnir/swift-qwen3.8-27b";
               small_model = "mjolnir/qwen3.8-flash-next";
-              coder = "mjolnir/swift-qwen3.8-27b";
+              # Tiered review loop (wiki: decisions/2026-11-13-tiered-review-loop):
+              # flash-next is the default coder (owner call: faster and more accurate
+              # than swift); fast reviewers run on 35B-A3B (-np 2 slots, measured
+              # 70-98 tok/s per stream); the deep tier (strong passes, epic sweep)
+              # stays on flash-next. The named reviewer entries below remain the
+              # deep mapping for manual/PR review via the code-reviewer skill.
+              coder = "mjolnir/qwen3.8-flash-next";
+              fast-reviewer = "mjolnir/Qwen3.6-35B-A3B";
+              deep-reviewer = "mjolnir/qwen3.8-flash-next";
               fetcher = "mjolnir/qwen3.8-flash-next";
               plan-critic = "mjolnir/swift-qwen3.8-27b";
               correctness-reviewer = "mjolnir/qwen3.8-flash-next";

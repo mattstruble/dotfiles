@@ -330,6 +330,13 @@ in
         };
         ".pi/workflows/saved/orchestrator_wave.js".source =
           "${inputs.skills-mattstruble}/orchestrator/references/wave.js";
+        ".pi/workflows/saved/orchestrator_strong_pass.json".text = builtins.toJSON {
+          name = "orchestrator_strong_pass";
+          description = "Orchestrator: deep review of the integrated working branch (wave mode: delta since the last strong pass; epic mode: whole base range)";
+          scriptPath = "orchestrator_strong_pass.js";
+        };
+        ".pi/workflows/saved/orchestrator_strong_pass.js".source =
+          "${inputs.skills-mattstruble}/orchestrator/references/strong-pass.js";
         ".pi/workflows/saved/orchestrator_audit.json".text = builtins.toJSON {
           name = "orchestrator_audit";
           description = "Orchestrator: audit an epic's integration branch per ticket and against its plan";
