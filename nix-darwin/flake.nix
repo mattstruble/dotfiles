@@ -23,11 +23,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nono = {
-      url = "github:nolabs-ai/nono";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Pinned to a rev, not a branch. bd refuses to open a database whose schema
     # is ahead of its own, and bringing a store up to date is one-way, so an
     # unpinned input lets a routine flake update leave every tracker unreadable

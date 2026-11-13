@@ -543,7 +543,6 @@ in
     ./modules/opencode-profiles.nix
     ./modules/pi-mcp.nix
     ./modules/pi-subagents.nix
-    ./modules/pi-box.nix
     ./modules/pi-profiles.nix
     ./modules/sol-pi.nix
     ./modules/pdf-fast.nix
@@ -1128,12 +1127,6 @@ in
     };
     # Keep the subagent tool active instead of behind the subagents_enable loader.
     pi-subagents.config.toolActivation = "eager";
-
-    pi-box = {
-      enable = true;
-      piConfigDir = "${path}/pi/.pi/agent";
-      onePasswordSocket = onePassPath;
-    };
 
     pi-mcp.servers = {
       context7 = {
