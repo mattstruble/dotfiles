@@ -150,7 +150,11 @@ in
           pi = {
             config = {
               defaultProvider = "mjolnir";
-              defaultModel = "mjolnir/swift-qwen3.8-27b";
+              # Flash-next as the interactive default (owner call 2026-11-13): the
+              # tiered-loop work made it the coder/orchestrator standard — 44 tok/s
+              # solo, 262k ctx, per-request reasoning effort. swift stays enabled
+              # as a fallback and for plan-critic/epic-auditor tiers.
+              defaultModel = "mjolnir/qwen3.8-flash-next";
               enabledModels = [
                 "mjolnir/swift-qwen3.8-27b"
                 "mjolnir/qwen3.8-flash-next"

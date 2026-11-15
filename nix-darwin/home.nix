@@ -701,7 +701,10 @@ in
 
       pi = {
         config = {
-          defaultThinkingLevel = "medium";
+          # High by default: the mjolnir fleet models all take reasoning effort
+          # (pi-effort pins them to high anyway), and the orchestrator sessions
+          # run high; medium wasted a model_change on every session start.
+          defaultThinkingLevel = "high";
           theme = "bamboo";
           enableSkillCommands = true;
           defaultProjectTrust = "always";
