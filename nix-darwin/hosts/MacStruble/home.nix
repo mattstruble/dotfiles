@@ -54,6 +54,27 @@ in
       programs.pi-subagents.config = {
         globalConcurrencyLimit = 2;
         parallel.concurrency = 2;
+        # 60 min: the 30 min default kills agents that are actively working.
+        # Traced from session timestamps (2026-11-15): a flash-next coder with
+        # 199k input / cacheRead=0 was killed at exactly 30m on turn 10 — still
+        # making real progress, each turn 82-263s (turn 1 includes model wake,
+        # later turns grow as context accumulates). It would have finished in
+        # ~45m. Concurrent --batch 2 coders are faster than sequential (tool
+        # I/O overlaps with GPU decode), so the fleet stays on-demand as-is.
+        timeoutMs = 3600000;
+        # One retry: recovers from cold-cache first turns and transient slot
+        # contention without doubling cost on every failure.
+        agentRetries = 1;
+        # Block the main agent until subagents/workflows finish (foreground by
+        # default). Two reasons: (1) pi-caffeinate tracks activeTurns via
+        # agent_start/agent_end — an async workflow ends the main turn,
+        # activeTurns hits 0, caffeinate stops, and the computer sleeps,
+        # suspending the background runner mid-work. Foreground keeps the turn
+        # alive so caffeinate stays on. (2) The result is needed inline anyway
+        # for review/orchestrator workflows. Internal workflow parallelism via
+        # parallel()/pipeline() is unaffected — children still run concurrently.
+        # Pass async:true explicitly for genuine fire-and-forget work.
+        asyncByDefault = false;
       };
 
       home.file.".pi/agent/models.json".source = pkgs.writeText "pi-models.json" (
@@ -150,11 +171,21 @@ in
           pi = {
             config = {
               defaultProvider = "mjolnir";
-              # Flash-next as the interactive default (owner call 2026-11-13): the
-              # tiered-loop work made it the coder/orchestrator standard — 44 tok/s
-              # solo, 262k ctx, per-request reasoning effort. swift stays enabled
-              # as a fallback and for plan-critic/epic-auditor tiers.
+              # Flash-next as the interactive default (owner call 2026-11-13):
+              # 44 tok/s solo, 262k ctx, per-request reasoning effort. The
+              # timeout failures were not the model's fault — session timestamps
+              # show agents killed mid-progress at exactly 30m. Root causes:
+              # turn 1 eats 82s on model wake (on-demand), and contexts with
+              # cacheRead=0 grow each turn (199k by turn 10). 60m timeout + 1
+              # retry (warm model + warm cache on second attempt) fixes it.
               defaultModel = "mjolnir/qwen3.8-flash-next";
+              # 10 min: undici's bodyTimeout/headersTimeout default (300s/5m) is
+              # too tight for on-demand wakes. A cold wake is 83-145s, a 200k
+              # prefill is ~193s, and queueing behind an in-flight request can
+              # add 200s — total ~538s, past the 5m default. 10m covers it
+              # without disabling the timeout entirely (the 60m subagent
+              # timeoutMs is the real deadline).
+              httpIdleTimeoutMs = 600000;
               enabledModels = [
                 "mjolnir/swift-qwen3.8-27b"
                 "mjolnir/qwen3.8-flash-next"
@@ -167,11 +198,13 @@ in
               default = "mjolnir/swift-qwen3.8-27b";
               small_model = "mjolnir/qwen3.8-flash-next";
               # Tiered review loop (wiki: decisions/2026-11-13-tiered-review-loop):
-              # flash-next is the default coder (owner call: faster and more accurate
-              # than swift); fast reviewers run on 35B-A3B (-np 2 slots, measured
-              # 70-98 tok/s per stream); the deep tier (strong passes, epic sweep)
-              # stays on flash-next. The named reviewer entries below remain the
-              # deep mapping for manual/PR review via the code-reviewer skill.
+              # flash-next is the coder/deep tier (44 tok/s solo, 262k ctx,
+              # --batch 2 for concurrent coders — measured faster than sequential
+              # because tool I/O overlaps with GPU decode). Fast reviewers run on
+              # 35B-A3B (-np 2 slots, 70-98 tok/s per stream). The named reviewer
+              # entries below are the deep mapping for manual/PR review via the
+              # code-reviewer skill; the orchestrator's wave.js routes in-loop
+              # reviewers to the fast-reviewer tier instead.
               coder = "mjolnir/qwen3.8-flash-next";
               fast-reviewer = "mjolnir/Qwen3.6-35B-A3B";
               deep-reviewer = "mjolnir/qwen3.8-flash-next";
