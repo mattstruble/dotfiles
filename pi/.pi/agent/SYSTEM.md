@@ -44,6 +44,22 @@ Use Context7 MCP docs before web search for any library, framework, SDK, or API 
 
 For research involving multiple pages or broad searches, run the `fetcher` subagent (bash/curl, no web tools) or fan out in codemode. Single doc lookups are fine in-session.
 
+# Subagent Orchestration
+
+The model server (mjolnir) runs on one GPU with `--batch 2` (two concurrent request slots). When subagents are running, the main session's own API calls queue behind them — during that queue no body data arrives, and the body timeout fires. This is the cause of `UND_ERR_BODY_TIMEOUT` errors.
+
+**For concurrent work, use `workflow()` with `parallel()` — never dispatch multiple async `subagent()` calls and continue working.** A workflow blocks the main session (zero API calls from it while running); `parallel()` inside dispatches agents concurrently on the model server. The main session stays idle the entire time.
+
+```js
+// Correct: workflow blocks main session, parallel runs agents concurrently
+await parallel([
+  () => agent("task A", { agentType: "worker" }),
+  () => agent("task B", { agentType: "worker" }),
+]);
+```
+
+Single subagent calls block by default (`asyncByDefault: false`) — the main session waits. Pass `async: true` only for genuine fire-and-forget work where the result is not needed this turn.
+
 # Workflow Commands
 
 Plan→critique→execute→review commands:
