@@ -179,13 +179,15 @@ in
               # cacheRead=0 grow each turn (199k by turn 10). 60m timeout + 1
               # retry (warm model + warm cache on second attempt) fixes it.
               defaultModel = "mjolnir/qwen3.8-flash-next";
-              # 10 min: undici's bodyTimeout/headersTimeout default (300s/5m) is
-              # too tight for on-demand wakes. A cold wake is 83-145s, a 200k
-              # prefill is ~193s, and queueing behind an in-flight request can
-              # add 200s — total ~538s, past the 5m default. 10m covers it
-              # without disabling the timeout entirely (the 60m subagent
-              # timeoutMs is the real deadline).
-              httpIdleTimeoutMs = 600000;
+              # Disabled: undici's bodyTimeout fires during prefill when no SSE
+              # events arrive for >300s (default) or >600s. With --batch 2
+              # concurrent slots, a 200k prefill takes ~388s per stream; with
+              # queueing that exceeds even 600s. The bodyTimeout is an idle
+              # timeout — it fires when no body data arrives, which is normal
+              # during model wake + prefill. The 60m subagent timeoutMs is the
+              # real deadline; this HTTP timeout only causes false positives.
+              # Also set litellm request_timeout in the gateway config (nix-config).
+              httpIdleTimeoutMs = "disabled";
               enabledModels = [
                 "mjolnir/swift-qwen3.8-27b"
                 "mjolnir/qwen3.8-flash-next"
