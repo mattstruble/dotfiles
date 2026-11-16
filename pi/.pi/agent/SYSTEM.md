@@ -46,7 +46,7 @@ For research involving multiple pages or broad searches, run the `fetcher` subag
 
 # Subagent Orchestration
 
-The model server (mjolnir) runs on one GPU with `--batch 2` (two concurrent request slots). When subagents are running, the main session's own API calls queue behind them — during that queue no body data arrives, and the body timeout fires. This is the cause of `UND_ERR_BODY_TIMEOUT` errors.
+When subagents are running, the main session's own API calls compete with them for model server capacity. During that contention no body data arrives for the queued request, causing body timeout errors.
 
 **For concurrent work, use `workflow()` with `parallel()` — never dispatch multiple async `subagent()` calls and continue working.** A workflow blocks the main session (zero API calls from it while running); `parallel()` inside dispatches agents concurrently on the model server. The main session stays idle the entire time.
 
