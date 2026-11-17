@@ -2,9 +2,7 @@
   description = "Darwin configuration";
 
   inputs = {
-    nixpkgs.url = "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1";
-    # beads only: its dependencies can require a newer Go than nixpkgs-weekly ships.
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -91,31 +89,16 @@
                     # Bun-compiled binary does not ship.
                     pi = inputs.llm-agents.packages.${system}.pi.override { useBun = false; };
                   })
-                  (final: prev: {
-                    # beads' own postPatch lowers go.mod to the toolchain, but its dependencies
-                    # (dolt) can still need a newer Go than nixpkgs-weekly, so build it on unstable.
-                    beads = (import inputs.nixpkgs-unstable {
-                      inherit system;
-                      overlays = [ inputs.beads.overlays.default ];
-                    }).beads;
-                  })
-                  (final: prev: {
-                    # weekly's mcp-nixos 3.0.2 builds fastmcp-slim against mcp v2, which is marked
-                    # broken; unstable pins mcp_1. Drop once nixpkgs-weekly carries that fix.
-                    mcp-nixos = (import inputs.nixpkgs-unstable { inherit system; }).mcp-nixos;
-                  })
+                  inputs.beads.overlays.default
                   (final: prev: {
                     # bd refuses shared Dolt servers older than 2.6.0 (its embedded engine pin);
                     # nixpkgs lags. Pinned to the tag bd's go.mod embeds; bump alongside beads.
-                    # dolt 2.6 needs Go 1.27, so build on unstable.
+                    # dolt 2.6 needs Go 1.27.
                     dolt =
-                      let
-                        unstable = import inputs.nixpkgs-unstable { inherit system; };
-                      in
-                      (unstable.dolt.override { buildGoModule = unstable.buildGo127Module; }).overrideAttrs
+                      (prev.dolt.override { buildGoModule = prev.buildGo127Module; }).overrideAttrs
                         (old: rec {
                           version = "2.6.0";
-                          src = unstable.fetchFromGitHub {
+                          src = prev.fetchFromGitHub {
                             owner = "dolthub";
                             repo = "dolt";
                             tag = "v${version}";
