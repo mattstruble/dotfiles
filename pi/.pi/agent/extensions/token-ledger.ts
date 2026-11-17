@@ -5,37 +5,55 @@ import { join } from "node:path";
 const LEDGER_DIR = join(process.env.HOME ?? "", ".local", "share", "pi");
 const LEDGER_PATH = join(LEDGER_DIR, "token-ledger.jsonl");
 
+const TASK_ID_RE = /^[A-Za-z0-9][\w.-]*$/;
+
 interface LedgerEntry {
   ts: string;
-  taskId: string;
+  taskId: string | null;
   sessionId: string;
-  event: "turn" | "dispatch" | "claim" | "close";
+  event: "turn" | "dispatch" | "claim" | "close" | "warm";
   children?: number;
-  tokens?: { input?: number; output?: number };
+  tokens?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number };
+  cost?: number;
 }
+
+const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
 
 function summarize(entries: LedgerEntry[]) {
   let turns = 0;
   let dispatches = 0;
   let inputTokens = 0;
   let outputTokens = 0;
+  let turnCost = 0;
+  let warms = 0;
+  let warmCost = 0;
 
   for (const e of entries) {
     if (e.event === "turn") turns++;
     if (e.event === "dispatch") dispatches++;
+    if (e.event === "turn") turnCost += num(e.cost);
+    if (e.event === "warm") {
+      warms++;
+      warmCost += num(e.cost);
+    }
     if (e.tokens) {
       inputTokens += e.tokens.input ?? 0;
       outputTokens += e.tokens.output ?? 0;
     }
   }
 
-  return { turns, dispatches, inputTokens, outputTokens };
+  return { turns, dispatches, inputTokens, outputTokens, turnCost, warms, warmCost };
+}
+
+function fmtSummary(label: string, s: ReturnType<typeof summarize>): string {
+  return `${label}: ${s.turns} turns $${s.turnCost.toFixed(2)} · warming ${s.warms}× $${s.warmCost.toFixed(2)} · ${s.dispatches} dispatches`;
 }
 
 export default function (pi: ExtensionAPI): void {
   let currentTaskId: string | null = null;
   let sessionId = "";
-  let pendingTokens: { input?: number; output?: number } | null = null;
+  const fresh = () => ({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0 });
+  let acc = fresh();
 
   mkdirSync(LEDGER_DIR, { recursive: true });
 
@@ -87,6 +105,7 @@ export default function (pi: ExtensionAPI): void {
     // Detect bd update --claim <taskId>
     const claimMatch = cmd.match(/bd\s+update\s+(\S+)\s+--claim/);
     if (claimMatch) {
+      if (!TASK_ID_RE.test(claimMatch[1])) return;
       currentTaskId = claimMatch[1];
       append({
         ts: new Date().toISOString(),
@@ -101,6 +120,7 @@ export default function (pi: ExtensionAPI): void {
     const closeMatch = cmd.match(/bd\s+close\s+(\S+)/);
     if (closeMatch) {
       const closedId = closeMatch[1];
+      if (!TASK_ID_RE.test(closedId)) return;
       append({
         ts: new Date().toISOString(),
         taskId: closedId,
@@ -113,30 +133,45 @@ export default function (pi: ExtensionAPI): void {
     }
   });
 
-  // Capture token usage from message_update if available
-  pi.on("message_update", async (event) => {
-    const usage = (event as any).usage;
-    if (usage) {
-      pendingTokens = {
-        input: usage.input_tokens ?? usage.inputTokens,
-        output: usage.output_tokens ?? usage.outputTokens,
-      };
+  pi.on("message_end", (event) => {
+    const msg = (event as any).message;
+    if (msg?.role !== "assistant" || !msg.usage) return;
+    const u = msg.usage;
+    acc.input += num(u.input);
+    acc.output += num(u.output);
+    acc.cacheRead += num(u.cacheRead);
+    acc.cacheWrite += num(u.cacheWrite);
+    acc.cost += num(u.cost?.total);
+  });
+
+  // The logged decision is pi's, before later handlers; pi-cache-optimizer only
+  // flips stop->warm for zero-priced models whose warmCost is 0, so dollar
+  // totals stay exact. Never override the decision.
+  pi.on("cache_warming_decision", (event) => {
+    const e = event as any;
+    if (e.action === "warm") {
+      append({
+        event: "warm",
+        cost: num(e.warmCost),
+        taskId: currentTaskId,
+        sessionId,
+        ts: new Date().toISOString(),
+      });
     }
+    return undefined;
   });
 
   pi.on("agent_settled", async () => {
-    if (!currentTaskId) return;
-    const entry: LedgerEntry = {
+    const { cost, ...tokens } = acc;
+    acc = fresh();
+    append({
       ts: new Date().toISOString(),
       taskId: currentTaskId,
       sessionId,
       event: "turn",
-    };
-    if (pendingTokens) {
-      entry.tokens = pendingTokens;
-      pendingTokens = null;
-    }
-    append(entry);
+      tokens,
+      cost,
+    });
   });
 
   pi.registerCommand("cost", {
@@ -151,10 +186,10 @@ export default function (pi: ExtensionAPI): void {
           ctx.ui.notify("Usage: /cost --epic <epic-id>", "warning");
           return;
         }
-        const matched = entries.filter((e) => e.taskId.startsWith(epicId));
+        const matched = entries.filter((e) => e.taskId != null && e.taskId.startsWith(epicId));
         const s = summarize(matched);
         ctx.ui.notify(
-          `Epic ${epicId}: ${s.turns} turns, ${s.dispatches} dispatches, ~${s.inputTokens} in / ~${s.outputTokens} out tokens`,
+          fmtSummary(`Epic ${epicId}`, s),
           "info",
         );
         return;
@@ -168,7 +203,7 @@ export default function (pi: ExtensionAPI): void {
         }
         const s = summarize(matched);
         ctx.ui.notify(
-          `Task ${flags}: ${s.turns} turns, ${s.dispatches} dispatches, ~${s.inputTokens} in / ~${s.outputTokens} out tokens`,
+          fmtSummary(`Task ${flags}`, s),
           "info",
         );
         return;
@@ -178,7 +213,7 @@ export default function (pi: ExtensionAPI): void {
       const sessionEntries = entries.filter((e) => e.sessionId === sessionId);
       const s = summarize(sessionEntries);
       ctx.ui.notify(
-        `Session: ${s.turns} turns, ${s.dispatches} dispatches, ~${s.inputTokens} in / ~${s.outputTokens} out tokens`,
+        fmtSummary("Session", s),
         "info",
       );
     },
@@ -197,7 +232,7 @@ export default function (pi: ExtensionAPI): void {
       const formatted = recent
         .map(
           (e) =>
-            `${e.ts.slice(5, 16)} [${e.event.padEnd(8)}] ${e.taskId}${e.tokens ? ` (${e.tokens.input ?? 0}→${e.tokens.output ?? 0})` : ""}`,
+            `${e.ts.slice(5, 16)} [${e.event.padEnd(8)}] ${e.taskId ?? "-"}${e.tokens ? ` (${e.tokens.input ?? 0}→${e.tokens.output ?? 0})` : ""}${typeof e.cost === "number" ? ` $${e.cost.toFixed(3)}` : ""}`,
         )
         .join("\n");
       ctx.ui.notify(formatted, "info");
