@@ -15,6 +15,7 @@ interface LedgerEntry {
   children?: number;
   tokens?: { input?: number; output?: number; cacheRead?: number; cacheWrite?: number };
   cost?: number;
+  model?: string;
 }
 
 const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
@@ -66,16 +67,68 @@ export default function (pi: ExtensionAPI): void {
   function readLedger(): LedgerEntry[] {
     if (!existsSync(LEDGER_PATH)) return [];
     try {
-      const raw = readFileSync(LEDGER_PATH, "utf-8").trim();
-      if (!raw) return [];
-      return raw.split("\n").map((line) => JSON.parse(line));
+      const out: LedgerEntry[] = [];
+      for (const line of readFileSync(LEDGER_PATH, "utf-8").split("\n")) {
+        if (!line.trim()) continue;
+        try {
+          out.push(JSON.parse(line));
+        } catch { /* skip malformed line */ }
+      }
+      return out;
     } catch {
       return [];
     }
   }
 
-  pi.on("session_start", async (_event, _ctx) => {
+  function flushTurn(): void {
+    const { cost, ...tokens } = acc;
+    if (cost === 0 && Object.values(tokens).every((v) => v === 0)) return;
+    acc = fresh();
+    append({
+      ts: new Date().toISOString(),
+      taskId: currentTaskId,
+      sessionId,
+      event: "turn",
+      tokens,
+      cost,
+    });
+  }
+
+  // Warms are taken from pi's completed cache_warm usage entries, so skipped or
+  // failed refreshes are not counted and the cost is the billed amount.
+  const seenWarms = new Set<string>();
+
+  function warmEntries(ctx: any): any[] {
+    try {
+      const sm = ctx?.sessionManager;
+      if (!sm || typeof sm.getEntries !== "function") return [];
+      const all = sm.getEntries();
+      return Array.isArray(all)
+        ? all.filter((e: any) => e?.type === "usage" && e.kind === "cache_warm")
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function sweepWarms(ctx: any): void {
+    for (const entry of warmEntries(ctx)) {
+      if (seenWarms.has(entry.id)) continue;
+      seenWarms.add(entry.id);
+      append({
+        ts: new Date().toISOString(),
+        taskId: currentTaskId,
+        sessionId,
+        event: "warm",
+        cost: num(entry.usage?.cost?.total),
+        model: entry.model,
+      });
+    }
+  }
+
+  pi.on("session_start", async (_event, ctx) => {
     sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    for (const entry of warmEntries(ctx)) seenWarms.add(entry.id);
   });
 
   pi.on("tool_call", async (event) => {
@@ -106,6 +159,7 @@ export default function (pi: ExtensionAPI): void {
     const claimMatch = cmd.match(/bd\s+update\s+(\S+)\s+--claim/);
     if (claimMatch) {
       if (!TASK_ID_RE.test(claimMatch[1])) return;
+      flushTurn();
       currentTaskId = claimMatch[1];
       append({
         ts: new Date().toISOString(),
@@ -121,6 +175,7 @@ export default function (pi: ExtensionAPI): void {
     if (closeMatch) {
       const closedId = closeMatch[1];
       if (!TASK_ID_RE.test(closedId)) return;
+      if (closedId === currentTaskId) flushTurn();
       append({
         ts: new Date().toISOString(),
         taskId: closedId,
@@ -144,38 +199,27 @@ export default function (pi: ExtensionAPI): void {
     acc.cost += num(u.cost?.total);
   });
 
-  // The logged decision is pi's, before later handlers; pi-cache-optimizer only
-  // flips stop->warm for zero-priced models whose warmCost is 0, so dollar
-  // totals stay exact. Never override the decision.
-  pi.on("cache_warming_decision", (event) => {
-    const e = event as any;
-    if (e.action === "warm") {
-      append({
-        event: "warm",
-        cost: num(e.warmCost),
-        taskId: currentTaskId,
-        sessionId,
-        ts: new Date().toISOString(),
-      });
-    }
+  // Never override pi's decision; only sweep completed warms.
+  pi.on("cache_warming_decision", (_event, ctx) => {
+    sweepWarms(ctx);
     return undefined;
   });
 
-  pi.on("agent_settled", async () => {
-    const { cost, ...tokens } = acc;
-    acc = fresh();
-    append({
-      ts: new Date().toISOString(),
-      taskId: currentTaskId,
-      sessionId,
-      event: "turn",
-      tokens,
-      cost,
-    });
+  pi.on("agent_start", async (_event, ctx) => {
+    sweepWarms(ctx);
+  });
+
+  pi.on("agent_settled", async (_event, ctx) => {
+    flushTurn();
+    sweepWarms(ctx);
+  });
+
+  pi.on("session_shutdown", async (_event, ctx) => {
+    sweepWarms(ctx);
   });
 
   pi.registerCommand("cost", {
-    description: "Show token cost per task or epic. Usage: /cost [task-id] | /cost --epic <id>",
+    description: "Show dollar spend (turns and cache warming) per task or epic. Usage: /cost [task-id] | /cost --epic <id>",
     handler: async (args, ctx) => {
       const entries = readLedger();
       const flags = args.trim();
