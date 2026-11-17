@@ -41,26 +41,38 @@ A nonzero count confirms the model is actually using Action Fusion. Zero means t
 
 ### 2. Turns Per Task (Token Ledger)
 
-The token ledger at `~/.local/share/pi/token-ledger.jsonl` records `claim`, `dispatch` (one per `subagent`/`workflow` call), `close`, and `turn` events per task.
+The token ledger at `~/.local/share/pi/token-ledger.jsonl` is JSONL. Events: `claim`, `close`, `dispatch` (one per `subagent`/`workflow` call, only while a task is claimed), `turn`, and `warm`. Every entry starts with `ts`, `taskId`, `sessionId`, `event`. `taskId` is a task ID or `null` (spend while no task was claimed; `turn` and `warm` can be null).
+
+- `turn` entries carry `tokens: { input, output, cacheRead, cacheWrite }` and `cost` (dollars). A run's spend is flushed as a `turn` entry at each task claim/close boundary and at agent settle; zero-usage turns are not written, so a run can produce more than one `turn` entry.
+- `warm` entries carry `cost` (actual billed dollars of a completed prompt-cache refresh) and `model`.
+- Older lines have no `cost` or `tokens`; treat them as 0.
+
+Turn counts now include boundary flushes, so compare turn counts only across ledgers written by the same extension version.
 
 ```bash
-# Turns per task (lower = better)
+# Turns, dispatches and dollar cost per task (lower = better)
 python3 -c "
 import json, sys
 from collections import defaultdict
 
-tasks = defaultdict(lambda: {'turns': 0, 'dispatches': 0})
+tasks = defaultdict(lambda: {'turns': 0, 'dispatches': 0, 'cost': 0.0})
 for line in open('$HOME/.local/share/pi/token-ledger.jsonl'):
     e = json.loads(line)
-    tid = e['taskId']
-    if e['event'] == 'turn':
+    tid = e.get('taskId')
+    if tid is None:
+        continue
+    ev = e.get('event')
+    if ev == 'turn':
         tasks[tid]['turns'] += 1
-    elif e['event'] == 'dispatch':
+        tasks[tid]['cost'] += e.get('cost') or 0
+    elif ev == 'warm':
+        tasks[tid]['cost'] += e.get('cost') or 0
+    elif ev == 'dispatch':
         tasks[tid]['dispatches'] += e.get('children', 0)
 
 for tid, d in sorted(tasks.items()):
     if d['turns'] > 0:
-        print(f'{tid:30s}  turns={d[\"turns\"]:3d}  dispatches={d[\"dispatches\"]:2d}')
+        print(f'{tid:30s}  turns={d[\"turns\"]:3d}  dispatches={d[\"dispatches\"]:2d}  cost=\${d[\"cost\"]:.2f}')
 "
 ```
 

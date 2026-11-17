@@ -69,5 +69,5 @@ Plan→critique→execute→review commands:
 - `/workflows` — live workflow runs: phases, agents, tokens, cost
 - `/review [task-id]` — queue a completed task for review
 - `/reviews` — show pending/completed review status
-- `/cost [task-id]` — token spend per task (or `--epic <id>` for rollup)
+- `/cost [task-id]` — dollar spend (turns and cache warming) per task (or `--epic <id>` for rollup)
 - `/ledger [n]` — show recent token ledger entries
