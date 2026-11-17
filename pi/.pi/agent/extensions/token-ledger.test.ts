@@ -32,7 +32,7 @@ function setup() {
       await commands.get(name).handler(args, ctx);
       return messages.join("\n");
     },
-    bash: (command: string) => handlers.get("tool_call")!({ toolName: "bash", input: { command } }),
+    bash: (command: string) => handlers.get("tool_call")!({ toolName: "bash", input: { command } }, ctx),
   };
 }
 const entries = (): any[] =>
@@ -207,5 +207,92 @@ describe("token-ledger", () => {
       JSON.stringify({ ts: "2025-01-01T00:00:00Z", taskId: "bad-1", sessionId: "s", event: "turn", cost });
     writeFileSync(LEDGER, [good(1), "{not json", good(2)].join("\n") + "\n");
     assert.equal(await t.run("cost", "bad-1"), "Task bad-1: 2 turns $3.00 · warming 0× $0.00 · 0 dispatches");
+  });
+
+  it("multi-id close writes one close per id and charges the current task", async () => {
+    const t = setup();
+    await t.fire("session_start");
+    await t.bash("bd update b --claim");
+    t.fire("message_end", asst(usage(1, 1, 0, 0, 0.4)));
+    await t.bash("bd close a b --reason x");
+    t.fire("message_end", asst(usage(2, 2, 0, 0, 0.6)));
+    await t.fire("agent_settled");
+    const e = entries();
+    assert.deepEqual(e.map((x) => [x.event, x.taskId]), [
+      ["claim", "b"], ["close", "a"], ["turn", "b"], ["close", "b"], ["turn", null],
+    ]);
+    assert.equal(e[2].cost, 0.4);
+    assert.deepEqual(Object.keys(e[1]), ["ts", "taskId", "sessionId", "event"]);
+  });
+
+  it("closing a list without the current task leaves it current", async () => {
+    const t = setup();
+    await t.fire("session_start");
+    await t.bash("bd update c --claim");
+    await t.bash("bd close a b");
+    t.fire("message_end", asst(usage(1, 1, 0, 0, 0.2)));
+    await t.fire("agent_settled");
+    const e = entries();
+    assert.deepEqual(e.map((x) => [x.event, x.taskId]), [
+      ["claim", "c"], ["close", "a"], ["close", "b"], ["turn", "c"],
+    ]);
+  });
+
+  it("skips non-literal ids, strips quotes, stops at operators", async () => {
+    const t = setup();
+    await t.fire("session_start");
+    await t.bash("bd close $T good");
+    await t.bash("bd close $(bd ready) \"q1\" 'q2' > /dev/null");
+    await t.bash("bd close s1; echo s2");
+    await t.bash("bd close f1 --reason x f2");
+    assert.deepEqual(entries().map((x) => x.taskId), ["good", "q1", "q2", "s1", "f1"]);
+  });
+
+  it("does not treat fd redirects as ids", async () => {
+    const t = setup();
+    await t.fire("session_start");
+    await t.bash("bd close a b 2>&1");
+    await t.bash("bd close c 2>/dev/null");
+    await t.bash("bd close d 1>&2");
+    assert.deepEqual(entries().map((x) => x.taskId), ["a", "b", "c", "d"]);
+  });
+
+  it("handles several bd close invocations in one command", async () => {
+    const t = setup();
+    await t.fire("session_start");
+    await t.bash("bd close a && bd close b");
+    assert.deepEqual(entries().map((x) => [x.event, x.taskId]), [["close", "a"], ["close", "b"]]);
+  });
+
+  it("attributes a warm completed mid-run to the outgoing task at close and claim", async () => {
+    const t = setup();
+    await t.fire("session_start");
+    await t.bash("bd update b --claim");
+    t.sessionEntries.push(warmEntry("w1", 0.05));
+    await t.bash("bd update d --claim");
+    t.sessionEntries.push(warmEntry("w2", 0.06));
+    await t.bash("bd close a d");
+    const warms = entries().filter((x) => x.event === "warm");
+    assert.deepEqual(warms.map((x) => [x.taskId, x.cost]), [["b", 0.05], ["d", 0.06]]);
+    const e = entries();
+    assert.ok(e.findIndex((x) => x.event === "warm" && x.taskId === "d") < e.findIndex((x) => x.event === "close" && x.taskId === "d"));
+  });
+
+  it("session_shutdown flushes pending usage", async () => {
+    const t = setup();
+    await t.fire("session_start");
+    t.fire("message_end", asst(usage(1, 1, 0, 0, 0.9)));
+    await t.fire("session_shutdown");
+    assert.deepEqual(entries().map((x) => [x.event, x.cost]), [["turn", 0.9]]);
+  });
+
+  it("skips non-object ledger lines", async () => {
+    const t = setup();
+    await t.fire("session_start");
+    const good = JSON.stringify({ ts: "2025-01-01T00:00:00Z", taskId: "n-1", sessionId: "s", event: "turn", cost: 1 });
+    writeFileSync(LEDGER, ["null", "42", "[]", "{}", '"str"', good].join("\n") + "\n");
+    assert.equal(await t.run("cost", "n-1"), "Task n-1: 1 turns $1.00 · warming 0× $0.00 · 0 dispatches");
+    assert.equal(await t.run("cost"), "Session: 0 turns $0.00 · warming 0× $0.00 · 0 dispatches");
+    assert.match(await t.run("ledger"), /n-1/);
   });
 });

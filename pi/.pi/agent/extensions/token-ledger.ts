@@ -50,6 +50,32 @@ function fmtSummary(label: string, s: ReturnType<typeof summarize>): string {
   return `${label}: ${s.turns} turns $${s.turnCost.toFixed(2)} · warming ${s.warms}× $${s.warmCost.toFixed(2)} · ${s.dispatches} dispatches`;
 }
 
+// Literal task IDs listed after a `bd close`, in order. Scanning stops at the
+// first flag, shell operator, redirect, or end of line; non-literal tokens
+// (e.g. `$T`, `$(bd`) are skipped without ending the scan.
+function closeIds(rest: string): string[] {
+  const ids: string[] = [];
+  const line = rest.split("\n", 1)[0];
+  for (const raw of line.split(/\s+/)) {
+    if (!raw) continue;
+    if (raw.startsWith("-") || /^[;|&<>)]/.test(raw)) break;
+    let tok = raw;
+    // Operator glued to the token (`b;`, `b&&`): keep the ID part and stop.
+    const op = tok.search(/[;|&<>]/);
+    const stop = op >= 0;
+    if (stop) {
+      // `2>&1`, `2>/dev/null`: a file-descriptor redirect, not an ID.
+      if (/^\d+$/.test(tok.slice(0, op)) && /[<>]/.test(tok[op])) break;
+      tok = tok.slice(0, op);
+    }
+    const q = tok.match(/^(["'])(.*)\1$/);
+    if (q) tok = q[2];
+    if (TASK_ID_RE.test(tok)) ids.push(tok);
+    if (stop) break;
+  }
+  return ids;
+}
+
 export default function (pi: ExtensionAPI): void {
   let currentTaskId: string | null = null;
   let sessionId = "";
@@ -71,7 +97,16 @@ export default function (pi: ExtensionAPI): void {
       for (const line of readFileSync(LEDGER_PATH, "utf-8").split("\n")) {
         if (!line.trim()) continue;
         try {
-          out.push(JSON.parse(line));
+          const parsed = JSON.parse(line);
+          if (
+            parsed !== null &&
+            typeof parsed === "object" &&
+            !Array.isArray(parsed) &&
+            typeof parsed.ts === "string" &&
+            typeof parsed.event === "string"
+          ) {
+            out.push(parsed);
+          }
         } catch { /* skip malformed line */ }
       }
       return out;
@@ -131,7 +166,7 @@ export default function (pi: ExtensionAPI): void {
     for (const entry of warmEntries(ctx)) seenWarms.add(entry.id);
   });
 
-  pi.on("tool_call", async (event) => {
+  pi.on("tool_call", async (event, ctx) => {
     if (event.toolName === "subagent" || event.toolName === "workflow") {
       if (currentTaskId) {
         const input = (event.input as any) ?? {};
@@ -159,6 +194,7 @@ export default function (pi: ExtensionAPI): void {
     const claimMatch = cmd.match(/bd\s+update\s+(\S+)\s+--claim/);
     if (claimMatch) {
       if (!TASK_ID_RE.test(claimMatch[1])) return;
+      sweepWarms(ctx);
       flushTurn();
       currentTaskId = claimMatch[1];
       append({
@@ -170,21 +206,23 @@ export default function (pi: ExtensionAPI): void {
       return;
     }
 
-    // Detect bd close <taskId>
-    const closeMatch = cmd.match(/bd\s+close\s+(\S+)/);
-    if (closeMatch) {
-      const closedId = closeMatch[1];
-      if (!TASK_ID_RE.test(closedId)) return;
-      if (closedId === currentTaskId) flushTurn();
-      append({
-        ts: new Date().toISOString(),
-        taskId: closedId,
-        sessionId,
-        event: "close",
-      });
-      if (closedId === currentTaskId) {
-        currentTaskId = null;
+    // Detect bd close <id> [<id> ...]
+    for (const m of cmd.matchAll(/bd\s+close(?=\s|$)/g)) {
+      let closedCurrent = false;
+      for (const closedId of closeIds(cmd.slice(m.index + m[0].length))) {
+        if (closedId === currentTaskId) {
+          sweepWarms(ctx);
+          flushTurn();
+          closedCurrent = true;
+        }
+        append({
+          ts: new Date().toISOString(),
+          taskId: closedId,
+          sessionId,
+          event: "close",
+        });
       }
+      if (closedCurrent) currentTaskId = null;
     }
   });
 
@@ -216,6 +254,7 @@ export default function (pi: ExtensionAPI): void {
 
   pi.on("session_shutdown", async (_event, ctx) => {
     sweepWarms(ctx);
+    flushTurn();
   });
 
   pi.registerCommand("cost", {
