@@ -271,6 +271,8 @@ export default function (pi: ExtensionAPI): void {
       // is injected at most once per session so the earlier prefix never changes.
       // Behavioural change: because systemPrompt is no longer returned, other
       // extensions' sections (Ponytail's always-on text) are no longer stripped.
+      // Custom-message turns (e.g. async subagent completions) carry no prompt.
+      if (event.messageType !== "user") return;
       return buildInjection(event.prompt, entries, injected);
     },
   );

@@ -3,7 +3,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildInjection, parseIndex, recoverInjectedKeys } from "./knowledge-base.ts";
+import knowledgeBase, { buildInjection, parseIndex, recoverInjectedKeys } from "./knowledge-base.ts";
 
 const INDEX = `## Topics
 - [[topics/kubernetes-networking|K8s Networking]] — cilium ingress service mesh
@@ -59,4 +59,15 @@ test("compacted key can be re-injected", () => {
     { type: "compaction", id: "3", firstKeptEntryId: "2" },
   ]);
   assert.ok(buildInjection(P1, entries, inj));
+});
+
+test("custom-message turn (no prompt) is skipped without throwing", async () => {
+  const handlers = new Map<string, (event: unknown, ctx: unknown) => unknown>();
+  knowledgeBase({ on: (name: string, h: (e: unknown, c: unknown) => unknown) => handlers.set(name, h) } as never);
+  const event = {
+    type: "before_agent_start",
+    messageType: "custom",
+    message: { customType: "subagent-result", content: "kubernetes networking cilium ingress" },
+  };
+  assert.equal(await handlers.get("before_agent_start")!(event, {}), undefined);
 });
