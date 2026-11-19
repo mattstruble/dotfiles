@@ -1240,6 +1240,8 @@ function makeCfg(port: number, overrides?: Partial<RouterConfig["decider"]> & { 
       timeoutMs: overrides?.timeoutMs ?? 2000,
       threshold: overrides?.threshold ?? 0.30,
       apiKeyEnv: overrides?.apiKeyEnv ?? null,
+      apiKeyCommand: overrides?.apiKeyCommand ?? null,
+      path: overrides?.path ?? "/v1/systemone",
     },
     catalog: "~/.pi/agent/skill-profiles/all",
     maxSkillsPerTurn: overrides?.maxSkillsPerTurn ?? 2,
@@ -1331,6 +1333,74 @@ describe("queryKev", () => {
       delete process.env[envKey];
       server.close();
     }
+  });
+
+  it("posts to decider.path", async () => {
+    let seenPath: string | undefined;
+    const { server, port } = await startKevServer((req, res) => {
+      seenPath = req.url;
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ answers: { "git-commit": { type: "noul", noul: 0.6 } } }));
+    });
+    try {
+      await queryKev(new Map([["git-commit", 0.75]]), loadCatalog(), "commit", makeCfg(port, { path: "/hatchery/v/verify" }));
+
+      assert.equal(seenPath, "/hatchery/v/verify");
+    } finally { server.close(); }
+  });
+
+  it("sends a bearer from apiKeyCommand and runs the command once across requests", async () => {
+    const headers: string[] = [];
+    const { server, port } = await startKevServer((req, res) => {
+      headers.push(req.headers["authorization"] as string);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ answers: { "git-commit": { type: "noul", noul: 0.6 } } }));
+    });
+    const counter = join(mkdtempSync(join(tmpdir(), "sr-token-")), "calls");
+    const cfg = makeCfg(port, { apiKeyCommand: `echo x >> '${counter}'; printf ' tok-abc\\n'` });
+    try {
+      await queryKev(new Map([["git-commit", 0.75]]), loadCatalog(), "commit", cfg);
+      await queryKev(new Map([["git-commit", 0.75]]), loadCatalog(), "commit", cfg);
+
+      assert.deepEqual(headers, ["Bearer tok-abc", "Bearer tok-abc"]);
+      assert.equal(readFileSync(counter, "utf-8").trim().split("\n").length, 1);
+    } finally { server.close(); }
+  });
+
+  it("apiKeyCommand wins over apiKeyEnv", async () => {
+    let authHeader: string | undefined;
+    const { server, port } = await startKevServer((req, res) => {
+      authHeader = req.headers["authorization"] as string;
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ answers: { "git-commit": { type: "noul", noul: 0.6 } } }));
+    });
+    const envKey = "__SKILL_ROUTER_TEST_KEY2";
+    process.env[envKey] = "from-env";
+    try {
+      await queryKev(new Map([["git-commit", 0.75]]), loadCatalog(), "commit",
+        makeCfg(port, { apiKeyEnv: envKey, apiKeyCommand: "echo from-command" }));
+
+      assert.equal(authHeader, "Bearer from-command");
+    } finally {
+      delete process.env[envKey];
+      server.close();
+    }
+  });
+
+  it("rejects without sending a request when apiKeyCommand fails or prints nothing", async () => {
+    let requests = 0;
+    const { server, port } = await startKevServer((_req, res) => {
+      requests++;
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ answers: {} }));
+    });
+    const hits = new Map([["git-commit", 0.75]]);
+    try {
+      await assert.rejects(() => queryKev(hits, loadCatalog(), "commit", makeCfg(port, { apiKeyCommand: "exit 3" })), /apiKeyCommand/);
+      await assert.rejects(() => queryKev(hits, loadCatalog(), "commit", makeCfg(port, { apiKeyCommand: "true" })), /apiKeyCommand/);
+
+      assert.equal(requests, 0);
+    } finally { server.close(); }
   });
 
   it("times out on slow server", async () => {
@@ -1769,6 +1839,28 @@ describe("config parsing", () => {
     assert.ok(typeof cfg.decider.threshold === "number");
     assert.ok(typeof cfg.maxSkillsPerTurn === "number");
     assert.ok(typeof cfg.catalog === "string");
+  });
+
+  it("loadConfig reads decider.path and decider.apiKeyCommand and drops invalid values", () => {
+    const savedHome = process.env.HOME;
+    const home = mkdtempSync(join(tmpdir(), "sr-home-"));
+    mkdirSync(join(home, ".pi/agent"), { recursive: true });
+    const load = (decider: any) => {
+      writeFileSync(join(home, ".pi/agent/skill-router.json"), JSON.stringify({ decider }));
+      return loadConfig().decider;
+    };
+    process.env.HOME = home;
+    try {
+      const set = load({ url: "https://gw.example", path: "/hatchery/v/verify", apiKeyCommand: "chariot auth token" });
+      const unset = load({});
+      const invalid = load({ path: "verify", apiKeyCommand: 7 });
+
+      assert.deepEqual([set.path, set.apiKeyCommand], ["/hatchery/v/verify", "chariot auth token"]);
+      assert.deepEqual([unset.path, unset.apiKeyCommand], ["/v1/systemone", null]);
+      assert.deepEqual([invalid.path, invalid.apiKeyCommand], ["/v1/systemone", null]);
+    } finally {
+      process.env.HOME = savedHome;
+    }
   });
 
   it("expandTilde replaces leading ~", () => {

@@ -18,6 +18,8 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
 import { join, dirname, resolve as resolvePath } from "node:path";
 import { homedir } from "node:os";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
 // ── Config ──────────────────────────────────────────────────────────
 
@@ -27,6 +29,10 @@ interface DeciderConfig {
   timeoutMs: number;
   threshold: number;
   apiKeyEnv: string | null;
+  /** Shell command printing a bearer token; takes precedence over apiKeyEnv. */
+  apiKeyCommand: string | null;
+  /** Request path appended to url. */
+  path: string;
 }
 
 interface RouterConfig {
@@ -45,6 +51,8 @@ const DEFAULT_CONFIG: RouterConfig = {
     timeoutMs: 1500,
     threshold: 0.30,
     apiKeyEnv: null,
+    apiKeyCommand: null,
+    path: "/v1/systemone",
   },
   catalog: "~/.pi/agent/skill-profiles/all",
   maxSkillsPerTurn: 2,
@@ -140,6 +148,10 @@ function loadConfig(): RouterConfig {
       else if (d.threshold !== undefined) badFields.push("decider.threshold");
       if (d.apiKeyEnv === null || (typeof d.apiKeyEnv === "string")) dc.apiKeyEnv = d.apiKeyEnv;
       else if (d.apiKeyEnv !== undefined) badFields.push("decider.apiKeyEnv");
+      if (d.apiKeyCommand === null || (typeof d.apiKeyCommand === "string" && d.apiKeyCommand.length > 0)) dc.apiKeyCommand = d.apiKeyCommand;
+      else if (d.apiKeyCommand !== undefined) badFields.push("decider.apiKeyCommand");
+      if (typeof d.path === "string" && d.path.startsWith("/")) dc.path = d.path;
+      else if (d.path !== undefined) badFields.push("decider.path");
       cfg.decider = dc;
     } else if (raw.decider !== undefined) {
       badFields.push("decider");
@@ -1101,6 +1113,28 @@ interface KevResult {
   probs: Record<string, number>; // skill → p
 }
 
+const execFileAsync = promisify(execFile);
+// Command tokens (e.g. `chariot auth token`, valid 1 h) are reused for 5 min, so the command stays off the hot path.
+const TOKEN_TTL_MS = 5 * 60_000;
+const TOKEN_COMMAND_TIMEOUT_MS = 10_000;
+const _tokenCache = new Map<string, { token: string; expiresAt: number }>();
+
+/** Bearer from decider.apiKeyCommand (cached per command; failures are not cached). */
+async function commandToken(cmd: string): Promise<string> {
+  const cached = _tokenCache.get(cmd);
+  if (cached && cached.expiresAt > Date.now()) return cached.token;
+  let stdout: string;
+  try {
+    ({ stdout } = await execFileAsync("/bin/sh", ["-c", cmd], { timeout: TOKEN_COMMAND_TIMEOUT_MS }));
+  } catch (e: any) {
+    throw new Error(`apiKeyCommand failed (${e?.code ?? e?.signal ?? "error"})`);
+  }
+  const token = stdout.trim();
+  if (!token) throw new Error("apiKeyCommand printed no token");
+  _tokenCache.set(cmd, { token, expiresAt: Date.now() + TOKEN_TTL_MS });
+  return token;
+}
+
 /**
  * Query Kev with a pre-built state string. This is the single implementation;
  * queryKev (below) builds the state and delegates here.
@@ -1129,15 +1163,17 @@ async function queryKevWithState(
 
   const body = { state, model: cfg.decider.model, questions };
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (cfg.decider.apiKeyEnv) {
+  const url = cfg.decider.url;
+  if (!url) throw new Error("decider URL is disabled");
+
+  if (cfg.decider.apiKeyCommand) {
+    headers["Authorization"] = `Bearer ${await commandToken(cfg.decider.apiKeyCommand)}`;
+  } else if (cfg.decider.apiKeyEnv) {
     const key = process.env[cfg.decider.apiKeyEnv];
     if (key) headers["Authorization"] = `Bearer ${key}`;
   }
 
-  const url = cfg.decider.url;
-  if (!url) throw new Error("decider URL is disabled");
-
-  const resp = await fetch(`${url}/v1/systemone`, {
+  const resp = await fetch(`${url}${cfg.decider.path}`, {
     method: "POST",
     headers,
     body: JSON.stringify(body),

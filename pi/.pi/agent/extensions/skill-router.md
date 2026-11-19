@@ -75,11 +75,13 @@ one warning lists every invalid field.
 | Key | Type | Default | Effect |
 |-----|------|---------|--------|
 | `mode` | `"inject"`, `"shadow"`, `"off"` | `"inject"` | `inject` routes and injects. `shadow` records decisions (with `wouldInject`) but changes nothing the model sees. `off` does no routing; the commit check still runs. |
-| `decider.url` | string | `"http://127.0.0.1:8008"` | Decider base URL (`POST /v1/systemone`). Plain `http://` is allowed only for `127.0.0.1`, `::1` and `localhost`; `https://` to another host is allowed with a one-time warning that prompts leave the machine. Anything else disables the decider, so routing uses the rules alone. |
+| `decider.url` | string | `"http://127.0.0.1:8008"` | Decider base URL; requests go to `url` + `decider.path`. Plain `http://` is allowed only for `127.0.0.1`, `::1` and `localhost`; `https://` to another host is allowed with a one-time warning that prompts leave the machine. Anything else disables the decider, so routing uses the rules alone. |
 | `decider.model` | string | `"kev-latest"` | Model name sent with each request. The Kev server answers to `kev-latest` whichever checkpoint it runs. |
 | `decider.timeoutMs` | number > 0 | `1500` | Per-request timeout. On timeout that turn falls back to the rules. |
 | `decider.threshold` | number, 0 to 1 | `0.30` | Minimum probability to keep a hit. Tuned for Kev-0.8B on the replay labels (it removed a quarter of the wrong injections without losing a right one); not yet tuned for Kev-4B. |
 | `decider.apiKeyEnv` | string or `null` | `null` | Name of an environment variable holding a bearer token for a hosted decider. The token is never read from this file; the router warns once if the variable is empty. |
+| `decider.apiKeyCommand` | string or `null` | `null` | Shell command that prints a bearer token (for example `chariot auth token`). Takes precedence over `apiKeyEnv`. The token is reused for 5 minutes; the command may run for up to 10 s on a cache miss, outside `timeoutMs`. If it fails or prints nothing, that turn falls back to the rules and the command is retried on the next turn. |
+| `decider.path` | string starting with `/` | `"/v1/systemone"` | Request path. A hosted verifier behind a gateway can use another route with the same request and response shape (`state`, `questions`, `answers.<name>.noul`). |
 | `catalog` | string | `"~/.pi/agent/skill-profiles/all"` | Directory of `<name>/SKILL.md` skills to route over, independent of the per-directory skill profiles. `~` is expanded. |
 | `maxSkillsPerTurn` | number > 0 | `2` | Most skills injected per user turn and per subagent task (non-coding). |
 | `maxSkillsPerTask` | number > 0 | `3` | Most skills named per subagent coding task (language + software-design + Kev picks). |
@@ -89,6 +91,11 @@ sent only to `decider.url`.
 
 Which Kev checkpoint answers is set per host by `services.kev-server.model` in the nix-darwin config
 (`jaredpalmer/kev-0.8b` by default, `jaredpalmer/kev-4b` on MacStruble); the router config does not change.
+On lm-mstruble, with `useLilaGateway = true`, the host config replaces this file: the decider is the Hatchery
+`deepseek-v4-flash-verifier` behind the Lila AI gateway (`/hatchery/deepseek-v4-flash-verifier/verify`, bearer from
+`chariot auth token`, threshold 0.53). On the 149 replay labels it matched Kev-0.8B's recall with fewer wrong
+injections, and under load it held twice as many concurrent routing calls within the 1.5 s timeout. kev-server is
+turned off on that host while the toggle is on.
 
 ## Checking what it did
 
