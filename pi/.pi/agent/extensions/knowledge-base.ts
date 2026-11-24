@@ -13,10 +13,14 @@ import type {
   AgentSettledEvent,
 } from "@earendil-works/pi-coding-agent";
 import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 
-const WIKI_PATH = join(process.env.HOME ?? "", "llm-wiki");
-const INDEX_PATH = join(WIKI_PATH, "INDEX.md");
+// Resolved lazily so tests can point HOME at a temp dir.
+const wikiPath = (): string => join(process.env.HOME ?? "", "llm-wiki");
+const indexPath = (): string => join(wikiPath(), "INDEX.md");
+// Same file memory.ts reads.
+const clientConfigPath = (): string => join(homedir(), ".config", "memory-gateway", "client.json");
 
 // ── Entry parsing ─────────────────────────────────────────────────────────
 
@@ -237,15 +241,41 @@ export function buildInjection(
 
 export { parseIndex };
 
+/**
+ * False only when memory-gateway client.json has mode exactly "inject" (the memory
+ * store is injecting, so INDEX matches are suppressed). Missing/unparsable file or
+ * any other mode keeps INDEX injection on.
+ */
+export function indexInjectionEnabled(clientJsonText: string | null): boolean {
+  if (clientJsonText === null) return true;
+  try {
+    const cfg = JSON.parse(clientJsonText) as { mode?: unknown } | null;
+    return cfg?.mode !== "inject";
+  } catch {
+    return true;
+  }
+}
+
+function readClientJson(): string | null {
+  try {
+    return readFileSync(clientConfigPath(), "utf8");
+  } catch {
+    return null;
+  }
+}
+
 // ── Extension ─────────────────────────────────────────────────────────────
 
 export default function (pi: ExtensionAPI): void {
   let entries: WikiEntry[] = [];
   let injected = new Set<string>();
+  let injectionEnabled = true;
+  let suppressionLogged = false;
 
   function reload(): void {
+    injectionEnabled = indexInjectionEnabled(readClientJson());
     try {
-      const raw = readFileSync(INDEX_PATH, "utf8").trim();
+      const raw = readFileSync(indexPath(), "utf8").trim();
       entries = parseIndex(raw);
     } catch {
       entries = [];
@@ -259,6 +289,7 @@ export default function (pi: ExtensionAPI): void {
   reload();
 
   pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
+    suppressionLogged = false;
     reload();
     recover(ctx);
   });
@@ -273,6 +304,13 @@ export default function (pi: ExtensionAPI): void {
       // extensions' sections (Ponytail's always-on text) are no longer stripped.
       // Custom-message turns (e.g. async subagent completions) carry no prompt.
       if (event.messageType !== "user") return;
+      if (!injectionEnabled) {
+        if (!suppressionLogged) {
+          suppressionLogged = true;
+          console.error("[knowledge-base] INDEX injection suppressed: memory mode is inject");
+        }
+        return;
+      }
       return buildInjection(event.prompt, entries, injected);
     },
   );
@@ -291,7 +329,7 @@ export default function (pi: ExtensionAPI): void {
   pi.on("agent_settled", async (_event: AgentSettledEvent, _ctx) => {
     try {
       const status = await pi.exec("git", ["status", "--porcelain"], {
-        cwd: WIKI_PATH,
+        cwd: wikiPath(),
         timeout: 5000,
       });
       if (!status.stdout?.trim()) return;
@@ -299,7 +337,7 @@ export default function (pi: ExtensionAPI): void {
       await pi.exec(
         "sh",
         ["-c", `git add -A && git commit -m 'auto-sync: session idle ${timestamp}' && git push`],
-        { cwd: WIKI_PATH, timeout: 15000 },
+        { cwd: wikiPath(), timeout: 15000 },
       );
     } catch {
       // wiki not a git repo or push failed — non-fatal

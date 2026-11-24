@@ -3,7 +3,15 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import knowledgeBase, { buildInjection, parseIndex, recoverInjectedKeys } from "./knowledge-base.ts";
+import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import knowledgeBase, {
+  buildInjection,
+  indexInjectionEnabled,
+  parseIndex,
+  recoverInjectedKeys,
+} from "./knowledge-base.ts";
 
 const INDEX = `## Topics
 - [[topics/kubernetes-networking|K8s Networking]] — cilium ingress service mesh
@@ -70,4 +78,49 @@ test("custom-message turn (no prompt) is skipped without throwing", async () => 
     message: { customType: "subagent-result", content: "kubernetes networking cilium ingress" },
   };
   assert.equal(await handlers.get("before_agent_start")!(event, {}), undefined);
+});
+
+test("indexInjectionEnabled: only mode inject disables", () => {
+  assert.equal(indexInjectionEnabled(null), true);
+  assert.equal(indexInjectionEnabled("{not json"), true);
+  assert.equal(indexInjectionEnabled("null"), true);
+  assert.equal(indexInjectionEnabled("{}"), true);
+  assert.equal(indexInjectionEnabled('{"mode":"shadow"}'), true);
+  assert.equal(indexInjectionEnabled('{"mode":"off"}'), true);
+  assert.equal(indexInjectionEnabled('{"mode":"Inject"}'), true);
+  assert.equal(indexInjectionEnabled('{"mode":"inject"}'), false);
+});
+
+async function runWithHome(clientJson: string | null): Promise<unknown> {
+  const home = mkdtempSync(join(tmpdir(), "kb-test-"));
+  mkdirSync(join(home, "llm-wiki"), { recursive: true });
+  writeFileSync(join(home, "llm-wiki", "INDEX.md"), INDEX);
+  if (clientJson !== null) {
+    mkdirSync(join(home, ".config", "memory-gateway"), { recursive: true });
+    writeFileSync(join(home, ".config", "memory-gateway", "client.json"), clientJson);
+  }
+  const oldHome = process.env.HOME;
+  const oldErr = console.error;
+  process.env.HOME = home;
+  console.error = () => {};
+  try {
+    const handlers = new Map<string, (event: unknown, ctx: unknown) => unknown>();
+    knowledgeBase({ on: (n: string, h: (e: unknown, c: unknown) => unknown) => handlers.set(n, h) } as never);
+    await handlers.get("session_start")!({}, { sessionManager: { getEntries: () => [] } });
+    return await handlers.get("before_agent_start")!({ messageType: "user", prompt: P1 }, {});
+  } finally {
+    process.env.HOME = oldHome;
+    console.error = oldErr;
+  }
+}
+
+test("before_agent_start suppressed when client.json mode is inject", async () => {
+  assert.equal(await runWithHome('{"mode":"inject"}'), undefined);
+});
+
+test("before_agent_start injects when mode is shadow or file missing", async () => {
+  for (const cfg of ['{"mode":"shadow"}', null]) {
+    const r = (await runWithHome(cfg)) as { message: { content: string } } | undefined;
+    assert.match(r!.message.content, /topics\/kubernetes-networking/);
+  }
 });
