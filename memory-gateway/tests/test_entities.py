@@ -1,6 +1,7 @@
 import asyncio
 from types import SimpleNamespace
 
+from memory_gateway import entities as entities_mod
 from memory_gateway.entities import CACHE_SIZE, EntityExtractor, clean_entities
 
 
@@ -20,6 +21,12 @@ class FakeMessages:
             type="tool_use", name="extract_entities", input={"entities": self.entities}
         )
         return SimpleNamespace(content=[SimpleNamespace(type="text", text="hi"), block])
+
+
+def fake_clock(monkeypatch):
+    now = [1000.0]
+    monkeypatch.setattr(entities_mod, "time", SimpleNamespace(monotonic=lambda: now[0]))  # not the event loop clock
+    return now
 
 
 def extractor(config, tmp_path, **kw):
@@ -51,12 +58,18 @@ async def test_cache_evicts_least_recently_used(config, tmp_path):
     assert len(m.calls) == n + 1
 
 
-async def test_failure_yields_no_entities_and_is_not_cached(config, tmp_path):
+async def test_failure_yields_no_entities_and_is_retried_after_the_negative_ttl(
+    config, tmp_path, monkeypatch
+):
+    now = fake_clock(monkeypatch)
     ex, m = extractor(config, tmp_path, exc=RuntimeError("bedrock down"))
 
     assert await ex.extract("q") == []
     assert await ex.extract("q") == []
+    assert len(m.calls) == 1  # negative cached
 
+    now[0] += 61
+    assert await ex.extract("q") == []
     assert len(m.calls) == 2
 
 
@@ -75,3 +88,47 @@ def test_clean_entities_trims_dedups_and_caps():
     raw = [" a ", "A", "", 3, "b", "c", "d", "e", "f"]
     assert clean_entities(raw) == ["a", "b", "c", "d", "e"]
     assert clean_entities(None) == []
+
+
+# --- negative cache and circuit ------------------------------------------------------
+
+async def test_timeout_is_negative_cached(config, tmp_path, monkeypatch):
+    fake_clock(monkeypatch)
+    config.entity_timeout_s = 0.05
+    ex, m = extractor(config, tmp_path, entities=["a"], delay=1.0)
+
+    await ex.extract("q")
+    await ex.extract("q")
+
+    assert len(m.calls) == 1
+
+
+async def test_circuit_opens_after_three_consecutive_failures(config, tmp_path, monkeypatch):
+    now = fake_clock(monkeypatch)
+    ex, m = extractor(config, tmp_path, exc=RuntimeError("down"))
+
+    for q in ("q1", "q2", "q3"):
+        await ex.extract(q)
+    assert await ex.extract("q4") == []
+    assert len(m.calls) == 3  # circuit open: no call for a fresh query
+
+    now[0] += 61
+    m.exc = None
+    m.entities = ["alice"]
+    assert await ex.extract("q4") == ["alice"]
+    assert len(m.calls) == 4
+
+
+async def test_success_resets_consecutive_failures(config, tmp_path, monkeypatch):
+    fake_clock(monkeypatch)
+    ex, m = extractor(config, tmp_path, exc=RuntimeError("down"))
+    await ex.extract("q1")
+    await ex.extract("q2")
+    m.exc = None
+    m.entities = ["a"]
+    await ex.extract("ok")
+    m.exc = RuntimeError("down")
+    await ex.extract("q3")
+    await ex.extract("q4")
+
+    assert len(m.calls) == 5  # circuit never opened

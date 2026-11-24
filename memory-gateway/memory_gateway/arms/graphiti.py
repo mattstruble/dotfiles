@@ -28,6 +28,7 @@ ENTITY_BUDGET_SHARE = 0.4  # of the recall budget, across all entities
 ENTITY_CAP_TOKENS = 300  # summary + facts, per entity
 ENTITY_FACT_TOKENS = 250
 MIN_ENTITY_TOKENS = 10
+ENTITY_DEADLINE_S = 3.0  # shared by all entity lookups in one recall
 
 TRIVIAL_MAX_LEN = 120
 _TRIVIAL_FACTS = [
@@ -326,35 +327,65 @@ class GraphitiArm:
                 return n
         return None
 
-    async def _entity_memories(
-        self, project: str | None, entities: list[str], budget_tokens: int, facts: _FactCollector
+    async def _fetch_entity(self, project: str | None, name: str) -> tuple[Any, list[Any]] | None:
+        """(node, centred edges) for one entity, or None when the graph has no such node."""
+        node = await self._find_node(project, name)
+        if node is None:
+            return None
+        return node, await self._search(project, name, 10, center_node_uuid=node.uuid)
+
+    @staticmethod
+    async def _collect_entities(
+        entities: list[str], tasks: list[asyncio.Future[tuple[Any, list[Any]] | None]]
+    ) -> list[tuple[Any, list[Any]] | None]:
+        """Wait for the entity fetches under one shared deadline. Entities that fail or
+        miss the deadline come back as None; finished ones are kept."""
+        try:
+            if tasks:
+                await asyncio.wait(tasks, timeout=ENTITY_DEADLINE_S)
+        finally:
+            for t in tasks:
+                t.cancel()
+        results: list[tuple[Any, list[Any]] | None] = []
+        for name, t in zip(entities, tasks):
+            if not t.done() or t.cancelled():
+                log.warning("graphiti entity recall for %r timed out", name)
+                results.append(None)
+            elif (exc := t.exception()) is not None:
+                # Entity material is a bonus; a failing lookup must not lose the main recall.
+                log.warning("graphiti entity recall for %r failed: %s", name, exc)
+                results.append(None)
+            else:
+                results.append(t.result())
+        return results
+
+    def _assemble_entities(
+        self,
+        entities: list[str],
+        fetched: list[tuple[Any, list[Any]] | None],
+        budget_tokens: int,
+        facts: _FactCollector,
     ) -> list[Memory]:
         total = int(budget_tokens * ENTITY_BUDGET_SHARE)
         out: list[Memory] = []
         used = 0
-        for name in entities:
+        for name, hit in zip(entities, fetched):
             cap = min(ENTITY_CAP_TOKENS, total - used)
             if cap < MIN_ENTITY_TOKENS:
                 break
-            try:
-                node = await self._find_node(project, name)
-                if node is None or f"{NODE_PREFIX}{node.uuid}" in facts.ids:
-                    continue
-                part: list[Memory] = []
-                spent = 0
-                summary = (node.summary or "").strip()
-                if summary:
-                    text = _truncate(f"{node.name}: {summary}", cap)
-                    ref = f"{NODE_PREFIX}{node.uuid}"
-                    spent = count_tokens(text)
-                    part.append(
-                        Memory(ref, text, spent, node.created_at, self.name, source_ref=ref)
-                    )
-                edges = await self._search(project, name, 10, center_node_uuid=node.uuid)
-            # Entity material is a bonus; a failing node lookup must not lose the main recall.
-            except Exception as e:  # noqa: BLE001
-                log.warning("graphiti entity recall for %r failed: %s", name, e)
+            if hit is None:
                 continue
+            node, edges = hit
+            if f"{NODE_PREFIX}{node.uuid}" in facts.ids:
+                continue
+            part: list[Memory] = []
+            spent = 0
+            summary = (node.summary or "").strip()
+            if summary:
+                text = _truncate(f"{node.name}: {summary}", cap)
+                ref = f"{NODE_PREFIX}{node.uuid}"
+                spent = count_tokens(text)
+                part.append(Memory(ref, text, spent, node.created_at, self.name, source_ref=ref))
             facts.ids.add(f"{NODE_PREFIX}{node.uuid}")
             part += facts.take(edges, min(ENTITY_FACT_TOKENS, cap - spent))
             used += sum(m.tokens for m in part)
@@ -368,10 +399,19 @@ class GraphitiArm:
         budget_tokens: int,
         entities: list[str] | None = None,
     ) -> list[Memory]:
+        entities = entities or []
+        tasks = [asyncio.ensure_future(self._fetch_entity(project, n)) for n in entities]
+        try:
+            fetched, main = await asyncio.gather(
+                self._collect_entities(entities, tasks), self._search(project, query, 20)
+            )
+        finally:
+            for t in tasks:  # no-op once finished; stops lookups if the main search fails
+                t.cancel()
         facts = _FactCollector(self.name)
-        out = await self._entity_memories(project, entities or [], budget_tokens, facts)
+        out = self._assemble_entities(entities, fetched, budget_tokens, facts)
         remaining = budget_tokens - sum(m.tokens for m in out)
-        return out + facts.take(await self._search(project, query, 20), remaining)
+        return out + facts.take(main, remaining)
 
     async def forget(self, project: str | None, text: str, reason: str) -> list[str]:
         now = datetime.now(timezone.utc)

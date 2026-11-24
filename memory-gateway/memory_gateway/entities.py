@@ -3,6 +3,7 @@
 import asyncio
 import hashlib
 import logging
+import time
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,8 @@ log = logging.getLogger(__name__)
 
 MAX_ENTITIES = 5
 CACHE_SIZE = 1000
+FAILURE_TTL_S = 60.0  # negative cache per query, and global circuit duration
+CIRCUIT_THRESHOLD = 3  # consecutive failures that open the circuit
 TOOL_NAME = "extract_entities"
 SYSTEM = (
     "Extract up to 5 named entities from the user's query that a memory search should "
@@ -55,6 +58,9 @@ class EntityExtractor:
         self.state_dir = Path(state_dir)
         self._client = client
         self._cache: OrderedDict[str, list[str]] = OrderedDict()
+        self._failed_until: OrderedDict[str, float] = OrderedDict()
+        self._circuit_until = 0.0
+        self._consecutive_failures = 0
 
     def _get_client(self) -> Any:
         if self._client is None:
@@ -85,14 +91,32 @@ class EntityExtractor:
         if key in self._cache:
             self._cache.move_to_end(key)
             return list(self._cache[key])
+        now = time.monotonic()
+        if now < self._circuit_until or now < self._failed_until.get(key, 0.0):
+            return []
         try:
             entities = await asyncio.wait_for(self._call(query), self.config.entity_timeout_s)
         except asyncio.CancelledError:
             raise
         except Exception as e:  # noqa: BLE001 - extraction is best effort
             log.warning("entity extraction failed: %s", f"{type(e).__name__}: {e}")
+            self._record_failure(key)
             return []
+        self._consecutive_failures = 0
+        self._failed_until.pop(key, None)
         self._cache[key] = entities
         if len(self._cache) > CACHE_SIZE:
             self._cache.popitem(last=False)
         return list(entities)
+
+    def _record_failure(self, key: str) -> None:
+        """Skip this query for FAILURE_TTL_S; after CIRCUIT_THRESHOLD failures in a row
+        skip all extraction, so an outage does not add the timeout to every recall."""
+        now = time.monotonic()
+        self._failed_until[key] = now + FAILURE_TTL_S
+        self._failed_until.move_to_end(key)
+        while len(self._failed_until) > CACHE_SIZE:
+            self._failed_until.popitem(last=False)
+        self._consecutive_failures += 1
+        if self._consecutive_failures >= CIRCUIT_THRESHOLD:
+            self._circuit_until = now + FAILURE_TTL_S

@@ -1,9 +1,12 @@
+import asyncio
 import os
+import time
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
 
+from memory_gateway.arms import graphiti as graphiti_mod
 from memory_gateway.arms.base import IngestItem, count_tokens
 from memory_gateway.arms.graphiti import (
     GraphitiArm,
@@ -425,3 +428,80 @@ async def test_entity_recall_against_real_graph(config, tmp_path):
 
     assert mems[0].id == f"node:{n.uuid}" and mems[0].text == "Alice: Alice drinks tea."
     assert FACT_TEA in {m.text for m in mems}
+
+
+# --- concurrent, bounded entity recall ------------------------------------------------
+
+def slow_arm(config, tmp_path, nodes, edges, main, delays=None, errors=()):
+    """Arm whose searches sleep delays[name or query] and whose lookups may raise."""
+    arm = make_arm(config, tmp_path)
+    delays = delays or {}
+
+    async def search_nodes(project, name, limit=5):
+        await asyncio.sleep(delays.get(name, 0))
+        if name in errors:
+            raise RuntimeError("graph down")
+        return [nodes[name]] if name in nodes else []
+
+    async def search(project, query, limit, center_node_uuid=None):
+        await asyncio.sleep(delays.get(query, 0))
+        if center_node_uuid is not None:
+            return edges.get(center_node_uuid, [])
+        return main
+
+    arm._search_nodes = search_nodes
+    arm._search = search
+    return arm
+
+
+async def test_entities_and_main_search_run_concurrently(config, tmp_path):
+    names = ["a", "b", "c"]
+    nodes = {n: node(n, n, f"{n} summary") for n in names}
+    delays = {n: 0.2 for n in names} | {"q": 0.2}
+    arm = slow_arm(config, tmp_path, nodes, {}, [edge("m", "main fact")], delays)
+
+    t0 = time.monotonic()
+    out = await arm.recall("proj", "q", 1000, entities=names)
+    elapsed = time.monotonic() - t0
+
+    assert elapsed < 0.6  # sequential would take about 1.4 s
+    assert [m.id for m in out] == ["node:a", "node:b", "node:c", "m"]
+
+
+async def test_entity_deadline_keeps_main_and_finished_entities(config, tmp_path, monkeypatch):
+    monkeypatch.setattr(graphiti_mod, "ENTITY_DEADLINE_S", 0.1)
+    nodes = {"fast": node("f", "fast", "fast summary"), "slow": node("s", "slow", "slow summary")}
+    arm = slow_arm(config, tmp_path, nodes, {}, [edge("m", "main fact")], {"slow": 5.0})
+
+    t0 = time.monotonic()
+    out = await arm.recall("proj", "q", 1000, entities=["slow", "fast"])
+
+    assert time.monotonic() - t0 < 1.0
+    assert [m.id for m in out] == ["node:f", "m"]
+
+
+async def test_entity_exception_is_skipped(config, tmp_path):
+    nodes = {"bad": node("b", "bad", "x"), "ok": node("o", "ok", "ok summary")}
+    arm = slow_arm(config, tmp_path, nodes, {}, [edge("m", "main fact")], errors={"bad"})
+
+    out = await arm.recall("proj", "q", 1000, entities=["bad", "ok"])
+
+    assert [m.id for m in out] == ["node:o", "m"]
+
+
+async def test_assembly_follows_entity_order_not_completion_order(config, tmp_path):
+    nodes = {n: node(n, n, "s " * 50) for n in ("a", "b", "c")}
+    edges = {
+        "a": [edge("e1", "a likes tea"), edge("shared", "shared fact one")],
+        "b": [edge("shared", "shared fact one"), edge("e2", "b likes coffee")],
+        "c": [edge("e3", "c likes water")],
+    }
+    main = [edge("shared", "shared fact one"), edge("m1", "main only fact")]
+    arm = slow_arm(config, tmp_path, nodes, edges, main, {"a": 0.15, "b": 0.1, "c": 0.0})
+    ref = fake_arm(config, tmp_path, nodes, edges, main)
+
+    out = await arm.recall("proj", "q", 1000, entities=["a", "b", "c"])
+    expected = await ref.recall("proj", "q", 1000, entities=["a", "b", "c"])
+
+    assert [(m.id, m.text) for m in out] == [(m.id, m.text) for m in expected]
+    assert [m.id for m in out] == ["node:a", "e1", "shared", "node:b", "e2", "node:c", "e3", "m1"]
