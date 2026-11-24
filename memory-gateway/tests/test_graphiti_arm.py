@@ -71,8 +71,18 @@ def test_current_only_filter():
     assert f.valid_at is None
 
 
-def make_arm(config, tmp_path):
-    return GraphitiArm(config, tmp_path, llm_client=fake_llm(), embedder=fake_embedder())
+class OrderKeepingReranker:
+    """Scores pairs so that the incoming order is already best-first (no model download)."""
+
+    def rerank_pairs(self, pairs):
+        return [float(len(pairs) - i) for i in range(len(pairs))]
+
+
+def make_arm(config, tmp_path, reranker=None):
+    return GraphitiArm(
+        config, tmp_path, llm_client=fake_llm(), embedder=fake_embedder(),
+        reranker=reranker or OrderKeepingReranker(),
+    )
 
 
 async def add_edge(arm, group, fact):
@@ -245,9 +255,9 @@ def node(uuid, name, summary, created=T):
     return SimpleNamespace(uuid=uuid, name=name, summary=summary, created_at=created)
 
 
-def fake_arm(config, tmp_path, nodes=None, edges=None, main=None):
+def fake_arm(config, tmp_path, nodes=None, edges=None, main=None, reranker=None):
     """Arm with search stubbed: nodes {name: node}, edges {center uuid: [edge]}, main [edge]."""
-    arm = make_arm(config, tmp_path)
+    arm = make_arm(config, tmp_path, reranker)
     calls = []
 
     async def search_nodes(project, name, limit=5):
@@ -255,6 +265,7 @@ def fake_arm(config, tmp_path, nodes=None, edges=None, main=None):
 
     async def search(project, query, limit, center_node_uuid=None):
         calls.append((query, center_node_uuid))
+        arm.limits.append(limit)
         if center_node_uuid is not None:
             return (edges or {}).get(center_node_uuid, [])
         return main or []
@@ -262,6 +273,7 @@ def fake_arm(config, tmp_path, nodes=None, edges=None, main=None):
     arm._search_nodes = search_nodes
     arm._search = search
     arm.calls = calls
+    arm.limits = []
     return arm
 
 
@@ -527,3 +539,137 @@ async def test_assembly_follows_entity_order_not_completion_order(config, tmp_pa
 
     assert [(m.id, m.text) for m in out] == [(m.id, m.text) for m in expected]
     assert [m.id for m in out] == ["node:a", "e1", "shared", "node:b", "e2", "node:c", "e3", "m1"]
+
+
+# --- cross-encoder rerank of recalled facts --------------------------------------------
+
+class ScoringReranker:
+    """Scores a pair by a function of its fact text; records every call."""
+
+    def __init__(self, score):
+        self.score = score
+        self.calls = []
+
+    def rerank_pairs(self, pairs):
+        pairs = list(pairs)
+        self.calls.append(pairs)
+        return [self.score(q, d) for q, d in pairs]
+
+
+class ReverseReranker(ScoringReranker):
+    def __init__(self):
+        super().__init__(None)
+
+    def rerank_pairs(self, pairs):
+        pairs = list(pairs)
+        self.calls.append(pairs)
+        return [float(i) for i in range(len(pairs))]  # later input scores higher
+
+
+async def test_rerank_orders_main_facts_by_score(config, tmp_path):
+    main = [edge("1", "fact one"), edge("2", "fact two"), edge("3", "fact three")]
+    arm = fake_arm(config, tmp_path, main=main, reranker=ReverseReranker())
+
+    mems = await arm.recall("proj", "q", 1000)
+
+    assert [m.id for m in mems] == ["3", "2", "1"]
+
+
+async def test_rerank_orders_entity_facts_and_keeps_summaries_first(config, tmp_path):
+    nodes = {"Alice": node("a", "Alice", "Alice is an SRE.")}
+    edges = {"a": [edge("e1", "alice fact one"), edge("e2", "alice fact two")]}
+    main = [edge("m1", "main fact one"), edge("m2", "main fact two")]
+    rr = ReverseReranker()
+    arm = fake_arm(config, tmp_path, nodes, edges, main, reranker=rr)
+
+    mems = await arm.recall("proj", "q", 1000, entities=["Alice"])
+
+    assert [m.id for m in mems] == ["node:a", "e2", "e1", "m2", "m1"]
+    assert len(rr.calls) == 1  # one batched call per recall
+    pairs = rr.calls[0]
+    assert [p for p in pairs if p[1].startswith("main")] == [
+        ("q", "main fact one"), ("q", "main fact two")
+    ]
+    assert [p for p in pairs if p[1].startswith("alice")] == [
+        ("Alice q", "alice fact one"), ("Alice q", "alice fact two")
+    ]
+
+
+async def test_rerank_over_fetches_candidates(config, tmp_path):
+    nodes = {"Alice": node("a", "Alice", "Alice is an SRE.")}
+    arm = fake_arm(config, tmp_path, nodes, {}, [edge("m", "main fact")])
+
+    await arm.recall("proj", "q", 1000, entities=["Alice"])
+
+    assert sorted(arm.limits) == [15, 40]
+
+
+async def test_rerank_failure_keeps_search_order_and_logs_once(config, tmp_path, caplog):
+    class Boom:
+        def rerank_pairs(self, pairs):
+            raise RuntimeError("onnx exploded")
+
+    main = [edge("1", "fact one"), edge("2", "fact two")]
+    arm = fake_arm(config, tmp_path, main=main, reranker=Boom())
+
+    with caplog.at_level("WARNING"):
+        first = await arm.recall("proj", "q", 1000)
+        second = await arm.recall("proj", "q", 1000)
+
+    assert [m.id for m in first] == [m.id for m in second] == ["1", "2"]
+    assert sum("rerank unavailable" in r.message for r in caplog.records) == 1
+
+
+async def test_rerank_load_failure_falls_back_without_retry(config, tmp_path, monkeypatch):
+    loads = []
+
+    def broken():
+        loads.append(1)
+        raise OSError("model not cached")
+
+    monkeypatch.setattr(graphiti_mod, "_make_reranker", broken)
+    arm = fake_arm(config, tmp_path, main=[edge("1", "fact one"), edge("2", "fact two")])
+    arm._reranker = None
+
+    assert [m.id for m in await arm.recall("proj", "q", 1000)] == ["1", "2"]
+    assert [m.id for m in await arm.recall("proj", "q", 1000)] == ["1", "2"]
+    assert len(loads) == 1
+
+
+async def test_rerank_wrong_score_count_falls_back(config, tmp_path):
+    class Short:
+        def rerank_pairs(self, pairs):
+            return [1.0]
+
+    arm = fake_arm(config, tmp_path, main=[edge("1", "fact one"), edge("2", "fact two")],
+                   reranker=Short())
+
+    assert [m.id for m in await arm.recall("proj", "q", 1000)] == ["1", "2"]
+
+
+async def test_rerank_timeout_keeps_order_and_does_not_pile_up_jobs(config, tmp_path, monkeypatch):
+    import threading
+
+    monkeypatch.setattr(graphiti_mod, "RERANK_TIMEOUT_S", 0.05)
+    release = threading.Event()
+    calls = []
+
+    class Stalled:
+        def rerank_pairs(self, pairs):
+            calls.append(1)
+            release.wait(5)
+            return [float(i) for i in range(len(list(pairs)))]
+
+    main = [edge("1", "fact one"), edge("2", "fact two")]
+    arm = fake_arm(config, tmp_path, main=main, reranker=Stalled())
+
+    t0 = time.monotonic()
+    first = await arm.recall("proj", "q", 1000)
+    second = await arm.recall("proj", "q", 1000)  # job still stuck: no second job queued
+    elapsed = time.monotonic() - t0
+    release.set()
+
+    assert [m.id for m in first] == [m.id for m in second] == ["1", "2"]
+    assert elapsed < 1.0 and len(calls) == 1
+    await asyncio.sleep(0.1)  # stalled job finished; the next recall reranks again
+    assert [m.id for m in await arm.recall("proj", "q", 1000)] == ["2", "1"]

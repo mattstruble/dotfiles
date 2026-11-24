@@ -5,6 +5,7 @@ import asyncio
 import logging
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,10 @@ from .base import IngestItem, Memory, SourceRecord, count_tokens
 os.environ["GRAPHITI_TELEMETRY_ENABLED"] = "false"
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 EMBED_DIM = 384
+RERANK_MODEL = "Xenova/ms-marco-MiniLM-L-6-v2"
+MAIN_FACT_CANDIDATES = 40  # over-fetched, then reranked and cut by the budget
+ENTITY_FACT_CANDIDATES = 15
+RERANK_TIMEOUT_S = 5.0  # model load + scoring; past it recall keeps the search order
 os.environ["EMBEDDING_DIM"] = str(EMBED_DIM)
 
 log = logging.getLogger(__name__)
@@ -214,6 +219,12 @@ def _make_cross_encoder() -> Any:
     return PassthroughReranker()
 
 
+def _make_reranker() -> Any:
+    from fastembed.rerank.cross_encoder import TextCrossEncoder
+
+    return TextCrossEncoder(RERANK_MODEL)
+
+
 def _make_llm(config: Config, state_dir: Path) -> Any:
     import anthropic
     from graphiti_core.llm_client.anthropic_client import AnthropicClient
@@ -246,6 +257,7 @@ class GraphitiArm:
         llm_client: Any = None,
         embedder: Any = None,
         cross_encoder: Any = None,
+        reranker: Any = None,
     ):
         self.config = config
         self.state_dir = Path(state_dir)
@@ -253,6 +265,13 @@ class GraphitiArm:
         self._llm_client = llm_client
         self._embedder = embedder
         self._cross_encoder = cross_encoder
+        self._reranker = reranker  # exposes rerank_pairs(pairs) -> scores; loaded lazily
+        # One dedicated thread: load/score jobs never occupy the default executor (shared
+        # with the embedder) and never run concurrently.
+        self._rerank_executor = ThreadPoolExecutor(1, thread_name_prefix="graphiti-rerank")
+        self._rerank_busy = False  # a load/score job is still running (e.g. after a timeout)
+        self._reranker_broken = False
+        self._rerank_logged = False
         self._graphiti: Any = None
         self._lock = asyncio.Lock()
         self._error: str | None = "not started"
@@ -340,7 +359,9 @@ class GraphitiArm:
         node = await self._find_node(project, name)
         if node is None:
             return None
-        return node, await self._search(project, name, 10, center_node_uuid=node.uuid)
+        return node, await self._search(
+            project, name, ENTITY_FACT_CANDIDATES, center_node_uuid=node.uuid
+        )
 
     @staticmethod
     async def _collect_entities(
@@ -399,6 +420,71 @@ class GraphitiArm:
             out += part
         return out
 
+    def _score_pairs(self, pairs: list[tuple[str, str]]) -> list[float]:
+        """Blocking: loads the cross-encoder on first use, then scores all pairs at once."""
+        if self._reranker is None:
+            self._reranker = _make_reranker()
+        scores = [float(x) for x in self._reranker.rerank_pairs(pairs)]
+        if len(scores) != len(pairs):
+            raise ValueError(f"reranker returned {len(scores)} scores for {len(pairs)} pairs")
+        return scores
+
+    def _note_rerank_failure(self, reason: object) -> None:
+        if not self._rerank_logged:
+            self._rerank_logged = True
+            log.warning("graphiti rerank unavailable, keeping search order: %s", reason)
+
+    def _rerank_job_done(self, job: asyncio.Future[Any]) -> None:
+        self._rerank_busy = False
+        if job.cancelled():
+            return
+        exc = job.exception()  # also marks it retrieved when nobody is awaiting any more
+        if exc is not None:
+            if self._reranker is None:
+                self._reranker_broken = True  # model failed to load; do not retry per recall
+            self._note_rerank_failure(exc)
+
+    async def _rerank(
+        self,
+        query: str,
+        entities: list[str],
+        fetched: list[tuple[Any, list[Any]] | None],
+        main: list[Any],
+    ) -> tuple[list[tuple[Any, list[Any]] | None], list[Any]]:
+        """Sort candidate facts by cross-encoder relevance (entity facts are scored against
+        the entity name plus the query). Any failure keeps the incoming order."""
+        groups: list[tuple[str, list[Any]]] = [(query, main)]
+        for name, hit in zip(entities, fetched):
+            if hit is not None:
+                groups.append((f"{name} {query}", hit[1]))
+        pairs = [(q, e.fact) for q, edges in groups for e in edges]
+        if len(pairs) < 2 or self._reranker_broken or self._rerank_busy:
+            return fetched, main
+        job = asyncio.get_running_loop().run_in_executor(
+            self._rerank_executor, self._score_pairs, pairs
+        )
+        self._rerank_busy = True
+        job.add_done_callback(self._rerank_job_done)
+        try:
+            # shield: a timeout or cancelled recall leaves the job (e.g. a model download)
+            # running in the background so a later recall can use the loaded model.
+            scores = await asyncio.wait_for(asyncio.shield(job), RERANK_TIMEOUT_S)
+        except asyncio.TimeoutError:
+            self._note_rerank_failure(f"no result within {RERANK_TIMEOUT_S}s")
+            return fetched, main
+        except Exception:  # noqa: BLE001 - logged by _rerank_job_done; recall must not fail
+            return fetched, main
+        ranked: list[list[Any]] = []
+        pos = 0
+        for _, edges in groups:
+            chunk = scores[pos : pos + len(edges)]
+            pos += len(edges)
+            order = sorted(range(len(edges)), key=lambda i: -chunk[i])
+            ranked.append([edges[i] for i in order])
+        it = iter(ranked[1:])
+        out = [None if hit is None else (hit[0], next(it)) for hit in fetched]
+        return out, ranked[0]
+
     async def recall(
         self,
         project: str | None,
@@ -410,10 +496,11 @@ class GraphitiArm:
         tasks = [asyncio.ensure_future(self._fetch_entity(project, n)) for n in entities]
         try:
             fetched, main = await asyncio.gather(
-                self._collect_entities(entities, tasks), self._search(project, query, 20)
+                self._collect_entities(entities, tasks), self._search(project, query, MAIN_FACT_CANDIDATES)
             )
         finally:  # no-op once finished; stops lookups if the main search fails
             await _cancel_and_wait(tasks)
+        fetched, main = await self._rerank(query, entities, fetched, main)
         facts = _FactCollector(self.name)
         out = self._assemble_entities(entities, fetched, budget_tokens, facts)
         remaining = budget_tokens - sum(m.tokens for m in out)
