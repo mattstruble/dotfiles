@@ -193,7 +193,7 @@ let
   };
 
   clientConfig = {
-    inherit (cfg) mode injectArm;
+    inherit (cfg) mode injectArm entityAware;
     gatewayUrl = "http://127.0.0.1:${toString cfg.gatewayPort}";
     startBudget = 2000;
     topupBudget = 1000;
@@ -281,6 +281,12 @@ in
       type = lib.types.str;
       default = "graphiti";
       description = "Arm whose results are injected when mode = inject.";
+    };
+
+    entityAware = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Ask the gateway to extract entities from recall queries and recall by them.";
     };
 
     sourceDir = lib.mkOption {

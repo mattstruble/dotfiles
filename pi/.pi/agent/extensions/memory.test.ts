@@ -65,6 +65,11 @@ describe("config", () => {
     assert.equal(c.startBudget, 2000);
     assert.equal(loadClientConfig(cfgFile({ mode: "weird" })).mode, "off");
   });
+  it("entityAware defaults true, honours false, ignores non-boolean", () => {
+    assert.equal(loadClientConfig(cfgFile({ mode: "shadow" })).entityAware, true);
+    assert.equal(loadClientConfig(cfgFile({ mode: "shadow", entityAware: false })).entityAware, false);
+    assert.equal(loadClientConfig(cfgFile({ mode: "shadow", entityAware: "no" })).entityAware, true);
+  });
   it("mode off registers nothing and makes no calls", () => {
     const pi = fakePi();
     const m = mockFetch(() => ({}));
@@ -359,6 +364,37 @@ describe("extension behaviour", () => {
     const r = await pi.tools.memory_recall.execute("i", { query: "q" }, null, null, c);
     assert.equal(m.calls[2].body.budget_tokens, 1500);
     assert.ok(r.content[0].text.includes("<memory>"));
+  });
+});
+
+describe("entity-aware recall", () => {
+  const resp = () => ({ results: { hindsight: [{ id: "h1", text: "fact" }] }, errors: {} });
+  async function allPaths(extra: Record<string, unknown>) {
+    const pi = fakePi();
+    const m = mockFetch(resp);
+    createMemoryExtension({ configPath: cfgFile({ mode: "inject", ...extra }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
+    await pi.handlers.before_agent_start({ prompt: "deploy kubernetes cluster" }, ctxFor([]));
+    await pi.handlers.before_agent_start({ prompt: "compose haiku regarding autumn" }, ctxFor([]));
+    await pi.handlers.tool_call({ toolName: "subagent", input: { tasks: [{ agent: "w", task: "do thing" }] } }, ctxFor([]));
+    await pi.tools.memory_recall.execute("i", { query: "q" }, null, null, ctxFor([]));
+    return m.calls.filter((c: any) => c.path === "/recall");
+  }
+  it("start, topup, subagent and tool recalls send entity_aware (default true)", async () => {
+    const calls = await allPaths({});
+    assert.equal(calls.length, 4);
+    for (const c of calls) assert.equal(c.body.entity_aware, true);
+  });
+  it("false is honoured on every path", async () => {
+    const calls = await allPaths({ entityAware: false });
+    assert.equal(calls.length, 4);
+    for (const c of calls) assert.equal(c.body.entity_aware, false);
+  });
+  it("shadow start recall sends entity_aware", async () => {
+    const pi = fakePi();
+    const m = mockFetch(resp);
+    createMemoryExtension({ configPath: cfgFile({ mode: "shadow" }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
+    await pi.handlers.before_agent_start({ prompt: "deploy kubernetes cluster" }, ctxFor([]));
+    assert.equal(m.calls[0].body.entity_aware, true);
   });
 });
 

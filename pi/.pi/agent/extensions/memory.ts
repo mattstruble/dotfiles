@@ -19,6 +19,8 @@ export interface ClientConfig {
   injectArm: string;
   startBudget: number;
   topupBudget: number;
+  /** Ask the gateway to extract entities from the query and recall by them. */
+  entityAware: boolean;
 }
 
 export const DEFAULT_CONFIG_PATH = join(homedir(), ".config", "memory-gateway", "client.json");
@@ -28,6 +30,7 @@ const DEFAULTS: ClientConfig = {
   injectArm: "hindsight",
   startBudget: 2000,
   topupBudget: 1000,
+  entityAware: true,
 };
 
 export function loadClientConfig(path: string = DEFAULT_CONFIG_PATH): ClientConfig {
@@ -42,6 +45,7 @@ export function loadClientConfig(path: string = DEFAULT_CONFIG_PATH): ClientConf
       injectArm: typeof raw.injectArm === "string" && raw.injectArm ? raw.injectArm : DEFAULTS.injectArm,
       startBudget: num(raw.startBudget, DEFAULTS.startBudget),
       topupBudget: num(raw.topupBudget, DEFAULTS.topupBudget),
+      entityAware: typeof raw.entityAware === "boolean" ? raw.entityAware : DEFAULTS.entityAware,
     };
   } catch {
     return { ...DEFAULTS };
@@ -343,6 +347,8 @@ export function chunkText(text: string, max: number = MAX_INGEST_CHARS): string[
   return chunks;
 }
 export const RECALL_TIMEOUT_MS = 8000;
+/** Entity extraction adds ~1 s gateway-side. */
+export const ENTITY_RECALL_TIMEOUT_MS = 10_000;
 
 export function makeGateway(cfg: ClientConfig, fetchImpl: FetchFn = fetch as any) {
   let warned = false;
@@ -378,8 +384,8 @@ export function makeGateway(cfg: ClientConfig, fetchImpl: FetchFn = fetch as any
       const r = await post("/ingest", body, INGEST_TIMEOUT_MS);
       return r === null ? "error" : r.rejected ? "rejected" : "ok";
     },
-    async recall(body: { project: string | null; query: string; budget_tokens: number; arms?: string[] }): Promise<RecallResponse | null> {
-      const r = await post("/recall", body, RECALL_TIMEOUT_MS);
+    async recall(body: { project: string | null; query: string; budget_tokens: number; arms?: string[]; entity_aware?: boolean }): Promise<RecallResponse | null> {
+      const r = await post("/recall", body, cfg.entityAware ? ENTITY_RECALL_TIMEOUT_MS : RECALL_TIMEOUT_MS);
       return r && !r.rejected ? (r.json ?? {}) : null;
     },
     async forget(body: { project: string | null; text: string; reason: string }): Promise<{ arms?: Record<string, string[]> } | null> {
@@ -493,6 +499,7 @@ export function createMemoryExtension(opts: MemoryOptions = {}) {
           project,
           query,
           budget_tokens: first ? cfg.startBudget : cfg.topupBudget,
+          entity_aware: cfg.entityAware,
           ...(cfg.mode === "inject" ? { arms: [cfg.injectArm] } : {}),
         });
         if (!res) return undefined;
@@ -529,6 +536,7 @@ export function createMemoryExtension(opts: MemoryOptions = {}) {
               project,
               query: t.task,
               budget_tokens: 800,
+              entity_aware: cfg.entityAware,
               ...(cfg.mode === "inject" ? { arms: [cfg.injectArm] } : {}),
             });
             if (!res) return;
@@ -593,6 +601,7 @@ export function createMemoryExtension(opts: MemoryOptions = {}) {
           project: projectOf(ctx.cwd),
           query: String(params.query ?? ""),
           budget_tokens: 1500,
+          entity_aware: cfg.entityAware,
           arms: [cfg.injectArm],
         });
         if (!res) return text("Memory gateway unavailable.");
