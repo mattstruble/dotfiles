@@ -306,9 +306,44 @@ export function jaccard(a: Set<string>, b: Set<string>): number {
 
 export const TOPIC_SHIFT_THRESHOLD = 0.2;
 
+/** Prompts with fewer distinct content words are short replies, never a topic change. */
+export const MIN_TOPUP_WORDS = 6;
+export const TOPUP_QUERY_MAX_CHARS = 1500;
+
 export function isTopicShift(prompt: string, lastPrompt: string | null): boolean {
   if (lastPrompt === null) return false;
+  if (wordSet(prompt).size < MIN_TOPUP_WORDS) return false;
   return jaccard(wordSet(prompt), wordSet(lastPrompt)) < TOPIC_SHIFT_THRESHOLD;
+}
+
+/**
+ * Top-up recall query: current prompt first (so it dominates), then the two
+ * most recent prior user prompts, then the session's first user prompt.
+ * `priorUserPrompts` is chronological and excludes the current prompt.
+ */
+export function buildTopupQuery(current: string, priorUserPrompts: string[]): string {
+  const prior = priorUserPrompts.map((p) => p.trim()).filter(Boolean);
+  const picks = [current.trim(), ...prior.slice(-2).reverse()];
+  if (prior.length) picks.push(prior[0]);
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const p of picks) {
+    if (!p || seen.has(p)) continue;
+    seen.add(p);
+    parts.push(p);
+  }
+  return parts.join("\n").slice(0, TOPUP_QUERY_MAX_CHARS);
+}
+
+function priorUserPrompts(entries: any[], current: string): string[] {
+  const out: string[] = [];
+  for (const e of entries) {
+    if (e?.type !== "message" || e.message?.role !== "user") continue;
+    const t = stripInjected(contentText(e.message.content)).trim();
+    if (t) out.push(t);
+  }
+  if (out.length && out[out.length - 1] === current.trim()) out.pop();
+  return out;
 }
 
 // ── Recall formatting ───────────────────────────────────────────────
@@ -517,7 +552,14 @@ export function createMemoryExtension(opts: MemoryOptions = {}) {
         if (remaining < MIN_RECALL_TOKENS) return undefined;
         const project = projectOf(ctx.cwd);
         const kind = first ? "start" : "topup";
-        const query = first && project ? `${prompt}\n${project}` : prompt;
+        let query: string;
+        if (first) {
+          query = project ? `${prompt}\n${project}` : prompt;
+        } else {
+          let entries: any[] = [];
+          try { entries = ctx.sessionManager.getEntries() ?? []; } catch { /* */ }
+          query = buildTopupQuery(prompt, priorUserPrompts(entries, prompt));
+        }
         const turn = state.turn++;
         const res = await gw.recall({
           project,

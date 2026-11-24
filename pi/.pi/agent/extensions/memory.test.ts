@@ -9,7 +9,7 @@ import * as assert from "node:assert/strict";
 import {
   createMemoryExtension, loadClientConfig, projectFromCommonDir, makeProjectResolver, redact,
   stripInjected, serializeEntries, recoverCursor, entriesAfterCursor, recoverRecallState,
-  isTopicShift, jaccard, wordSet, filterNew, formatMemoryBlock, idsPerArm, isDerivedReadPath, chunkText,
+  isTopicShift, buildTopupQuery, MIN_TOPUP_WORDS, jaccard, wordSet, filterNew, formatMemoryBlock, idsPerArm, isDerivedReadPath, chunkText,
 } from "./memory.ts";
 
 const msg = (id: string, role: string, content: any, extra: any = {}) => ({
@@ -229,9 +229,28 @@ describe("topic shift and dedup", () => {
   it("jaccard / shift", () => {
     assert.equal(isTopicShift("anything here", null), false);
     assert.equal(isTopicShift("fix the kubernetes deployment rollout", "fix kubernetes deployment rollout please"), false);
-    assert.equal(isTopicShift("write poetry about autumn leaves", "fix kubernetes deployment rollout"), true);
+    assert.equal(isTopicShift("write poetry about autumn leaves falling gracefully tonight", "fix kubernetes deployment rollout"), true);
     assert.equal(jaccard(new Set(["a"]), new Set(["b"])), 0);
     assert.ok(!wordSet("the and cat this").has("this"));
+  });
+  it("short replies never count as a topic shift", () => {
+    assert.equal(MIN_TOPUP_WORDS, 6);
+    const last = "fix the kubernetes deployment rollout for the billing service";
+    for (const p of ["yes", "rebuilt", "All together", "Build these three now"]) assert.equal(isTopicShift(p, last), false, p);
+    assert.equal(isTopicShift("write poetry about autumn leaves falling gracefully tonight", last), true);
+  });
+  it("buildTopupQuery: current first, last two priors newest first, then first prompt", () => {
+    assert.equal(buildTopupQuery("cur", []), "cur");
+    assert.equal(buildTopupQuery("cur", ["p1", "p2", "p3", "p4"]), "cur\np4\np3\np1");
+    assert.equal(buildTopupQuery("cur", ["p1", "p2"]), "cur\np2\np1");
+  });
+  it("buildTopupQuery: trims, dedups exact repeats, skips empties", () => {
+    assert.equal(buildTopupQuery(" cur ", ["a", " cur", "  ", "a", "b"]), "cur\nb\na");
+  });
+  it("buildTopupQuery: truncates to 1500 chars keeping current prompt first", () => {
+    const q = buildTopupQuery("cur", ["x".repeat(2000), "y".repeat(2000)]);
+    assert.equal(q.length, 1500);
+    assert.ok(q.startsWith("cur\nyyy"));
   });
   it("filterNew dedups injected and duplicates", () => {
     const items = [{ id: "1", text: "a" }, { id: "2", text: "b" }, { id: "2", text: "b" }];
@@ -328,7 +347,7 @@ describe("extension behaviour", () => {
     assert.deepEqual(e.data.ids, { hindsight: ["h1"], other: ["o1"] });
     await pi.handlers.before_agent_start({ prompt: "deploy kubernetes cluster again", systemPrompt: "SYS" }, ctxFor([]));
     assert.equal(m.calls.length, 1);
-    await pi.handlers.before_agent_start({ prompt: "compose haiku regarding autumn", systemPrompt: "SYS" }, ctxFor([]));
+    await pi.handlers.before_agent_start({ prompt: "compose haiku regarding autumn leaves falling gracefully", systemPrompt: "SYS" }, ctxFor([]));
     assert.equal(m.calls.length, 2);
     assert.equal(m.calls[1].body.budget_tokens, 1000);
     assert.equal(pi.entries[1].data.kind, "topup");
@@ -344,8 +363,30 @@ describe("extension behaviour", () => {
     assert.equal(r.message.display, false);
     assert.ok(r.message.content.includes("- fact one"));
     assert.equal("systemPrompt" in r, false);
-    const r2 = await pi.handlers.before_agent_start({ prompt: "compose haiku regarding autumn", systemPrompt: "SYS" }, ctxFor([]));
+    const r2 = await pi.handlers.before_agent_start({ prompt: "compose haiku regarding autumn leaves falling gracefully", systemPrompt: "SYS" }, ctxFor([]));
     assert.equal(r2, undefined);
+  });
+
+  it("recall query: raw prompt (+project) at start, conversation context on top-ups", async () => {
+    const pi = fakePi();
+    const m = mockFetch(() => ({ results: { hindsight: [{ id: "h1", text: "t" }] } }));
+    createMemoryExtension({ configPath: cfgFile({ mode: "shadow" }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
+    const first = "deploy kubernetes cluster";
+    const mid1 = "tweak the ingress controller annotations";
+    const mid2 = "yes";
+    const topic = "compose haiku regarding autumn leaves falling gracefully";
+    const session = [msg("1", "user", first), msg("2", "assistant", "ok"), msg("3", "user", [{ type: "text", text: mid1 }]), msg("4", "user", mid2)];
+    await pi.handlers.before_agent_start({ prompt: first }, ctxFor([]));
+    assert.equal(m.calls[0].body.query, `${first}\n${"proj"}`);
+    await pi.handlers.before_agent_start({ prompt: "rebuilt" }, ctxFor(session));
+    await pi.handlers.before_agent_start({ prompt: "Build these three now" }, ctxFor(session));
+    assert.equal(m.calls.length, 1);
+    await pi.handlers.before_agent_start({ prompt: topic }, ctxFor([...session, msg("5", "user", topic)]));
+    assert.equal(m.calls.length, 2);
+    assert.equal(m.calls[1].body.query, `${topic}\n${mid2}\n${mid1}\n${first}`);
+    assert.equal(pi.entries[1].data.query, m.calls[1].body.query);
+    assert.equal(pi.entries[1].data.prompt, topic);
+    assert.equal(pi.entries[1].data.kind, "topup");
   });
 
   describe("session budget", () => {
@@ -353,7 +394,7 @@ describe("extension behaviour", () => {
       let k = 0;
       return () => ({ results: { hindsight: Array.from({ length: n }, () => ({ id: `h${k++}`, text: "fact", tokens })) } });
     };
-    const prompts = ["deploy kubernetes cluster", "compose haiku regarding autumn", "bake sourdough bread tonight", "calibrate telescope mirror alignment"];
+    const prompts = ["deploy kubernetes cluster", "compose haiku regarding autumn leaves falling gracefully", "bake sourdough bread tonight using fresh starter", "calibrate telescope mirror alignment before observing distant galaxies"];
 
     it("caps start and top-ups by remaining session budget; skips below 200", async () => {
       const pi = fakePi();
@@ -497,7 +538,7 @@ describe("entity-aware recall", () => {
     const m = mockFetch(resp);
     createMemoryExtension({ configPath: cfgFile({ mode: "inject", ...extra }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
     await pi.handlers.before_agent_start({ prompt: "deploy kubernetes cluster" }, ctxFor([]));
-    await pi.handlers.before_agent_start({ prompt: "compose haiku regarding autumn" }, ctxFor([]));
+    await pi.handlers.before_agent_start({ prompt: "compose haiku regarding autumn leaves falling gracefully" }, ctxFor([]));
     await pi.handlers.tool_call({ toolName: "subagent", input: { tasks: [{ agent: "w", task: "do thing" }] } }, ctxFor([]));
     await pi.tools.memory_recall.execute("i", { query: "q" }, null, null, ctxFor([]));
     return m.calls.filter((c: any) => c.path === "/recall");
