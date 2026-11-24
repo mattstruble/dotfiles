@@ -91,6 +91,8 @@ test("indexInjectionEnabled: only mode inject disables", () => {
   assert.equal(indexInjectionEnabled('{"mode":"inject"}'), false);
 });
 
+const stderrLines: string[] = [];
+
 async function runWithHome(clientJson: string | null): Promise<unknown> {
   const home = mkdtempSync(join(tmpdir(), "kb-test-"));
   mkdirSync(join(home, "llm-wiki"), { recursive: true });
@@ -102,7 +104,7 @@ async function runWithHome(clientJson: string | null): Promise<unknown> {
   const oldHome = process.env.HOME;
   const oldErr = console.error;
   process.env.HOME = home;
-  console.error = () => {};
+  console.error = (...a: unknown[]) => { stderrLines.push(a.join(" ")); };
   try {
     const handlers = new Map<string, (event: unknown, ctx: unknown) => unknown>();
     knowledgeBase({ on: (n: string, h: (e: unknown, c: unknown) => unknown) => handlers.set(n, h) } as never);
@@ -115,7 +117,9 @@ async function runWithHome(clientJson: string | null): Promise<unknown> {
 }
 
 test("before_agent_start suppressed when client.json mode is inject", async () => {
+  stderrLines.length = 0;
   assert.equal(await runWithHome('{"mode":"inject"}'), undefined);
+  assert.deepEqual(stderrLines, []);
 });
 
 test("before_agent_start injects when mode is shadow or file missing", async () => {

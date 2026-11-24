@@ -270,7 +270,6 @@ export default function (pi: ExtensionAPI): void {
   let entries: WikiEntry[] = [];
   let injected = new Set<string>();
   let injectionEnabled = true;
-  let suppressionLogged = false;
 
   function reload(): void {
     injectionEnabled = indexInjectionEnabled(readClientJson());
@@ -289,7 +288,6 @@ export default function (pi: ExtensionAPI): void {
   reload();
 
   pi.on("session_start", async (_event: SessionStartEvent, ctx) => {
-    suppressionLogged = false;
     reload();
     recover(ctx);
   });
@@ -304,13 +302,7 @@ export default function (pi: ExtensionAPI): void {
       // extensions' sections (Ponytail's always-on text) are no longer stripped.
       // Custom-message turns (e.g. async subagent completions) carry no prompt.
       if (event.messageType !== "user") return;
-      if (!injectionEnabled) {
-        if (!suppressionLogged) {
-          suppressionLogged = true;
-          console.error("[knowledge-base] INDEX injection suppressed: memory mode is inject");
-        }
-        return;
-      }
+      if (!injectionEnabled) return;
       return buildInjection(event.prompt, entries, injected);
     },
   );

@@ -254,15 +254,7 @@ in
 
     excludePatterns = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [
-        "memory[-_]gateway"
-        "memory[-_]eval"
-        "supersession_pairs"
-        "strict_judge"
-        "scratch_hindsight"
-        "calibration-(sheet|labels|cases)"
-        "hindsight_twoway"
-      ];
+      default = [ ];
       description = "Regex patterns excluding content from memory ingestion.";
     };
 
