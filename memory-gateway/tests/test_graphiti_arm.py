@@ -25,6 +25,8 @@ live = pytest.mark.skipif(
 VEC = [1.0] + [0.0] * 383
 FACT_TEA = "alice likes tea " * 3
 FACT_VIM = "alice uses vim " * 3
+FACT_ALEX_TEA = "alex likes tea " * 3
+FACT_ALEX_VIM = "alex uses vim " * 3
 T = datetime(2025, 1, 1, tzinfo=timezone.utc)
 
 
@@ -143,21 +145,152 @@ async def test_recall_respects_budget(config, tmp_path):
     assert len(mems) == 1 and sum(m.tokens for m in mems) <= budget
 
 
-async def test_forget_invalidates_without_deleting(config, tmp_path):
-    arm = make_arm(config, tmp_path)
-    await arm.start()
-    edge = await add_edge(arm, "proj", FACT_TEA)
+def make_forget_arm(config, tmp_path, judge):
+    return GraphitiArm(
+        config, tmp_path, llm_client=fake_llm(), embedder=fake_embedder(),
+        reranker=OrderKeepingReranker(), forget_judge=judge,
+    )
 
-    ids = await arm.forget("proj", "alice likes tea", "test")
 
-    assert ids == [edge.uuid]
-    assert await arm.recall("proj", "alice", 10_000) == []
-    rows, _, _ = await arm._graphiti.driver.clone("proj").execute_query(
+async def edge_state(arm, group, uuid):
+    rows, _, _ = await arm._graphiti.driver.clone(group).execute_query(
         "MATCH ()-[e:RELATES_TO {uuid: $u}]->() "
         "RETURN e.invalid_at AS i, e.expired_at AS x",
-        u=edge.uuid,
+        u=uuid,
     )
-    assert rows[0]["i"] and rows[0]["x"]
+    return rows[0]["i"], rows[0]["x"]
+
+
+async def test_forget_invalidates_without_deleting(config, tmp_path):
+    async def judge(text, facts):
+        return list(range(len(facts)))
+
+    arm = make_forget_arm(config, tmp_path, judge)
+    await arm.start()
+    edge = await add_edge(arm, "proj", FACT_ALEX_TEA)
+
+    ids = await arm.forget("proj", "alex likes tea", "test")
+
+    assert ids == [edge.uuid]
+    assert await arm.recall("proj", "alex", 10_000) == []
+    invalid_at, expired_at = await edge_state(arm, "proj", edge.uuid)
+    assert invalid_at and expired_at
+
+
+async def test_forget_invalidates_only_confirmed_candidates(config, tmp_path):
+    seen = {}
+
+    async def judge(text, facts):
+        seen["text"], seen["facts"] = text, list(facts)
+        return [i for i, f in enumerate(facts) if f == FACT_ALEX_TEA]
+
+    arm = make_forget_arm(config, tmp_path, judge)
+    await arm.start()
+    tea = await add_edge(arm, "proj", FACT_ALEX_TEA)
+    vim = await add_edge(arm, "proj", FACT_ALEX_VIM)
+
+    ids = await arm.forget("proj", "alex likes tea", "test")
+
+    assert ids == [tea.uuid]
+    assert seen["text"] == "alex likes tea"
+    assert set(seen["facts"]) == {FACT_ALEX_TEA, FACT_ALEX_VIM}
+    assert all(await edge_state(arm, "proj", tea.uuid))
+    assert await edge_state(arm, "proj", vim.uuid) == (None, None)
+    assert [m.id for m in await arm.recall("proj", "alex", 10_000)] == [vim.uuid]
+
+
+async def test_forget_invalidates_nothing_when_confirmation_fails(config, tmp_path):
+    async def judge(text, facts):
+        raise RuntimeError("bedrock down")
+
+    arm = make_forget_arm(config, tmp_path, judge)
+    await arm.start()
+    edge = await add_edge(arm, "proj", FACT_ALEX_TEA)
+
+    with pytest.raises(RuntimeError, match="bedrock down"):
+        await arm.forget("proj", "alex likes tea", "test")
+
+    assert await edge_state(arm, "proj", edge.uuid) == (None, None)
+    assert [m.id for m in await arm.recall("proj", "alex", 10_000)] == [edge.uuid]
+
+
+async def test_forget_invalidates_nothing_when_nothing_confirmed(config, tmp_path):
+    async def judge(text, facts):
+        return []
+
+    arm = make_forget_arm(config, tmp_path, judge)
+    await arm.start()
+    edge = await add_edge(arm, "proj", FACT_ALEX_TEA)
+
+    assert await arm.forget("proj", "alex likes tea", "test") == []
+    assert await edge_state(arm, "proj", edge.uuid) == (None, None)
+
+
+class FakeMessages:
+    def __init__(self, outcome):
+        self.outcome = outcome
+        self.calls = []
+
+    async def create(self, **kwargs):
+        self.calls.append(kwargs)
+        if isinstance(self.outcome, Exception):
+            raise self.outcome
+        return SimpleNamespace(content=self.outcome)
+
+
+def tool_block(matches, name="report_matches"):
+    return SimpleNamespace(type="tool_use", name=name, input={"matches": matches})
+
+
+async def test_default_judge_forces_tool_and_parses_indices(config, tmp_path):
+    client = SimpleNamespace(messages=FakeMessages([tool_block([1, "x", True, 0])]))
+    arm = GraphitiArm(config, tmp_path, forget_client=client)
+
+    got = await arm._judge_matches("Widget is blue", ["Widget is red", "Widget is blue"])
+
+    assert got == [1, 0]
+    call = client.messages.calls[0]
+    assert call["model"] == config.bedrock_model
+    assert call["tool_choice"] == {"type": "tool", "name": "report_matches"}
+    assert "0: Widget is red" in call["messages"][0]["content"]
+    assert "1: Widget is blue" in call["messages"][0]["content"]
+
+
+async def test_default_judge_raises_without_tool_output(config, tmp_path):
+    client = SimpleNamespace(messages=FakeMessages([SimpleNamespace(type="text", text="hi")]))
+    arm = GraphitiArm(config, tmp_path, forget_client=client)
+    with pytest.raises(RuntimeError):
+        await arm._judge_matches("t", ["f"])
+
+    client = SimpleNamespace(messages=FakeMessages(ConnectionError("down")))
+    arm = GraphitiArm(config, tmp_path, forget_client=client)
+    with pytest.raises(ConnectionError):
+        await arm._judge_matches("t", ["f"])
+
+
+async def test_restore_clears_invalidation_and_returns_ids(config, tmp_path):
+    async def judge(text, facts):
+        return list(range(len(facts)))
+
+    arm = make_forget_arm(config, tmp_path, judge)
+    await arm.start()
+    proj = await add_edge(arm, "proj", FACT_ALEX_TEA)
+    glob = await add_edge(arm, "global", FACT_ALEX_VIM)
+    untouched = await add_edge(arm, "proj", "alex owns gizmo " * 3)
+    for uuid, group in ((proj.uuid, "proj"), (glob.uuid, "global")):
+        await arm._graphiti.driver.clone(group).execute_query(
+            "MATCH ()-[e:RELATES_TO {uuid: $u}]->() SET e.invalid_at = $t, e.expired_at = $t",
+            u=uuid, t=T,
+        )
+    assert all(await edge_state(arm, "proj", proj.uuid))
+
+    got = await arm.restore([proj.uuid, glob.uuid, "XYZ-404"])
+
+    assert sorted(got) == sorted([proj.uuid, glob.uuid])
+    assert await edge_state(arm, "proj", proj.uuid) == (None, None)
+    assert await edge_state(arm, "global", glob.uuid) == (None, None)
+    assert await edge_state(arm, "proj", untouched.uuid) == (None, None)
+    assert {m.id for m in await arm.recall("proj", "alex", 10_000)} >= {proj.uuid, glob.uuid}
 
 
 async def test_history_returns_superseded_only(config, tmp_path):

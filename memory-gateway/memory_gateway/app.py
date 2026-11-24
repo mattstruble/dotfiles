@@ -42,6 +42,11 @@ class ForgetRequest(BaseModel):
     reason: str
 
 
+class RestoreRequest(BaseModel):
+    arm: str
+    memory_ids: list[str]
+
+
 def create_app(gateway: Gateway) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_: FastAPI):
@@ -94,6 +99,15 @@ def create_app(gateway: Gateway) -> FastAPI:
 
     @app.post("/forget")
     async def forget(req: ForgetRequest):
-        return await gateway.forget(req.project, req.text, req.reason)
+        out = await gateway.forget(req.project, req.text, req.reason)
+        if out.get("errors"):
+            # Non-2xx so clients that ignore `errors` still see the failure; the
+            # detail keeps what the other arms did.
+            raise HTTPException(502, detail=out)
+        return out
+
+    @app.post("/restore")
+    async def restore(req: RestoreRequest):
+        return await gateway.restore(req.arm, req.memory_ids)
 
     return app

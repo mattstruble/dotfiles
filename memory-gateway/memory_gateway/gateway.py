@@ -309,6 +309,7 @@ class Gateway:
 
     async def forget(self, project: str | None, text: str, reason: str) -> dict:
         out: dict[str, list[str]] = {}
+        errors: dict[str, str] = {}
 
         async def one(name: str) -> None:
             try:
@@ -320,6 +321,46 @@ class Gateway:
             except Exception as e:  # noqa: BLE001
                 log.warning("forget on %s failed: %s", name, e)
                 out[name] = []
+                errors[name] = f"{type(e).__name__}: {e}"
 
         await asyncio.gather(*(one(n) for n in self.arms))
-        return {"arms": out}
+        return {"arms": out, "errors": errors} if errors else {"arms": out}
+
+    async def restore(self, arm: str, memory_ids: list[str]) -> dict:
+        """Undo forget on one arm. Arms without restore() report "unsupported"."""
+        restored: list[str] = []
+        error: str | None = None
+        t0 = time.monotonic()
+        if arm in self.load_errors:
+            error = f"arm unavailable: {self.load_errors[arm]}"
+        elif arm not in self.arms:
+            error = "unknown arm"
+        else:
+            method = getattr(self.arms[arm], "restore", None)
+            if method is None:
+                error = "unsupported"
+            else:
+                try:
+                    async def call() -> list[str]:
+                        await self._ensure_started(arm)
+                        return await method(memory_ids)
+
+                    restored = await asyncio.wait_for(call(), self.config.arm_timeout_s)
+                except asyncio.TimeoutError:
+                    error = f"timeout after {self.config.arm_timeout_s}s"
+                except Exception as e:  # noqa: BLE001
+                    error = f"{type(e).__name__}: {e}"
+        entry = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "kind": "restore",
+            "request": {"arm": arm, "memory_ids": memory_ids},
+            "restored": restored,
+            "error": error,
+            "latency_s": round(time.monotonic() - t0, 4),
+        }
+        with self.recall_log.open("a") as f:
+            f.write(json.dumps(entry) + "\n")
+        out: dict = {"arms": {arm: restored} if error is None else {}}
+        if error is not None:
+            out["errors"] = {arm: error}
+        return out

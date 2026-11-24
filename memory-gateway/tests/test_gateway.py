@@ -369,3 +369,57 @@ async def test_entities_go_only_to_arms_that_accept_them(config, tmp_path):
     assert plain.kwargs == [{}]
     assert len(out["results"]["plain"]) == 3 and not out["errors"]
     g.queue.close()
+
+
+class RestorableArm(FakeArm):
+    def __init__(self, name, fail=False):
+        super().__init__(name)
+        self.fail = fail
+        self.restored_args: list[list[str]] = []
+
+    async def restore(self, memory_ids):
+        if self.fail:
+            raise RuntimeError("graph down")
+        self.restored_args.append(memory_ids)
+        return [i for i in memory_ids if i.startswith("XYZ-")]
+
+
+async def test_restore_routes_to_arm_reports_unsupported_and_logs(config, tmp_path):
+    r = RestorableArm("r")
+    g = gw(config, tmp_path, {"r": r, "plain": FakeArm("plain"), "bad": RestorableArm("bad", fail=True)})
+
+    ok = await g.restore("r", ["XYZ-1", "other"])
+    assert ok == {"arms": {"r": ["XYZ-1"]}}
+    assert r.restored_args == [["XYZ-1", "other"]]
+    assert (await g.restore("plain", ["XYZ-1"])) == {"arms": {}, "errors": {"plain": "unsupported"}}
+    assert (await g.restore("nope", ["XYZ-1"]))["errors"] == {"nope": "unknown arm"}
+    assert "graph down" in (await g.restore("bad", ["XYZ-1"]))["errors"]["bad"]
+
+    lines = [json.loads(x) for x in (tmp_path / "recall-log.jsonl").read_text().splitlines()]
+    assert [x["kind"] for x in lines] == ["restore"] * 4
+    assert lines[0]["request"] == {"arm": "r", "memory_ids": ["XYZ-1", "other"]}
+    assert lines[0]["restored"] == ["XYZ-1"] and lines[0]["error"] is None
+    assert lines[1]["error"] == "unsupported"
+    g.queue.close()
+
+
+async def test_http_restore_and_forget_errors(config, tmp_path):
+    class FailingForget(FakeArm):
+        async def forget(self, project, text, reason):
+            raise RuntimeError("judge down")
+
+    app = create_app(gw(config, tmp_path, {"r": RestorableArm("r"), "plain": FailingForget("plain")}))
+    async with app.router.lifespan_context(app):
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+            r = await c.post("/restore", json={"arm": "r", "memory_ids": ["XYZ-7"]})
+            assert r.status_code == 200 and r.json() == {"arms": {"r": ["XYZ-7"]}}
+
+            r = await c.post("/restore", json={"arm": "plain", "memory_ids": ["XYZ-7"]})
+            assert r.json() == {"arms": {}, "errors": {"plain": "unsupported"}}
+
+            r = await c.post("/forget", json={"project": "p", "text": "t", "reason": "r"})
+            assert r.status_code == 502
+            body = r.json()["detail"]
+            assert body["arms"] == {"r": ["r-0"], "plain": []}
+            assert "judge down" in body["errors"]["plain"]

@@ -28,6 +28,23 @@ log = logging.getLogger(__name__)
 
 GLOBAL_GROUP = "global"
 FORGET_TOP_K = 5
+FORGET_TOOL_NAME = "report_matches"
+FORGET_SYSTEM = (
+    "You decide which stored facts a user wants to forget. Given the claim to forget and "
+    "numbered candidate facts, return the indices of candidates that state the same claim "
+    "(same subject and same assertion, possibly worded differently). A candidate that is "
+    "merely on the same topic, mentions the same entities, or states a different or "
+    "related claim is NOT a match. Return an empty list if none match."
+)
+FORGET_TOOL = {
+    "name": FORGET_TOOL_NAME,
+    "description": "Report the indices of candidate facts that state the same claim.",
+    "input_schema": {
+        "type": "object",
+        "properties": {"matches": {"type": "array", "items": {"type": "integer"}}},
+        "required": ["matches"],
+    },
+}
 NODE_PREFIX = "node:"
 ENTITY_BUDGET_SHARE = 0.4  # of the recall budget, across all entities
 ENTITY_CAP_TOKENS = 300  # summary + facts, per entity
@@ -294,6 +311,8 @@ class GraphitiArm:
         embedder: Any = None,
         cross_encoder: Any = None,
         reranker: Any = None,
+        forget_client: Any = None,
+        forget_judge: Any = None,
     ):
         self.config = config
         self.state_dir = Path(state_dir)
@@ -301,6 +320,8 @@ class GraphitiArm:
         self._llm_client = llm_client
         self._embedder = embedder
         self._cross_encoder = cross_encoder
+        self._forget_client = forget_client  # Anthropic-style client for the forget judge
+        self._forget_judge = forget_judge  # async (text, facts) -> confirmed indices; overrides the client
         self._reranker = reranker  # exposes rerank_pairs(pairs) -> scores; loaded lazily
         # One dedicated thread: load/score jobs never occupy the default executor (shared
         # with the embedder) and never run concurrently.
@@ -542,11 +563,52 @@ class GraphitiArm:
         remaining = budget_tokens - sum(m.tokens for m in out)
         return out + facts.take(main, remaining)
 
+    async def _judge_matches(self, text: str, facts: list[str]) -> list[int]:
+        """Indices into `facts` that state the same claim as `text` (one Haiku call).
+        Raises on any failure or malformed answer."""
+        if self._forget_judge is not None:
+            return await self._forget_judge(text, facts)
+        if self._forget_client is None:
+            import anthropic
+
+            self._forget_client = UsageRecordingClient(
+                anthropic.AsyncAnthropicBedrock(aws_region=self.config.aws_region),
+                self.state_dir, "graphiti", "forget",
+            )
+        listing = "\n".join(f"{i}: {f}" for i, f in enumerate(facts))
+        resp = await self._forget_client.messages.create(
+            model=self.config.bedrock_model,
+            max_tokens=256,
+            system=FORGET_SYSTEM,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Claim to forget:\n{text}\n\nCandidate facts:\n{listing}",
+                }
+            ],
+            tools=[FORGET_TOOL],
+            tool_choice={"type": "tool", "name": FORGET_TOOL_NAME},
+        )
+        for block in resp.content:
+            if getattr(block, "type", None) == "tool_use" and block.name == FORGET_TOOL_NAME:
+                raw = (block.input or {}).get("matches")
+                if not isinstance(raw, list):
+                    break
+                return [i for i in raw if isinstance(i, int) and not isinstance(i, bool)]
+        raise RuntimeError("forget confirmation returned no usable tool output")
+
     async def forget(self, project: str | None, text: str, reason: str) -> list[str]:
         now = datetime.now(timezone.utc)
         ids: list[str] = []
         async with self._lock:
-            for edge in (await self._search(project, text, FORGET_TOP_K))[:FORGET_TOP_K]:
+            candidates = (await self._search(project, text, FORGET_TOP_K))[:FORGET_TOP_K]
+            if not candidates:
+                return ids
+            # A failing judge raises here, before anything is invalidated.
+            confirmed = set(await self._judge_matches(text, [e.fact for e in candidates]))
+            for i, edge in enumerate(candidates):
+                if i not in confirmed:
+                    continue
                 driver = self._graphiti.driver.clone(edge.group_id)
                 await driver.execute_query(
                     "MATCH ()-[e:RELATES_TO {uuid: $uuid}]->() "
@@ -556,6 +618,25 @@ class GraphitiArm:
                 )
                 ids.append(edge.uuid)
         return ids
+
+    async def restore(self, memory_ids: list[str]) -> list[str]:
+        """Undo forget: clear invalid_at and expired_at on the given edges."""
+        restored: list[str] = []
+        async with self._lock:
+            for group in await self._graph_names():
+                driver = self._graphiti.driver.clone(group)
+                for uuid in memory_ids:
+                    if uuid in restored:
+                        continue
+                    rows, _, _ = await driver.execute_query(
+                        "MATCH ()-[e:RELATES_TO {uuid: $uuid}]->() "
+                        "SET e.invalid_at = null, e.expired_at = null "
+                        "RETURN e.uuid AS uuid",
+                        uuid=uuid,
+                    )
+                    if rows:
+                        restored.append(uuid)
+        return restored
 
     async def history(
         self, project: str | None, query: str, budget_tokens: int
