@@ -247,7 +247,7 @@ in
 
     arms = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "hindsight" "graphiti" ];
+      default = [ "graphiti" ];
       description = "Memory arms enabled in the gateway.";
     };
 
@@ -265,6 +265,12 @@ in
       description = "Regex patterns excluding content from memory ingestion.";
     };
 
+    hindsight.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Run the hindsight launchd agent and sync its venv.";
+    };
+
     cognee.enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -273,7 +279,9 @@ in
 
     mode = lib.mkOption {
       type = lib.types.enum [ "off" "shadow" "inject" ];
-      default = "shadow";
+      # Rollback: set mode = "shadow", hindsight.enable = true and
+      # arms = [ "hindsight" "graphiti" ] (services.memory-eval options).
+      default = "inject";
       description = "memory.ts client mode.";
     };
 
@@ -304,7 +312,7 @@ in
       lib.hm.dag.entryBetween [ "setupLaunchAgents" ] [ "writeBoundary" ] ''
         if [ -z "''${DRY_RUN:-}" ]; then
           echo "memory-eval: syncing venvs (best-effort, 600s timeout)..."
-          for s in "${hsSync}" ${lib.optionalString cfg.cognee.enable "${cgSync}"} "${gwSync}"; do
+          for s in ${lib.optionalString cfg.hindsight.enable "\"${hsSync}\""} ${lib.optionalString cfg.cognee.enable "${cgSync}"} "${gwSync}"; do
             rc=0
             "${pkgs.coreutils}/bin/timeout" 600 "$s" activation || rc=$?
             if [ "$rc" -ne 0 ]; then
@@ -316,7 +324,7 @@ in
         fi
       '';
 
-    launchd.agents.hindsight = {
+    launchd.agents.hindsight = lib.mkIf cfg.hindsight.enable {
       enable = true;
       config = {
         Label = "com.user.hindsight";
