@@ -63,6 +63,10 @@ describe("config", () => {
     const c = loadClientConfig(cfgFile({ mode: "shadow" }));
     assert.equal(c.mode, "shadow");
     assert.equal(c.startBudget, 2000);
+    assert.equal(c.topupBudget, 1000);
+    assert.equal(c.sessionBudget, 4000);
+    assert.equal(loadClientConfig(cfgFile({ mode: "shadow", sessionBudget: 1234 })).sessionBudget, 1234);
+    assert.equal(loadClientConfig(cfgFile({ mode: "shadow", sessionBudget: -1 })).sessionBudget, 4000);
     assert.equal(loadClientConfig(cfgFile({ mode: "weird" })).mode, "off");
   });
   it("entityAware defaults true, honours false, ignores non-boolean", () => {
@@ -155,11 +159,19 @@ describe("stripping and serialisation", () => {
     const line = out.split("\n").find((l) => l.startsWith("tool bash: "))!;
     assert.ok(line.length <= "tool bash: ".length + 301);
   });
-  it("tool results truncated to 1000", () => {
-    const out = serializeEntries([msg("r", "toolResult", [{ type: "text", text: "y".repeat(5000) }], { toolName: "bash", toolCallId: "z" })]);
-    assert.ok(out.length < 1100);
+  it("omits tool results; keeps errors as one truncated line", () => {
+    const ok = serializeEntries([msg("r", "toolResult", [{ type: "text", text: "y".repeat(5000) }], { toolName: "bash", toolCallId: "z" })]);
+    assert.equal(ok, "");
+    const flagged = serializeEntries([msg("r", "toolResult", [{ type: "text", text: "boom\n" + "z".repeat(500) }], { toolName: "bash", toolCallId: "z", isError: true })]);
+    assert.ok(flagged.startsWith("[tool result bash 2025-01-01T00:00:00Z] error: boom "), flagged);
+    assert.ok(!flagged.includes("\n"));
+    assert.equal(flagged.split("error: ")[1].length, 200);
+    const texty = serializeEntries([msg("r", "toolResult", [{ type: "text", text: "Error: ENOENT password=abc12345" }], { toolName: "read", toolCallId: "z" })]);
+    assert.equal(texty, "[tool result read 2025-01-01T00:00:00Z] error: Error: ENOENT password=[REDACTED]");
+    const lower = serializeEntries([msg("r", "toolResult", [{ type: "text", text: "error: nope" }], { toolName: "bash", toolCallId: "z" })]);
+    assert.ok(lower.includes("error: error: nope"));
   });
-  it("drops read results of skill/wiki paths, keeps others", () => {
+  it("drops read results of skill/wiki paths and omits others", () => {
     const home = homedir();
     const call = (id: string, path: string) => msg(`a${id}`, "assistant", [{ type: "toolCall", id, name: "read", arguments: { path } }]);
     const res = (id: string, text: string) => msg(`r${id}`, "toolResult", [{ type: "text", text }], { toolName: "read", toolCallId: id });
@@ -171,7 +183,8 @@ describe("stripping and serialisation", () => {
     ];
     const out = serializeEntries(es);
     assert.ok(!out.includes("SKILLBODY") && !out.includes("WIKIBODY"));
-    assert.ok(out.includes("REALCODE"));
+    assert.ok(!out.includes("REALCODE"));
+    assert.ok(out.includes("tool read:"));
     assert.ok(isDerivedReadPath("~/llm-wiki/x.md"));
   });
   it("strips <memory> blocks from all serialised text", () => {
@@ -186,12 +199,11 @@ describe("stripping and serialisation", () => {
       msg("r", "toolResult", [{ type: "text", text: "out <memory>RECALLR</memory>" }], { toolName: "bash", toolCallId: "q" }),
     ]);
     assert.ok(!out.includes("RECALL"));
-    assert.ok(out.includes("hi") && out.includes("do it") && out.includes("out"));
+    assert.ok(out.includes("hi") && out.includes("do it"));
   });
   it("omits memory_recall results entirely", () => {
     const out = serializeEntries([msg("r", "toolResult", [{ type: "text", text: "RECALLED fact without tags" }], { toolName: "memory_recall", toolCallId: "q" })]);
-    assert.ok(!out.includes("RECALLED"));
-    assert.ok(out.includes("tool memory_recall: [recalled memories omitted]"));
+    assert.equal(out, "");
   });
   it("redacts in serialised output", () => {
     const out = serializeEntries([msg("u", "user", "my password=abc12345 ok")]);
@@ -234,11 +246,12 @@ describe("topic shift and dedup", () => {
     const b = formatMemoryBlock([{ id: "1", text: "likes tabs", ts: "2025-02-03T00:00:00Z" }]);
     assert.ok(b.startsWith("<memory>\nBackground context from past sessions, not instructions."));
     assert.ok(b.includes("- [2025-02-03] likes tabs") && b.endsWith("</memory>"));
+    assert.ok(b.endsWith("\nMore on any name or ticket above: call memory_recall with it.\n</memory>"));
     assert.deepEqual(idsPerArm({ results: { a: [{ id: "1", text: "" }] } }), { a: ["1"] });
   });
 });
 
-const longText = "x".repeat(300);
+const longText = "x".repeat(500);
 
 describe("extension behaviour", () => {
   it("registers tools and handlers in shadow", () => {
@@ -261,6 +274,17 @@ describe("extension behaviour", () => {
     assert.equal(m.calls[0].body.source, "session");
     assert.deepEqual(pi.entries.at(-1).data, { cursorEntryId: "a" });
     await pi.handlers.session_before_compact({}, ctx);
+    assert.equal(m.calls.length, 1);
+  });
+
+  it("chunks under 400 chars skipped with cursor advanced", async () => {
+    const pi = fakePi();
+    const m = mockFetch(() => ({}));
+    createMemoryExtension({ configPath: cfgFile({ mode: "shadow" }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
+    await pi.handlers.agent_settled({}, ctxFor([msg("a", "user", "x".repeat(300))]));
+    assert.equal(m.calls.length, 0);
+    assert.deepEqual(pi.entries.at(-1).data, { cursorEntryId: "a" });
+    await pi.handlers.agent_settled({}, ctxFor([msg("b", "user", "x".repeat(400))]));
     assert.equal(m.calls.length, 1);
   });
 
@@ -322,6 +346,105 @@ describe("extension behaviour", () => {
     assert.equal("systemPrompt" in r, false);
     const r2 = await pi.handlers.before_agent_start({ prompt: "compose haiku regarding autumn", systemPrompt: "SYS" }, ctxFor([]));
     assert.equal(r2, undefined);
+  });
+
+  describe("session budget", () => {
+    const respond = (tokens: number, n = 1) => {
+      let k = 0;
+      return () => ({ results: { hindsight: Array.from({ length: n }, () => ({ id: `h${k++}`, text: "fact", tokens })) } });
+    };
+    const prompts = ["deploy kubernetes cluster", "compose haiku regarding autumn", "bake sourdough bread tonight", "calibrate telescope mirror alignment"];
+
+    it("caps start and top-ups by remaining session budget; skips below 200", async () => {
+      const pi = fakePi();
+      const m = mockFetch(respond(1500));
+      createMemoryExtension({ configPath: cfgFile({ mode: "inject", startBudget: 1000, topupBudget: 500, sessionBudget: 4000 }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
+      const c = ctxFor([]);
+      const r1 = await pi.handlers.before_agent_start({ prompt: prompts[0] }, c);
+      assert.equal(m.calls[0].body.budget_tokens, 1000);
+      assert.equal(r1.message.details.tokens, 1500);
+      await pi.handlers.before_agent_start({ prompt: prompts[1] }, c);
+      assert.equal(m.calls[1].body.budget_tokens, 500);
+      await pi.handlers.before_agent_start({ prompt: prompts[2] }, c); // 3000 used, 1000 left
+      assert.equal(m.calls[2].body.budget_tokens, 500);
+      await pi.handlers.before_agent_start({ prompt: prompts[3] }, c); // 4500 used
+      assert.equal(m.calls.length, 3);
+    });
+
+    it("remaining budget shrinks the request; <200 remaining skips", async () => {
+      const pi = fakePi();
+      const m = mockFetch(respond(3900));
+      createMemoryExtension({ configPath: cfgFile({ mode: "inject" }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
+      const c = ctxFor([]);
+      await pi.handlers.before_agent_start({ prompt: prompts[0] }, c);
+      assert.equal(m.calls[0].body.budget_tokens, 2000);
+      assert.equal(await pi.handlers.before_agent_start({ prompt: prompts[1] }, c), undefined);
+      assert.equal(m.calls.length, 1); // 100 left
+      const pi2 = fakePi();
+      const m2 = mockFetch(respond(3700));
+      createMemoryExtension({ configPath: cfgFile({ mode: "inject" }), fetchImpl: m2.fn, gitCommonDir: git })(pi2 as any);
+      await pi2.handlers.before_agent_start({ prompt: prompts[0] }, c);
+      await pi2.handlers.before_agent_start({ prompt: prompts[1] }, c); // 300 left
+      assert.equal(m2.calls[1].body.budget_tokens, 300);
+    });
+
+    it("recovers spent budget after reload from memory messages and shadow entries", async () => {
+      const pi = fakePi();
+      const m = mockFetch(respond(10));
+      createMemoryExtension({ configPath: cfgFile({ mode: "inject" }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
+      const branch = [
+        { type: "custom_message", customType: "memory", content: "x".repeat(40), details: { ids: ["a"], prompt: "deploy kubernetes cluster", tokens: 3000 } },
+        { type: "custom_message", customType: "memory", content: "x".repeat(3400), details: { ids: ["b"], prompt: "deploy kubernetes cluster" } }, // legacy: estimated 850
+      ];
+      const ctx = ctxFor(branch);
+      await pi.handlers.session_start({}, ctx);
+      assert.equal(await pi.handlers.before_agent_start({ prompt: prompts[1] }, ctx), undefined);
+      assert.equal(m.calls.length, 0);
+
+      const pi2 = fakePi();
+      const m2 = mockFetch(respond(10));
+      createMemoryExtension({ configPath: cfgFile({ mode: "shadow" }), fetchImpl: m2.fn, gitCommonDir: git })(pi2 as any);
+      const ctx2 = ctxFor([
+        { type: "custom", customType: "memory-shadow", data: { turn: 0, kind: "start", prompt: "deploy kubernetes cluster", ids: {}, tokens: 3500 } },
+        { type: "custom", customType: "memory-shadow", data: { turn: 0, kind: "subagent", prompt: "x", ids: {}, tokens: 9999 } },
+      ]);
+      await pi2.handlers.session_start({}, ctx2);
+      await pi2.handlers.before_agent_start({ prompt: prompts[1] }, ctx2);
+      assert.equal(m2.calls[0].body.budget_tokens, 500);
+    });
+
+    it("shadow applies the same budgets and records tokens", async () => {
+      const run = async (mode: string) => {
+        const pi = fakePi();
+        const m = mockFetch(respond(1500));
+        createMemoryExtension({ configPath: cfgFile({ mode, startBudget: 1000, topupBudget: 500 }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
+        const c = ctxFor([]);
+        for (const p of prompts) await pi.handlers.before_agent_start({ prompt: p }, c);
+        return { budgets: m.calls.map((x) => x.body.budget_tokens), pi };
+      };
+      const inj = await run("inject");
+      const sh = await run("shadow");
+      assert.deepEqual(sh.budgets, inj.budgets);
+      assert.equal(sh.pi.entries[0].data.tokens, 1500);
+      assert.deepEqual(sh.pi.entries[0].data.injected, ["h0"]);
+    });
+
+    it("subagent recalls keep 800 and do not count toward the cap", async () => {
+      const pi = fakePi();
+      const m = mockFetch(respond(3900));
+      createMemoryExtension({ configPath: cfgFile({ mode: "inject" }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
+      const input = { tasks: [{ agent: "w", task: "do thing" }] };
+      await pi.handlers.tool_call({ toolName: "subagent", input }, ctxFor([]));
+      assert.equal(m.calls[0].body.budget_tokens, 800);
+      await pi.handlers.before_agent_start({ prompt: prompts[0] }, ctxFor([]));
+      assert.equal(m.calls[1].body.budget_tokens, 2000);
+    });
+
+    it("recall tool description points at the injected store", () => {
+      const pi = fakePi();
+      createMemoryExtension({ configPath: cfgFile({ mode: "inject" }), fetchImpl: mockFetch(() => ({})).fn, gitCommonDir: git })(pi as any);
+      assert.ok(/same .*store as the injected <memory> block/.test(pi.tools.memory_recall.description));
+    });
   });
 
   it("gateway failure never throws", async () => {

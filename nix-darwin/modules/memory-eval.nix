@@ -195,8 +195,9 @@ let
   clientConfig = {
     inherit (cfg) mode injectArm entityAware;
     gatewayUrl = "http://127.0.0.1:${toString cfg.gatewayPort}";
-    startBudget = 2000;
-    topupBudget = 1000;
+    startBudget = 1000;
+    topupBudget = 500;
+    inherit (cfg) sessionBudget;
   };
 in
 {
@@ -289,6 +290,12 @@ in
       type = lib.types.str;
       default = "graphiti";
       description = "Arm whose results are injected when mode = inject.";
+    };
+
+    sessionBudget = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 4000;
+      description = "Max tokens of recalled memory injected per session (start plus top-ups).";
     };
 
     entityAware = lib.mkOption {
