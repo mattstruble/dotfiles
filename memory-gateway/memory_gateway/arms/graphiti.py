@@ -228,6 +228,14 @@ def _make_llm(config: Config, state_dir: Path) -> Any:
     )
 
 
+async def _cancel_and_wait(tasks: list[asyncio.Future[Any]]) -> None:
+    """Cancel unfinished tasks and wait for them, so connection cleanup in the
+    cancelled lookups completes before recall returns."""
+    for t in tasks:
+        t.cancel()
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+
 class GraphitiArm:
     name = "graphiti"
 
@@ -344,8 +352,7 @@ class GraphitiArm:
             if tasks:
                 await asyncio.wait(tasks, timeout=ENTITY_DEADLINE_S)
         finally:
-            for t in tasks:
-                t.cancel()
+            await _cancel_and_wait(tasks)
         results: list[tuple[Any, list[Any]] | None] = []
         for name, t in zip(entities, tasks):
             if not t.done() or t.cancelled():
@@ -405,9 +412,8 @@ class GraphitiArm:
             fetched, main = await asyncio.gather(
                 self._collect_entities(entities, tasks), self._search(project, query, 20)
             )
-        finally:
-            for t in tasks:  # no-op once finished; stops lookups if the main search fails
-                t.cancel()
+        finally:  # no-op once finished; stops lookups if the main search fails
+            await _cancel_and_wait(tasks)
         facts = _FactCollector(self.name)
         out = self._assemble_entities(entities, fetched, budget_tokens, facts)
         remaining = budget_tokens - sum(m.tokens for m in out)

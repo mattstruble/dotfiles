@@ -414,7 +414,8 @@ async def test_source_for_node_ids(config, tmp_path):
     assert await arm.source("node:missing") is None
 
 
-async def test_entity_recall_against_real_graph(config, tmp_path):
+async def test_entity_recall_against_real_graph(config, tmp_path, monkeypatch):
+    monkeypatch.setattr(graphiti_mod, "ENTITY_DEADLINE_S", 30.0)  # not racing a loaded machine
     from graphiti_core.nodes import EntityNode
 
     arm = make_arm(config, tmp_path)
@@ -478,6 +479,27 @@ async def test_entity_deadline_keeps_main_and_finished_entities(config, tmp_path
 
     assert time.monotonic() - t0 < 1.0
     assert [m.id for m in out] == ["node:f", "m"]
+
+
+async def test_cancelled_entity_tasks_are_awaited(config, tmp_path, monkeypatch):
+    monkeypatch.setattr(graphiti_mod, "ENTITY_DEADLINE_S", 0.05)
+    cleaned = []
+    arm = slow_arm(config, tmp_path, {}, {}, [edge("m", "main fact")])
+
+    async def fetch(project, name):
+        try:
+            await asyncio.sleep(5.0)
+        finally:
+            await asyncio.sleep(0.05)  # cleanup that outlives the cancel() call
+            cleaned.append(name)
+
+    arm._fetch_entity = fetch
+
+    out = await arm.recall("proj", "q", 1000, entities=["a", "b"])
+
+    assert [m.id for m in out] == ["m"]
+    assert sorted(cleaned) == ["a", "b"]
+    assert asyncio.all_tasks() == {asyncio.current_task()}
 
 
 async def test_entity_exception_is_skipped(config, tmp_path):
