@@ -2,9 +2,10 @@
 Claude on Bedrock for extraction, local fastembed embeddings."""
 
 import asyncio
+import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -18,8 +19,35 @@ EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 EMBED_DIM = 384
 os.environ["EMBEDDING_DIM"] = str(EMBED_DIM)
 
+log = logging.getLogger(__name__)
+
 GLOBAL_GROUP = "global"
 FORGET_TOP_K = 5
+NODE_PREFIX = "node:"
+ENTITY_BUDGET_SHARE = 0.4  # of the recall budget, across all entities
+ENTITY_CAP_TOKENS = 300  # summary + facts, per entity
+ENTITY_FACT_TOKENS = 250
+MIN_ENTITY_TOKENS = 10
+
+TRIVIAL_MAX_LEN = 120
+_TRIVIAL_FACTS = [
+    re.compile(p, re.IGNORECASE)
+    for p in (
+        r"^.+? (?:is|are) (?:a|an) (?:story|subtask|spike|epic|pull request|PR|repository|package|ticket)\b",
+        r"^.+? is part of .+$",
+        r"^.+? is (?:related to|associated with) .+?\.?$",
+        r"^.+? (?:contains|holds) the (?:code location|specification)",
+    )
+]
+_TICKET_ID = re.compile(r"\b[A-Z][A-Z0-9]*-\d+\b")
+_VERSION_OR_DATE = re.compile(
+    r"\bv?\d+\.\d+|\b\d{4}-\d{1,2}(?:-\d{1,2})?\b|\b\d{1,2}/\d{1,2}(?:/\d{2,4})?\b"
+    r"|\b(?:19|20)\d{2}\b|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d",
+    re.IGNORECASE,
+)
+_STALE_PLAN = re.compile(r"\bshould\b|\bwill\b|\bplans? to\b|\bnext week\b", re.IGNORECASE)
+STALE_PLAN_DAYS = 14
+NEAR_DUP_JACCARD = 0.8
 
 
 def group_id_for(project: str | None) -> str:
@@ -56,6 +84,91 @@ def superseded_filters() -> list[Any]:
 
     not_null = [[DateFilter(comparison_operator=ComparisonOperator.is_not_null)]]
     return [SearchFilters(invalid_at=not_null), SearchFilters(expired_at=not_null)]
+
+
+def is_trivial_fact(text: str) -> bool:
+    """Structural boilerplate ("X is a story", "X is part of Y") carrying no information."""
+    text = text.strip()
+    if len(text) >= TRIVIAL_MAX_LEN or "," in text or ";" in text:
+        return False
+    if _VERSION_OR_DATE.search(_TICKET_ID.sub("", text)):
+        return False
+    return any(rx.search(text) for rx in _TRIVIAL_FACTS)
+
+
+def is_stale_plan(fact: str, valid_at: datetime | None, now: datetime) -> bool:
+    if valid_at is None or not _STALE_PLAN.search(fact):
+        return False
+    if valid_at.tzinfo is None:
+        valid_at = valid_at.replace(tzinfo=timezone.utc)
+    return now - valid_at > timedelta(days=STALE_PLAN_DAYS)
+
+
+def rank_facts(edges: list[Any], now: datetime | None = None) -> list[Any]:
+    """Drop trivial facts; move stale future-tense facts after the rest (order kept)."""
+    now = now or datetime.now(timezone.utc)
+    kept = [e for e in edges if not is_trivial_fact(e.fact)]
+    stale = [e for e in kept if is_stale_plan(e.fact, e.valid_at, now)]
+    return [e for e in kept if e not in stale] + stale
+
+
+def _fact_tokens(text: str) -> set[str]:
+    return set(re.sub(r"[^\w\s]", " ", text.lower()).split())
+
+
+def _jaccard(a: set[str], b: set[str]) -> float:
+    return len(a & b) / len(a | b) if a | b else 1.0
+
+
+def _name_words(name: str) -> list[str]:
+    return re.findall(r"[\w-]+", name.lower())
+
+
+def _contains_run(words: list[str], run: list[str]) -> bool:
+    return any(words[i : i + len(run)] == run for i in range(len(words) - len(run) + 1))
+
+
+def _truncate(text: str, max_tokens: int) -> str:
+    if count_tokens(text) <= max_tokens:
+        return text
+    return text[: max_tokens * 4 - 1].rstrip() + "…"
+
+
+class _FactCollector:
+    """Turns ranked edges into Memories across several searches, deduplicating by id
+    and by near-identical text."""
+
+    def __init__(self, arm_name: str):
+        self.arm_name = arm_name
+        self.ids: set[str] = set()
+        self._token_sets: list[set[str]] = []
+
+    def take(self, edges: list[Any], budget_tokens: int) -> list[Memory]:
+        out: list[Memory] = []
+        used = 0
+        for edge in rank_facts(edges):
+            n = count_tokens(edge.fact)
+            toks = _fact_tokens(edge.fact)
+            if (
+                edge.uuid in self.ids
+                or used + n > budget_tokens
+                or any(_jaccard(toks, t) >= NEAR_DUP_JACCARD for t in self._token_sets)
+            ):
+                continue
+            used += n
+            self.ids.add(edge.uuid)
+            self._token_sets.append(toks)
+            out.append(
+                Memory(
+                    id=edge.uuid,
+                    text=edge.fact,
+                    tokens=n,
+                    ts=edge.valid_at,
+                    arm=self.arm_name,
+                    source_ref=edge.group_id,
+                )
+            )
+        return out
 
 
 def _make_embedder() -> Any:
@@ -177,35 +290,88 @@ class GraphitiArm:
                 group_id=group_id_for(item.project),
             )
 
-    async def _search(self, project: str | None, query: str, limit: int) -> list[Any]:
+    async def _search(
+        self, project: str | None, query: str, limit: int, center_node_uuid: str | None = None
+    ) -> list[Any]:
         return await self._graphiti.search(
             query,
+            center_node_uuid=center_node_uuid,
             group_ids=recall_group_ids(project),
             num_results=limit,
             search_filter=current_only_filters(),
         )
 
-    async def recall(
-        self, project: str | None, query: str, budget_tokens: int
+    async def _search_nodes(self, project: str | None, name: str, limit: int = 5) -> list[Any]:
+        from graphiti_core.search.search_config_recipes import NODE_HYBRID_SEARCH_RRF
+
+        res = await self._graphiti.search_(
+            name,
+            config=NODE_HYBRID_SEARCH_RRF.model_copy(update={"limit": limit}),
+            group_ids=recall_group_ids(project),
+        )
+        return res.nodes
+
+    async def _find_node(self, project: str | None, name: str) -> Any | None:
+        """Best EntityNode for `name`: exact name match, else the first hit whose name
+        contains the entity (or vice versa) as whole words. Substrings of a word do not
+        count (PRJ-12 vs PRJ-123, git vs GitHub); unrelated vector neighbours are dropped."""
+        want = _name_words(name)
+        nodes = await self._search_nodes(project, name)
+        for n in nodes:
+            if _name_words(n.name) == want:
+                return n
+        for n in nodes:
+            have = _name_words(n.name)
+            if want and have and (_contains_run(have, want) or _contains_run(want, have)):
+                return n
+        return None
+
+    async def _entity_memories(
+        self, project: str | None, entities: list[str], budget_tokens: int, facts: _FactCollector
     ) -> list[Memory]:
+        total = int(budget_tokens * ENTITY_BUDGET_SHARE)
         out: list[Memory] = []
         used = 0
-        for edge in await self._search(project, query, 20):
-            n = count_tokens(edge.fact)
-            if used + n > budget_tokens:
+        for name in entities:
+            cap = min(ENTITY_CAP_TOKENS, total - used)
+            if cap < MIN_ENTITY_TOKENS:
+                break
+            try:
+                node = await self._find_node(project, name)
+                if node is None or f"{NODE_PREFIX}{node.uuid}" in facts.ids:
+                    continue
+                part: list[Memory] = []
+                spent = 0
+                summary = (node.summary or "").strip()
+                if summary:
+                    text = _truncate(f"{node.name}: {summary}", cap)
+                    ref = f"{NODE_PREFIX}{node.uuid}"
+                    spent = count_tokens(text)
+                    part.append(
+                        Memory(ref, text, spent, node.created_at, self.name, source_ref=ref)
+                    )
+                edges = await self._search(project, name, 10, center_node_uuid=node.uuid)
+            # Entity material is a bonus; a failing node lookup must not lose the main recall.
+            except Exception as e:  # noqa: BLE001
+                log.warning("graphiti entity recall for %r failed: %s", name, e)
                 continue
-            used += n
-            out.append(
-                Memory(
-                    id=edge.uuid,
-                    text=edge.fact,
-                    tokens=n,
-                    ts=edge.valid_at,
-                    arm=self.name,
-                    source_ref=edge.group_id,
-                )
-            )
+            facts.ids.add(f"{NODE_PREFIX}{node.uuid}")
+            part += facts.take(edges, min(ENTITY_FACT_TOKENS, cap - spent))
+            used += sum(m.tokens for m in part)
+            out += part
         return out
+
+    async def recall(
+        self,
+        project: str | None,
+        query: str,
+        budget_tokens: int,
+        entities: list[str] | None = None,
+    ) -> list[Memory]:
+        facts = _FactCollector(self.name)
+        out = await self._entity_memories(project, entities or [], budget_tokens, facts)
+        remaining = budget_tokens - sum(m.tokens for m in out)
+        return out + facts.take(await self._search(project, query, 20), remaining)
 
     async def forget(self, project: str | None, text: str, reason: str) -> list[str]:
         now = datetime.now(timezone.utc)
@@ -265,10 +431,26 @@ class GraphitiArm:
             names = []
         return list(dict.fromkeys([*names, GLOBAL_GROUP]))
 
+    async def _node_source(self, uuid: str) -> SourceRecord | None:
+        from graphiti_core.nodes import EntityNode
+
+        for group in await self._graph_names():
+            try:
+                node = await EntityNode.get_by_uuid(self._graphiti.driver.clone(group), uuid)
+            except Exception:  # noqa: BLE001 - not in this graph
+                continue
+            ref = f"{NODE_PREFIX}{uuid}"
+            return SourceRecord(
+                memory_id=ref, source_ref=ref, text=node.summary, ts=node.created_at
+            )
+        return None
+
     async def source(self, memory_id: str) -> SourceRecord | None:
         from graphiti_core.edges import EntityEdge
         from graphiti_core.nodes import EpisodicNode
 
+        if memory_id.startswith(NODE_PREFIX):
+            return await self._node_source(memory_id[len(NODE_PREFIX):])
         for group in await self._graph_names():
             driver = self._graphiti.driver.clone(group)
             try:

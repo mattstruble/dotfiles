@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import json
 import logging
 import re
@@ -11,6 +12,7 @@ from pathlib import Path
 from .arms import load_arm
 from .arms.base import Arm, IngestItem, Memory, SourceRecord
 from .config import Config
+from .entities import MAX_ENTITIES, EntityExtractor, clean_entities
 from .queue import DurableQueue
 
 log = logging.getLogger("memory_gateway")
@@ -40,12 +42,14 @@ class Gateway:
         arms: dict[str, Arm] | None = None,
         poll_interval_s: float = 0.2,
         backoff_base_s: float = 1.0,
+        entity_extractor: EntityExtractor | None = None,
     ):
         self.config = config
         self.state_dir = state_dir
         self.queue = DurableQueue(state_dir / "queue.sqlite", backoff_base_s)
         self.recall_log = state_dir / "recall-log.jsonl"
         self.poll_interval_s = poll_interval_s
+        self.entity_extractor = entity_extractor or EntityExtractor(config, state_dir)
         self.arms: dict[str, Arm] = {}
         self.load_errors: dict[str, str] = {}
         self._started: set[str] = set()
@@ -169,9 +173,29 @@ class Gateway:
         return chosen, errors
 
     async def recall(
-        self, project: str | None, query: str, budget_tokens: int, names: list[str] | None
+        self, project: str | None, query: str, budget_tokens: int, names: list[str] | None,
+        entities: list[str] | None = None, entity_aware: bool = False,
     ) -> dict:
-        return await self._query("recall", project, query, budget_tokens, names)
+        entities = clean_entities(entities) or None
+        if entities is None and entity_aware:
+            chosen, _ = self._select(names)
+            # only pay for extraction when some arm can use the result
+            if any(self._takes_entities(self.arms[n], "recall") for n in chosen):
+                try:
+                    entities = (await self.entity_extractor.extract(query))[:MAX_ENTITIES] or None
+                except Exception as e:  # noqa: BLE001 - extraction failure means plain recall
+                    log.warning("entity extraction failed: %s", e)
+        return await self._query("recall", project, query, budget_tokens, names, entities)
+
+    @staticmethod
+    def _takes_entities(arm: Arm, kind: str) -> bool:
+        method = getattr(arm, kind, None)
+        if method is None:
+            return False
+        try:
+            return "entities" in inspect.signature(method).parameters
+        except (TypeError, ValueError):
+            return False
 
     async def history(
         self, project: str | None, query: str, budget_tokens: int, names: list[str] | None
@@ -180,7 +204,7 @@ class Gateway:
 
     async def _query(
         self, kind: str, project: str | None, query: str, budget_tokens: int,
-        names: list[str] | None,
+        names: list[str] | None, entities: list[str] | None = None,
     ) -> dict:
         chosen, errors = self._select(names)
         results: dict[str, list[Memory]] = {}
@@ -196,6 +220,8 @@ class Gateway:
 
                 async def call() -> list[Memory]:
                     await self._ensure_started(name)
+                    if entities and self._takes_entities(self.arms[name], kind):
+                        return await method(project, query, budget_tokens, entities=entities)
                     return await method(project, query, budget_tokens)
 
                 mems = await asyncio.wait_for(call(), self.config.arm_timeout_s)
@@ -215,10 +241,11 @@ class Gateway:
                 latency[name] = round(time.monotonic() - t0, 4)
 
         await asyncio.gather(*(one(n) for n in chosen))
-        self._log_recall(kind, project, query, budget_tokens, names, results, errors, latency)
+        self._log_recall(kind, project, query, budget_tokens, names, results, errors, latency, entities)
         return {"results": results, "errors": errors}
 
-    def _log_recall(self, kind, project, query, budget, names, results, errors, latency) -> None:
+    def _log_recall(self, kind, project, query, budget, names, results, errors, latency,
+                    entities=None) -> None:
         entry = {
             "kind": kind,
             "ts": datetime.now(timezone.utc).isoformat(),
@@ -227,6 +254,7 @@ class Gateway:
                 "query": query,
                 "budget_tokens": budget,
                 "arms": names,
+                "entities": entities,
             },
             "arms": {
                 n: {

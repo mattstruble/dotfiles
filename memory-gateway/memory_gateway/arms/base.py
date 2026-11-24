@@ -68,5 +68,10 @@ class Arm(Protocol):
     #     """Facts relevant to `query` that are superseded/invalidated/no longer
     #     current (the complement of recall), most recent first."""
     #
+    # async def recall(self, project, query, budget_tokens, entities: list[str] | None = None)
+    #     An arm whose `recall` declares an `entities` parameter receives the entities
+    #     (named in the request or extracted from the query) to recall around; the
+    #     gateway inspects the signature and omits the kwarg for other arms.
+    #
     # async def source(self, memory_id: str) -> SourceRecord | None:
     #     """Raw input text the fact `memory_id` was extracted from, or None."""

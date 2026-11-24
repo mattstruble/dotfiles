@@ -26,6 +26,11 @@ class RecallRequest(BaseModel):
     arms: list[str] | None = None
 
 
+class EntityRecallRequest(RecallRequest):
+    entities: list[str] | None = None
+    entity_aware: bool = False
+
+
 class SourceRequest(BaseModel):
     arm: str
     memory_id: str
@@ -61,8 +66,11 @@ def create_app(gateway: Gateway) -> FastAPI:
         return {"queued": True, "id": item_id}
 
     @app.post("/recall")
-    async def recall(req: RecallRequest):
-        out = await gateway.recall(req.project, req.query, req.budget_tokens, req.arms)
+    async def recall(req: EntityRecallRequest):
+        out = await gateway.recall(
+            req.project, req.query, req.budget_tokens, req.arms,
+            entities=req.entities, entity_aware=req.entity_aware,
+        )
         return {
             "results": {
                 arm: [_memory_json(m) for m in mems] for arm, mems in out["results"].items()

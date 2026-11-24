@@ -246,3 +246,114 @@ async def test_excluded_item_journaled_without_deliveries(config, tmp_path):
     assert len(_rows(g)) == 1
     assert (await g.health())["excluded_total"] == 1
     g.queue.close()
+
+
+class FakeExtractor:
+    def __init__(self, entities=None, exc=None):
+        self.entities = entities or []
+        self.exc = exc
+        self.queries = []
+
+    async def extract(self, query):
+        self.queries.append(query)
+        if self.exc:
+            raise self.exc
+        return self.entities
+
+
+class EntityArm(FakeArm):
+    def __init__(self, name="ent"):
+        super().__init__(name)
+        self.seen = []
+
+    async def recall(self, project, query, budget_tokens, entities=None):
+        self.seen.append(entities)
+        return await super().recall(project, query, budget_tokens)
+
+
+class SpyArm(FakeArm):
+    def __init__(self, name="plain"):
+        super().__init__(name)
+        self.kwargs = []
+
+    async def recall(self, project, query, budget_tokens, **kwargs):
+        self.kwargs.append(kwargs)
+        return await super().recall(project, query, budget_tokens)
+
+
+def entity_gw(config, tmp_path, extractor, **arm_map):
+    return Gateway(
+        config, tmp_path, arms=arm_map, poll_interval_s=0.02, entity_extractor=extractor
+    )
+
+
+def log_lines(tmp_path):
+    return [json.loads(x) for x in (tmp_path / "recall-log.jsonl").read_text().splitlines()]
+
+
+async def test_entity_aware_extracts_and_logs_entities(config, tmp_path):
+    ent, ex = EntityArm(), FakeExtractor(["alice"])
+    g = entity_gw(config, tmp_path, ex, ent=ent)
+
+    await g.recall("p", "what did alice say", 100, None, entity_aware=True)
+
+    assert ex.queries == ["what did alice say"] and ent.seen == [["alice"]]
+    assert log_lines(tmp_path)[0]["request"]["entities"] == ["alice"]
+    g.queue.close()
+
+
+async def test_explicit_entities_skip_extraction(config, tmp_path):
+    ent, ex = EntityArm(), FakeExtractor(["other"])
+    g = entity_gw(config, tmp_path, ex, ent=ent)
+
+    await g.recall("p", "q", 100, None, entities=["bob"], entity_aware=True)
+
+    assert ex.queries == [] and ent.seen == [["bob"]]
+    assert log_lines(tmp_path)[0]["request"]["entities"] == ["bob"]
+    g.queue.close()
+
+
+async def test_not_entity_aware_does_not_extract(config, tmp_path):
+    ent, ex = EntityArm(), FakeExtractor(["alice"])
+    g = entity_gw(config, tmp_path, ex, ent=ent)
+
+    await g.recall("p", "q", 100, None)
+
+    assert ex.queries == [] and ent.seen == [None]
+    assert log_lines(tmp_path)[0]["request"]["entities"] is None
+    g.queue.close()
+
+
+async def test_extraction_only_when_an_arm_can_use_it(config, tmp_path):
+    ex = FakeExtractor(["alice"])
+    g = entity_gw(config, tmp_path, ex, plain=SpyArm())
+
+    await g.recall("p", "q", 100, None, entity_aware=True)
+
+    assert ex.queries == []
+    g.queue.close()
+
+
+async def test_extraction_failure_falls_back_to_plain_recall(config, tmp_path):
+    ent = EntityArm()
+    g = entity_gw(config, tmp_path, FakeExtractor(exc=RuntimeError("boom")), ent=ent)
+
+    out = await g.recall("p", "q", 100, None, entity_aware=True)
+
+    assert ent.seen == [None] and len(out["results"]["ent"]) == 3
+    assert log_lines(tmp_path)[0]["request"]["entities"] is None
+    g.queue.close()
+
+
+async def test_http_recall_accepts_entities_and_entity_aware(config, tmp_path):
+    ent, ex = EntityArm(), FakeExtractor(["alice"])
+    app = create_app(entity_gw(config, tmp_path, ex, ent=ent))
+    async with app.router.lifespan_context(app):
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+            body = {"project": "p", "query": "q", "budget_tokens": 100}
+            assert (await c.post("/recall", json={**body, "entities": ["bob"]})).status_code == 200
+            assert (await c.post("/recall", json={**body, "entity_aware": True})).status_code == 200
+            assert (await c.post("/recall", json=body)).status_code == 200
+
+    assert ent.seen == [["bob"], ["alice"], None]

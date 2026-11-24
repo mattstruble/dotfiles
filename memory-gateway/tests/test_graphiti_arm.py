@@ -1,13 +1,18 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import pytest
 
 from memory_gateway.arms.base import IngestItem, count_tokens
 from memory_gateway.arms.graphiti import (
     GraphitiArm,
+    _FactCollector,
     current_only_filters,
     group_id_for,
+    is_stale_plan,
+    is_trivial_fact,
+    rank_facts,
     recall_group_ids,
 )
 
@@ -222,3 +227,201 @@ async def test_live_supersession(config, tmp_path):
     assert any("Paris" in m.text and m.text.startswith("[superseded ") for m in hist)
     src = await arm.source(hist[0].id)
     assert src is not None and src.text in {t for _, t in episodes}
+
+
+# --- entity-aware recall, noise filters ---------------------------------------------
+
+NOW = datetime.now(timezone.utc)
+
+
+def edge(uuid, fact, valid_at=T, group="proj"):
+    return SimpleNamespace(uuid=uuid, fact=fact, valid_at=valid_at, group_id=group)
+
+
+def node(uuid, name, summary, created=T):
+    return SimpleNamespace(uuid=uuid, name=name, summary=summary, created_at=created)
+
+
+def fake_arm(config, tmp_path, nodes=None, edges=None, main=None):
+    """Arm with search stubbed: nodes {name: node}, edges {center uuid: [edge]}, main [edge]."""
+    arm = make_arm(config, tmp_path)
+    calls = []
+
+    async def search_nodes(project, name, limit=5):
+        return [nodes[name]] if name in (nodes or {}) else []
+
+    async def search(project, query, limit, center_node_uuid=None):
+        calls.append((query, center_node_uuid))
+        if center_node_uuid is not None:
+            return (edges or {}).get(center_node_uuid, [])
+        return main or []
+
+    arm._search_nodes = search_nodes
+    arm._search = search
+    arm.calls = calls
+    return arm
+
+
+def test_stale_plan_needs_whole_word_and_tolerates_naive_datetimes():
+    old = NOW - timedelta(days=30)
+    assert not is_stale_plan("the willing helper", old, NOW)
+    assert is_stale_plan("we will go", old.replace(tzinfo=None), NOW)
+
+
+def test_near_duplicates_collapse():
+    c = _FactCollector("graphiti")
+    first = c.take(
+        [
+            edge("1", "Alice prefers the vim editor for all work"),
+            edge("2", "alice prefers the vim editor, for all work!"),
+            edge("3", "Alice prefers the emacs editor for all work"),  # 6/8 = 0.75 < 0.8
+            edge("4", "Alice prefers the vim editor for all work today"),  # 8/9 >= 0.8
+        ],
+        1000,
+    )
+    assert [m.id for m in first] == ["1", "3"]
+    # collapse also spans later calls
+    assert c.take([edge("5", "alice prefers the vim editor for all work")], 1000) == []
+
+
+async def test_entity_summary_first_then_centred_facts_then_main(config, tmp_path):
+    n = node("n1", "Alice", "Staff engineer on platform.")
+    arm = fake_arm(
+        config, tmp_path,
+        nodes={"Alice": n},
+        edges={"n1": [edge("e1", "alice owns the gateway")]},
+        main=[edge("m1", "bob uses emacs")],
+    )
+
+    mems = await arm.recall("proj", "who is alice", 1000, entities=["Alice", "Unknown"])
+
+    assert [m.id for m in mems] == ["node:n1", "e1", "m1"]
+    first = mems[0]
+    assert first.text == "Alice: Staff engineer on platform."
+    assert first.source_ref == "node:n1" and first.ts == T and first.arm == "graphiti"
+    assert first.tokens == count_tokens(first.text)
+    assert arm.calls == [("Alice", "n1"), ("who is alice", None)]
+
+
+async def test_entity_without_summary_still_gets_facts(config, tmp_path):
+    arm = fake_arm(
+        config, tmp_path,
+        nodes={"Alice": node("n1", "Alice", "  ")},
+        edges={"n1": [edge("e1", "alice owns the gateway")]},
+    )
+
+    mems = await arm.recall("proj", "q", 1000, entities=["Alice"])
+
+    assert [m.id for m in mems] == ["e1"]
+
+
+async def test_entity_material_deduped_against_main_and_other_entities(config, tmp_path):
+    shared = edge("e1", "alice and bob own the gateway")
+    arm = fake_arm(
+        config, tmp_path,
+        nodes={"Alice": node("n1", "Alice", "a"), "Al": node("n1", "Alice", "a"),
+               "Bob": node("n2", "Bob", "b")},
+        edges={"n1": [shared], "n2": [shared, edge("e2", "bob uses emacs")]},
+        main=[shared, edge("m1", "carol likes tea")],
+    )
+
+    mems = await arm.recall("proj", "q", 1000, entities=["Alice", "Al", "Bob"])
+
+    assert [m.id for m in mems] == ["node:n1", "e1", "node:n2", "e2", "m1"]
+
+
+async def test_per_entity_cap_limits_summary_and_facts(config, tmp_path):
+    facts = [edge(f"e{i}", f"fact number {i} " + "pad " * 20) for i in range(20)]
+    arm = fake_arm(
+        config, tmp_path,
+        nodes={"Alice": node("n1", "Alice", "word " * 400)},  # 500-token summary
+        edges={"n1": facts},
+    )
+
+    mems = await arm.recall("proj", "q", 100_000, entities=["Alice"])
+
+    assert mems[0].id == "node:n1" and sum(m.tokens for m in mems) <= 300
+
+    arm = fake_arm(
+        config, tmp_path,
+        nodes={"Alice": node("n1", "Alice", "short summary")},
+        edges={"n1": facts},
+    )
+    mems = await arm.recall("proj", "q", 100_000, entities=["Alice"])
+
+    assert len(mems) > 2 and sum(m.tokens for m in mems[1:]) <= 250
+
+
+async def test_total_entity_cap_is_forty_percent_of_budget(config, tmp_path):
+    nodes = {f"E{i}": node(f"n{i}", f"E{i}", "summary " * 10) for i in range(3)}
+    edges = {
+        f"n{i}": [edge(f"e{i}{j}", f"entity fact {i} {j} " + "x" * 80) for j in range(8)]
+        for i in range(3)
+    }
+    main = [edge(f"m{i}", f"main fact {i} " + "y" * 80) for i in range(30)]
+    arm = fake_arm(config, tmp_path, nodes=nodes, edges=edges, main=main)
+
+    mems = await arm.recall("proj", "q", 500, entities=["E0", "E1", "E2"])
+
+    entity_tokens = sum(m.tokens for m in mems if not m.id.startswith("m"))
+    assert mems[0].id == "node:n0"
+    assert 100 < entity_tokens <= 200
+    assert sum(m.tokens for m in mems) <= 500
+    assert any(m.id.startswith("m") for m in mems)
+
+
+async def test_entity_search_failure_falls_back_to_main(config, tmp_path):
+    arm = fake_arm(config, tmp_path, main=[edge("m1", "carol likes tea")])
+
+    async def boom(*a, **k):
+        raise RuntimeError("db down")
+
+    arm._search_nodes = boom
+
+    assert [m.id for m in await arm.recall("proj", "q", 1000, entities=["Alice"])] == ["m1"]
+
+
+async def test_find_node_prefers_exact_then_containing_name(config, tmp_path):
+    arm = make_arm(config, tmp_path)
+
+    async def search_nodes(project, name, limit=5):
+        return [node("1", "Unrelated", "x"), node("2", "Alice Smith", "y"), node("3", "alice", "z")]
+
+    arm._search_nodes = search_nodes
+
+    assert (await arm._find_node("proj", "Alice")).uuid == "3"
+    assert (await arm._find_node("proj", "smith")).uuid == "2"
+    assert await arm._find_node("proj", "Zed") is None
+
+
+async def test_source_for_node_ids(config, tmp_path):
+    from graphiti_core.nodes import EntityNode
+
+    arm = make_arm(config, tmp_path)
+    await arm.start()
+    driver = arm._graphiti.driver.clone("proj")
+    n = EntityNode(name="Alice", group_id="proj", name_embedding=VEC, summary="Alice is an SRE.",
+                   created_at=T)
+    await n.save(driver)
+
+    rec = await arm.source(f"node:{n.uuid}")
+
+    assert rec.text == "Alice is an SRE." and rec.source_ref == f"node:{n.uuid}"
+    assert rec.memory_id == f"node:{n.uuid}" and rec.ts == T
+    assert await arm.source("node:missing") is None
+
+
+async def test_entity_recall_against_real_graph(config, tmp_path):
+    from graphiti_core.nodes import EntityNode
+
+    arm = make_arm(config, tmp_path)
+    await arm.start()
+    await add_edge(arm, "proj", FACT_TEA)
+    driver = arm._graphiti.driver.clone("proj")
+    n = EntityNode(name="Alice", group_id="proj", name_embedding=VEC, summary="Alice drinks tea.")
+    await n.save(driver)
+
+    mems = await arm.recall("proj", "tea", 10_000, entities=["Alice"])
+
+    assert mems[0].id == f"node:{n.uuid}" and mems[0].text == "Alice: Alice drinks tea."
+    assert FACT_TEA in {m.text for m in mems}

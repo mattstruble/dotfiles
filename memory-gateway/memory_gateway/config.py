@@ -15,6 +15,8 @@ class Config(BaseModel):
     hindsight_latest_only: bool = True
     bedrock_model: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     aws_region: str = "us-east-1"
+    entity_model: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    entity_timeout_s: float = 3.0
     cognee_url: str = "http://127.0.0.1:8012"
     wiki_source: str = "~/llm-wiki"
     arm_sources: dict[str, list[str]] = Field(default_factory=dict)
