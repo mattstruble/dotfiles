@@ -46,6 +46,23 @@ _TRIVIAL_FACTS = [
     )
 ]
 _TICKET_ID = re.compile(r"\b[A-Z][A-Z0-9]*-\d+\b")
+MEMBERSHIP_MAX_LEN = 200
+_MEMBERSHIP_KIND = r"(?:story|task epic|task|subtask|spike|epic|sub-spec|ticket|child|issue)"
+_MEMBERSHIP_SUBJECT = r"\S+(?:\s+\S+){0,5}?"
+_MEMBERSHIP_FACTS = [
+    re.compile(p, re.IGNORECASE)
+    for p in (
+        rf"^{_MEMBERSHIP_SUBJECT}\s+(?:is|are)\s+(?:(?:a|an|the)\s+)?{_MEMBERSHIP_KIND}"
+        r"\s+(?:that is\s+)?(?:under|within|in|of|part of|belonging to)\s+(?P<rest>.+)$",
+        rf"^{_MEMBERSHIP_SUBJECT}\s+is part of\s+(?:the\s+)?(?P<rest>.+)$",
+    )
+]
+_MEMBERSHIP_CONTENT = re.compile(
+    r"\b(?:because|blocks|blocked|depends|must|adds|includes|owns|assigned|requires"
+    r"|after|before|via|so that|which)\b",
+    re.IGNORECASE,
+)
+_VERSION_TOKEN = re.compile(r"\bv?\d+(?:\.\d+)+\b")
 _VERSION_OR_DATE = re.compile(
     r"\bv?\d+\.\d+|\b\d{4}-\d{1,2}(?:-\d{1,2})?\b|\b\d{1,2}/\d{1,2}(?:/\d{2,4})?\b"
     r"|\b(?:19|20)\d{2}\b|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d",
@@ -92,9 +109,28 @@ def superseded_filters() -> list[Any]:
     return [SearchFilters(invalid_at=not_null), SearchFilters(expired_at=not_null)]
 
 
+def _is_membership_fact(text: str) -> bool:
+    """"X is a story under Y" epic-membership boilerplate, even with a naming appositive."""
+    if len(text) >= MEMBERSHIP_MAX_LEN:
+        return False
+    for rx in _MEMBERSHIP_FACTS:
+        m = rx.match(text)
+        if not m:
+            continue
+        rest = m.group("rest")
+        if _MEMBERSHIP_CONTENT.search(rest):
+            continue
+        if re.search(r"\d", _VERSION_TOKEN.sub("", _TICKET_ID.sub("", rest))):
+            continue
+        return True
+    return False
+
+
 def is_trivial_fact(text: str) -> bool:
     """Structural boilerplate ("X is a story", "X is part of Y") carrying no information."""
     text = text.strip()
+    if _is_membership_fact(text):
+        return True
     if len(text) >= TRIVIAL_MAX_LEN or "," in text or ";" in text:
         return False
     if _VERSION_OR_DATE.search(_TICKET_ID.sub("", text)):
