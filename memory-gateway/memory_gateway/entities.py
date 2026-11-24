@@ -20,7 +20,7 @@ CIRCUIT_THRESHOLD = 3  # consecutive failures that open the circuit
 TOOL_NAME = "extract_entities"
 SYSTEM = (
     "Extract up to 5 named entities from the user's query that a memory search should "
-    "look up: people, ticket ids (like PRJ-123), repositories, services and tools. "
+    "look up: people, ticket ids, repositories, services and tools. "
     "Return names exactly as written. Return an empty list if there are none."
 )
 TOOL = {

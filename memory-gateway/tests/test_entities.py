@@ -132,3 +132,13 @@ async def test_success_resets_consecutive_failures(config, tmp_path, monkeypatch
     await ex.extract("q4")
 
     assert len(m.calls) == 5  # circuit never opened
+
+
+async def test_extract_forces_tool_and_uses_configured_model(config, tmp_path):
+    ex, m = extractor(config, tmp_path, entities=["XYZ-123", "Alex"])
+
+    assert await ex.extract("status of XYZ-123 from Alex") == ["XYZ-123", "Alex"]
+
+    call = m.calls[0]
+    assert call["model"] == config.entity_model
+    assert call["tool_choice"] == {"type": "tool", "name": "extract_entities"}

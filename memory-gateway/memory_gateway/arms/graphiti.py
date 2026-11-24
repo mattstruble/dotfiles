@@ -378,7 +378,7 @@ class GraphitiArm:
     async def _find_node(self, project: str | None, name: str) -> Any | None:
         """Best EntityNode for `name`: exact name match, else the first hit whose name
         contains the entity (or vice versa) as whole words. Substrings of a word do not
-        count (PRJ-12 vs PRJ-123, git vs GitHub); unrelated vector neighbours are dropped."""
+        count (a short name inside a longer id, git vs GitHub); unrelated vector neighbours are dropped."""
         want = _name_words(name)
         nodes = await self._search_nodes(project, name)
         for n in nodes:

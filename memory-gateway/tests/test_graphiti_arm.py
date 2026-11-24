@@ -673,3 +673,138 @@ async def test_rerank_timeout_keeps_order_and_does_not_pile_up_jobs(config, tmp_
     assert elapsed < 1.0 and len(calls) == 1
     await asyncio.sleep(0.1)  # stalled job finished; the next recall reranks again
     assert [m.id for m in await arm.recall("proj", "q", 1000)] == ["2", "1"]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "XYZ-123 is a story",
+        "XYZ-123 is a Story in the kitchen project.",
+        "XYZ-9 is a subtask",
+        "Fix whisk is a spike",
+        "Rollout is an epic",
+        "Fix 1234 is a pull request",
+        "acme-tools is a repository",
+        "foo are a package",
+        "XYZ-1 is a ticket",
+        "XYZ-123 is part of XYZ-50",
+        "XYZ-123 is related to XYZ-51",
+        "XYZ-123 is associated with the dashboard.",
+        "Repo X contains the code location for service Y",
+        "repo X holds the specification",
+        "XYZ-12 is a story under XYZ-7, the Widget 2.0 launch epic",
+        "XYZ-2 is a story that is part of the XYZ-7 epic about Widget 2.0 lids",
+        "gizmo-handle is a task epic within the XYZ-7 Widget 2.0 Lids epic",
+        "XYZ-3 lid sizing story is part of the XYZ-7 Widget 2.0 Lids epic",
+        "XYZ-9 is a story within the XYZ-7 epic about Widget 2.0 lids",
+    ],
+)
+def test_trivial_facts_are_dropped(text):
+    assert is_trivial_fact(text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Jordan likes tea",
+        "XYZ-123 is a story, blocked on review",  # clause after comma
+        "XYZ-123 is a story; owner is Sam",  # clause after semicolon
+        "gizmo is a package at version 2.3.1",  # version
+        "XYZ-123 is a story created 2030-03-04",  # date
+        "XYZ-123 is part of the 2030 roadmap",  # year
+        "XYZ-123 was a story",
+        "Alex is a staff engineer",
+        "XYZ-123 is a story " + "x" * 110,  # over the length cap
+        "XYZ-50 blocks XYZ-51 because XYZ-51 reuses the lid template defined in XYZ-50",
+        "XYZ-50 must merge before XYZ-2's sample run because the handle field changes every Widget build tag",
+        "XYZ-7 was sketched on Nov 3 2030 against acme.core main abc1234.",
+        "XYZ-7 proposes the labels acme.core.lid, acme.core.handle, acme.core.blade, and acme.core.motor for the Widget 2.0 design",
+        "Jordan is recommended to own XYZ-9 (the lid supplier check) as part of the sourcing plan",
+        "XYZ-1 is a story under XYZ-2, which blocks XYZ-3",  # content words in the rest
+        "XYZ-1 is a story under XYZ-2, created on the 28th",  # stray digits in the rest
+    ],
+)
+def test_nontrivial_facts_are_kept(text):
+    assert not is_trivial_fact(text)
+
+
+def test_stale_plan_is_moved_last_keeping_order():
+    old, recent = NOW - timedelta(days=30), NOW - timedelta(days=3)
+    edges = [
+        edge("1", "Sam will ship the fix", old),
+        edge("2", "Jordan uses vim", old),
+        edge("3", "Alex should refactor", recent),
+        edge("4", "Riley plans to leave", old),
+        edge("5", "Sam said next week is fine", old),
+        edge("6", "Alex likes tea", None),
+        edge("7", "Jordan will rest", None),
+    ]
+
+    assert [e.uuid for e in rank_facts(edges, NOW)] == ["2", "3", "6", "7", "1", "4", "5"]
+
+
+def test_rank_facts_drops_trivia():
+    edges = [edge("1", "XYZ-1 is a story"), edge("2", "Alex likes tea")]
+    assert [e.uuid for e in rank_facts(edges, NOW)] == ["2"]
+
+
+async def test_recall_without_entities_filters_noise_and_dedups(config, tmp_path):
+    arm = fake_arm(
+        config, tmp_path,
+        main=[edge("1", "XYZ-1 is a story"), edge("2", "Alex likes tea"), edge("2", "Alex likes tea")],
+    )
+
+    mems = await arm.recall("proj", "q", 1000)
+
+    assert [m.id for m in mems] == ["2"]
+    assert arm.calls == [("q", None)]
+
+
+@pytest.mark.parametrize(
+    "entity, node_name",
+    [("XYZ-12", "XYZ-123"), ("XYZ-1", "XYZ-1234"), ("Go", "Google"), ("git", "GitHub"),
+     ("XYZ-123", "XYZ-12")],
+)
+async def test_find_node_rejects_partial_word_matches(config, tmp_path, entity, node_name):
+    arm = make_arm(config, tmp_path)
+
+    async def search_nodes(project, name, limit=5):
+        return [node("1", node_name, "wrong summary")]
+
+    arm._search_nodes = search_nodes
+
+    assert await arm._find_node("proj", entity) is None
+
+
+async def test_find_node_matches_whole_word_runs(config, tmp_path):
+    arm = make_arm(config, tmp_path)
+
+    async def search_nodes(project, name, limit=5):
+        return [node("1", "The XYZ-12 batch", "x"), node("2", "acme-tools", "y")]
+
+    arm._search_nodes = search_nodes
+
+    assert (await arm._find_node("proj", "XYZ-12")).uuid == "1"
+    assert (await arm._find_node("proj", "Acme-Tools")).uuid == "2"
+
+
+async def test_filters_apply_after_rerank(config, tmp_path):
+    main = [
+        edge("1", "Alex likes tea"),
+        edge("2", "XYZ-1 is a story"),  # trivial: dropped even when ranked first
+        edge("3", "Alex should plan the cleanup", valid_at=T),  # stale plan: moved last
+        edge("4", "Alex likes tea a lot"),
+        edge("5", "Jordan uses a whisk daily"),
+    ]
+    scores = {"2": 9, "3": 8, "1": 7, "4": 6, "5": 5}
+    rr = ScoringReranker(lambda q, d: next(
+        s for i, s in scores.items() if d == next(e.fact for e in main if e.uuid == i)
+    ))
+    arm = fake_arm(config, tmp_path, main=main, reranker=rr)
+
+    mems = await arm.recall("proj", "q", 1000)
+
+    assert [m.id for m in mems] == ["1", "4", "5", "3"]
+    # budget still caps the reranked list
+    tight = await arm.recall("proj", "q", count_tokens("Alex likes tea"))
+    assert [m.id for m in tight] == ["1"]

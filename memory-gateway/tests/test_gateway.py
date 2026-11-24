@@ -357,3 +357,15 @@ async def test_http_recall_accepts_entities_and_entity_aware(config, tmp_path):
             assert (await c.post("/recall", json=body)).status_code == 200
 
     assert ent.seen == [["bob"], ["alice"], None]
+
+
+async def test_entities_go_only_to_arms_that_accept_them(config, tmp_path):
+    ent, plain = EntityArm(), SpyArm()
+    g = entity_gw(config, tmp_path, FakeExtractor(), ent=ent, plain=plain)
+
+    out = await g.recall("p", "q", 100, None, entities=["Alex", "XYZ-1"])
+
+    assert ent.seen == [["Alex", "XYZ-1"]]
+    assert plain.kwargs == [{}]
+    assert len(out["results"]["plain"]) == 3 and not out["errors"]
+    g.queue.close()
