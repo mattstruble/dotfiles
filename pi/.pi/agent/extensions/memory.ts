@@ -628,11 +628,18 @@ export function createMemoryExtension(opts: MemoryOptions = {}) {
     pi.registerTool({
       name: "memory_retain",
       label: "Memory retain",
-      description: 'Store a durable fact in long-term memory. Use when the user says "remember this" or states a durable preference/decision.',
-      parameters: { type: "object", properties: { text: str("The fact to remember, self-contained") }, required: ["text"] },
+      description: 'Store a durable fact in long-term memory. Use when the user says "remember this" or states a durable preference/decision. Scope defaults to "project" (current repository). Use scope "global" for knowledge that is not specific to the current repository (people, teams, cross-project decisions, other repos\' status).',
+      parameters: {
+        type: "object",
+        properties: {
+          text: str("The fact to remember, self-contained"),
+          scope: { type: "string", enum: ["project", "global"], description: 'Where the fact applies: "project" (default) or "global"' },
+        },
+        required: ["text"],
+      },
       async execute(_id: string, params: any, _signal: any, _upd: any, ctx: any) {
         const r = await gw.ingest({
-          project: projectOf(ctx.cwd),
+          project: params.scope === "global" ? null : projectOf(ctx.cwd),
           session_id: sessionId(ctx),
           source: "retain",
           timestamp: new Date().toISOString(),

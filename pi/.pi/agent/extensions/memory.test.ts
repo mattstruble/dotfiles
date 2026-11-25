@@ -532,6 +532,31 @@ describe("extension behaviour", () => {
   });
 });
 
+describe("memory_retain scope", () => {
+  async function retainWith(params: Record<string, unknown>) {
+    const pi = fakePi();
+    const m = mockFetch(() => ({}));
+    createMemoryExtension({ configPath: cfgFile({ mode: "inject" }), fetchImpl: m.fn, gitCommonDir: git })(pi as any);
+    await pi.tools.memory_retain.execute("i", { text: "team alpha owns billing", ...params }, null, null, ctxFor([]));
+    return m.calls.find((c: any) => c.path === "/ingest").body;
+  }
+
+  it("defaults to the project tag", async () => {
+    const body = await retainWith({});
+    assert.equal(typeof body.project, "string");
+    assert.equal((await retainWith({ scope: "project" })).project, body.project);
+  });
+
+  it("global sends null project", async () => {
+    assert.equal((await retainWith({ scope: "global" })).project, null);
+  });
+
+  it("invalid scope falls back to project", async () => {
+    const def = await retainWith({});
+    assert.equal((await retainWith({ scope: "bogus" })).project, def.project);
+  });
+});
+
 describe("entity-aware recall", () => {
   const resp = () => ({ results: { hindsight: [{ id: "h1", text: "fact" }] }, errors: {} });
   async function allPaths(extra: Record<string, unknown>) {
