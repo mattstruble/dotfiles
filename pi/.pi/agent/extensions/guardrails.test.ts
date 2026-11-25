@@ -9,6 +9,7 @@ import {
   secretDecryptBlockReason,
   bdVerbs,
   default as guardrails,
+  isForcePush,
   loadEnvSecrets,
   redactSecrets,
   scanSecrets,
@@ -375,6 +376,34 @@ function signUnpushedBody(): string {
   assert.ok(m, "sign-unpushed alias not found in home.nix");
   return m[1].replace(/\\(.)/g, "$1"); // undo Nix string escapes
 }
+
+it("treats a forced push segment as a force push", () => {
+  for (const c of [
+    "git push --force origin main",
+    "git push -f",
+    "git push -uf origin x",
+    "git push --force-with-lease",
+    "git push --force-if-includes origin x",
+    "git push origin +main",
+    "git push origin +refs/heads/x:refs/heads/x",
+    "git -C sub push -f",
+    "git -c a=b push --force",
+    "git status && git push -f",
+    "FOO=1 git push -f",
+  ]) assert.equal(isForcePush(c), true, c);
+});
+
+it("ignores force-like flags outside the push segment", () => {
+  for (const c of [
+    "git push origin main",
+    "git push -u origin x",
+    "git push --follow-tags",
+    "git push && bd create 'x' --body-file /tmp/b.md",
+    "bd create 'mention git push' --body-file /tmp/b.md",
+    'git commit -m "git push -f is blocked"',
+    "git log -f",
+  ]) assert.equal(isForcePush(c), false, c);
+});
 
 it("lets a plain push through but still blocks a forced push", async () => {
   const h = loadHandlers();

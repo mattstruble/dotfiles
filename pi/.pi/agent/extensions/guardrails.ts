@@ -244,6 +244,24 @@ export function secretDecryptBlockReason(command: string): string | undefined {
   return undefined;
 }
 
+const GIT_PUSH_SEGMENT = /^(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*git(?:\s+-[cC]\s+\S+|\s+--[A-Za-z][\w-]*(?:=\S+)?|\s+-P)*\s+push(?:\s+(.*))?$/;
+const FORCE_FLAG = /(^|\s)(-[a-zA-Z]*f[a-zA-Z]*|--force(?:-with-lease|-if-includes)?(?:=\S*)?|\+\S+)(?=\s|$)/;
+
+/**
+ * Whether a `git push` segment carries a force flag or a `+` refspec. Only the push segment is checked,
+ * so a `-f` elsewhere on the line (`--body-file`, a quoted commit message) does not count.
+ * ponytail: quote-unaware segment split; `sh -c 'git push -f'` and git aliases are accepted gaps.
+ */
+export function isForcePush(command: string): boolean {
+  return command
+    .split(/&&|\|\||[;|\n]/)
+    .map((s) => s.trim().replace(/^[({]\s*/, ""))
+    .some((s) => {
+      const m = s.match(GIT_PUSH_SEGMENT);
+      return m !== null && FORCE_FLAG.test(m[1] ?? "");
+    });
+}
+
 /** Shared bash-command guards: force-push, doom loop, secret decrypt, conventional commit, staged diff secrets, bd remember secrets. */
 async function checkBashCommand(cmd: string, pi: ExtensionAPI): Promise<GuardResult> {
   // ── Doom loop breaker ──────────────────────────────────────────────────
@@ -258,7 +276,7 @@ async function checkBashCommand(cmd: string, pi: ExtensionAPI): Promise<GuardRes
   recentCommands.push(cmd);
 
   // ── Force-push block ───────────────────────────────────────────────────
-  if (/git\s+push\s+.*(-f|--force|--force-with-lease)/.test(cmd) || /\+refs\//.test(cmd)) {
+  if (isForcePush(cmd)) {
     return { block: true, reason: "Force-push is blocked. Use a regular push or open a PR." };
   }
 
