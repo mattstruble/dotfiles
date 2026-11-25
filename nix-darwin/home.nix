@@ -17,7 +17,10 @@ let
 
   # Extensions loaded inside subagent and workflow children. `name` is how
   # pi-dynamic-workflows identifies an extension; pi-subagents takes the path.
-  # Keep out anything that needs a UI (pi-permission-system would deny every "ask").
+  # pi-permission-system is loaded too; observed behaviour in children:
+  # - foreground pi-subagents and workflow children deny "ask" at once, with no prompt and no hang;
+  # - background pi-subagents children forward asks to the parent and time out to a deferred denial;
+  # - deny rules hold everywhere.
   piChildExtensions = [
     {
       name = "skill-router";
@@ -34,6 +37,10 @@ let
     {
       name = "pi-rtk-optimizer";
       path = "${home}/.pi/agent/npm/node_modules/pi-rtk-optimizer/index.ts";
+    }
+    {
+      name = "@gotgenes/pi-permission-system";
+      path = "${home}/.pi/agent/npm/node_modules/@gotgenes/pi-permission-system/src/index.ts";
     }
   ];
   # Obsidian Linter data.json. Not set via programs.obsidian's plugin `settings`: the linter
