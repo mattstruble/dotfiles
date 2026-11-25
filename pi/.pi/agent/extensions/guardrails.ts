@@ -8,8 +8,8 @@ const SECRET_PATTERNS: Array<{ re: RegExp; label: string }> = [
   { re: /AKIA[0-9A-Z]{16}/, label: "AWS Access Key" },
   { re: /ghp_[A-Za-z0-9_]{36,}/, label: "GitHub PAT" },
   { re: /gho_[A-Za-z0-9_]{36,}/, label: "GitHub OAuth" },
-  { re: /sk-live_[A-Za-z0-9]+/, label: "Stripe live key" },
-  { re: /sk-test_[A-Za-z0-9]+/, label: "Stripe test key" },
+  { re: /(?<![A-Za-z0-9_])(?:[sr]k_|sk-)live_[A-Za-z0-9]+/, label: "Stripe live key" },
+  { re: /(?<![A-Za-z0-9_])(?:[sr]k_|sk-)test_[A-Za-z0-9]+/, label: "Stripe test key" },
   { re: /xoxb-[A-Za-z0-9-]+/, label: "Slack bot token" },
   { re: /xoxp-[A-Za-z0-9-]+/, label: "Slack user token" },
   { re: /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/, label: "Private key" },
@@ -18,11 +18,143 @@ const SECRET_PATTERNS: Array<{ re: RegExp; label: string }> = [
   { re: /mongodb(\+srv)?:\/\/[^\s]+/, label: "MongoDB URI" },
 ];
 
-function scanSecrets(text: string): string | null {
+// A URI whose userinfo is exactly a redaction placeholder (what redactSecrets emits) holds no secret; drop the
+// `scheme://[REDACTED:...]@` prefix so a model copying redacted tool output is not blocked.
+const REDACTED_URI_PREFIX = /(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?):\/\/\[REDACTED:[^\]\n]*\]@/g;
+
+export function scanSecrets(text: string): string | null {
+  const scanned = text.replace(REDACTED_URI_PREFIX, "");
   for (const { re, label } of SECRET_PATTERNS) {
-    if (re.test(text)) return label;
+    if (re.test(scanned)) return label;
   }
   return null;
+}
+
+// ── Output redaction (tool results) ────────────────────────────────────────
+// Every pattern has a fixed prefix or key; no unanchored high-entropy matching, so git SHAs and digests pass.
+// Redaction-only variants: private keys match the whole block; URIs redact only the userinfo.
+// URI rule follows gitleaks' generic URL-credentials approach and RFC 3986 section 3.2: userinfo cannot contain
+// / ? # or whitespace/quotes, so it ends at the first @ before any of those. Only the userinfo is replaced
+// (scheme://[REDACTED:label]@host/path keeps host and path readable and minified JSON intact). A URI without
+// userinfo is not a secret and is left unchanged; `h/db,x@y` is path text, not userinfo.
+const uriRedaction = (scheme: string) => new RegExp(`(?<=${scheme}:\\/\\/)[^\\s"'<>/?#@]+(?=@)`, "g");
+const AWS_SECRET_KEY_NAME = `aws[_-]?secret[_-]?access[_-]?key`;
+const REDACT_OVERRIDES: Record<string, RegExp> = {
+  "PostgreSQL URI": uriRedaction("postgres(?:ql)?"),
+  "MySQL URI": uriRedaction("mysql"),
+  "MongoDB URI": uriRedaction("mongodb(?:\\+srv)?"),
+  "Private key": new RegExp(
+    "-----BEGIN (?:[A-Z]+ )*PRIVATE KEY-----(?:[\\s\\S]*?-----END (?:[A-Z]+ )*PRIVATE KEY-----)?",
+    "g",
+  ),
+};
+const REDACT_PATTERNS: Array<{ re: RegExp; label: string }> = [
+  ...SECRET_PATTERNS.map(({ re, label }) => ({ re: REDACT_OVERRIDES[label] ?? new RegExp(re.source, "g"), label })),
+  { re: /ASIA[0-9A-Z]{16}/g, label: "AWS Temporary Access Key" },
+  { re: /github_pat_[A-Za-z0-9_]{20,}/g, label: "GitHub fine-grained PAT" },
+  { re: /ghs_[A-Za-z0-9]{30,}/g, label: "GitHub App token" },
+  { re: /sk-ant-[A-Za-z0-9_-]{20,}/g, label: "Anthropic API key" },
+  { re: /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, label: "JWT" },
+  // Key-name forms follow gitleaks/detect-secrets keyword rules (no unanchored high-entropy match): the name in
+  // snake/kebab/camel/Pascal case (case-insensitive), then `=`, `:`, `=>` (Ruby hash rocket), or whitespace after a
+  // `--` CLI flag; optional quotes around key and value; the value stops at a closing quote or delimiter.
+  {
+    re: new RegExp(
+      `(?:--${AWS_SECRET_KEY_NAME}\\s+|${AWS_SECRET_KEY_NAME}["']?\\s*(?:=>|[=:])\\s*)["']?[^\\s"'<>,;)]+`,
+      "gi",
+    ),
+    label: "AWS Secret Key",
+  },
+];
+
+export type EnvSecret = { name: string; value: string };
+
+const ENV_SECRET_NAME = /(_API_KEY|_TOKEN|_SECRET|_SECRET_ACCESS_KEY|_ACCESS_KEY)$|PASSWORD/;
+const ENV_NON_SECRET_NAME = /^MAX_|_MAX_/; // MAX_THINKING_TOKENS, *_MAX_OUTPUT_TOKENS
+
+/** Environment variables whose exact values must never reach the transcript. Longest values first. */
+export function loadEnvSecrets(env: Record<string, string | undefined>): EnvSecret[] {
+  const out: EnvSecret[] = [];
+  for (const [name, value] of Object.entries(env)) {
+    if (value === undefined || value.length < 8) continue;
+    if (!ENV_SECRET_NAME.test(name) || ENV_NON_SECRET_NAME.test(name)) continue;
+    out.push({ name, value });
+  }
+  return out.sort((a, b) => b.value.length - a.value.length);
+}
+
+/** Replace env values and known secret patterns in text with [REDACTED:<label>]. */
+export function redactSecrets(text: string, envSecrets: EnvSecret[] = []): string {
+  let out = text;
+  for (const { name, value } of envSecrets) out = out.split(value).join(`[REDACTED:env:${name}]`);
+  for (const { re, label } of REDACT_PATTERNS) out = out.replace(re, `[REDACTED:${label}]`);
+  return out;
+}
+
+function redactJson(v: any, envSecrets: EnvSecret[]): any {
+  if (typeof v === "string") return redactSecrets(v, envSecrets);
+  if (Array.isArray(v)) return v.map((x) => redactJson(x, envSecrets));
+  if (v && typeof v === "object") {
+    return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, redactJson(x, envSecrets)]));
+  }
+  return v;
+}
+
+/**
+ * Redact text parts of a tool result (and structuredContent, which pi drops when only content is replaced).
+ * Returns a partial patch, or undefined when nothing changed.
+ */
+export function redactToolResult(
+  event: { content?: any[]; structuredContent?: unknown },
+  envSecrets: EnvSecret[],
+): { content: any[]; structuredContent?: any } | undefined {
+  let changed = false;
+  const content = (event.content ?? []).map((part) => {
+    if (part?.type !== "text" || typeof part.text !== "string") return part;
+    const text = redactSecrets(part.text, envSecrets);
+    if (text === part.text) return part;
+    changed = true;
+    return { ...part, text };
+  });
+  let structured: any;
+  if (event.structuredContent !== undefined) {
+    const before = JSON.stringify(event.structuredContent);
+    structured = redactJson(event.structuredContent, envSecrets);
+    if (JSON.stringify(structured) !== before) changed = true;
+  }
+  if (!changed) return undefined;
+  return event.structuredContent !== undefined ? { content, structuredContent: structured } : { content };
+}
+
+// ── Unanswered permission prompts ──────────────────────────────────────────
+// pi-permission-system blocks a timed-out ask with a tool_call reason. A blocked call skips tool_result, so
+// the text only reaches the model as an error toolResult message; the `context` hook is the one place that
+// sees and can change it, in the parent and in every child session that runs the tool.
+// Shape of renderUnansweredDenial, @gotgenes/pi-permission-system src/presentation/agent-renderer.ts:265, via tagged() :283.
+// Anchored to the start of the text: tagged() always puts `[pi-permission-system] ` first, so bash stderr or a
+// user's denial reason that merely contains the phrase is left alone. The sentence is a single line (a reason
+// may follow it and span lines), hence [^\n]*? rather than the dotall wildcard.
+export const UNANSWERED_DENIAL_RE =
+  /^\[pi-permission-system\] Nobody\b[^\n]*?\banswered the approval prompt for this\b[^\n]*?\bwithin \d+(\.\d+)?s\./;
+export const DEFERRED_DENIAL_TEXT =
+  "Deferred: no human available. Do not attempt this another way. Report it as pending under 'Needs approval'.";
+
+/** Replace unanswered-prompt denial text in error tool results. Returns undefined when nothing changed. */
+export function deferUnansweredDenials(messages: any[]): any[] | undefined {
+  let changed = false;
+  const out = messages.map((m) => {
+    if (m?.role !== "toolResult" || m.isError !== true || !Array.isArray(m.content)) return m;
+    let hit = false;
+    const content = m.content.map((part: any) => {
+      if (part?.type !== "text" || typeof part.text !== "string" || !UNANSWERED_DENIAL_RE.test(part.text)) return part;
+      hit = true;
+      return { ...part, text: DEFERRED_DENIAL_TEXT };
+    });
+    if (!hit) return m;
+    changed = true;
+    return { ...m, content };
+  });
+  return changed ? out : undefined;
 }
 
 // Process-scoped doom loop history (not persisted across restarts)
@@ -299,7 +431,19 @@ export function nestedCallReason(toolName: string, parentToolCallId: string | un
 
 export default function (pi: ExtensionAPI) {
   const mcpGate = createMcpGate((channel, data) => pi.events.emit(channel, data));
-  pi.on("session_start", async () => mcpGate.reset());
+  let envSecrets: EnvSecret[] = loadEnvSecrets(process.env);
+  pi.on("session_start", async () => {
+    mcpGate.reset();
+    envSecrets = loadEnvSecrets(process.env);
+  });
+
+  // Runs for nested (codemode) calls too: parentToolCallId is deliberately not checked.
+  pi.on("tool_result", async (event) => redactToolResult(event as any, envSecrets));
+
+  pi.on("context", async (event) => {
+    const messages = deferUnansweredDenials((event as any).messages ?? []);
+    return messages ? { messages } : undefined;
+  });
 
   pi.on("tool_call", async (event, ctx) => {
     const tool = event.toolName;
