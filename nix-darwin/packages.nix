@@ -93,7 +93,8 @@ with pkgs;
   perl
   perlPackages.ImageExifTool
   pinentry_mac
-  plantuml
+  # VegaTest SVG snapshot tests (stdlib azure/osa2) fail on darwin in 1.2026.10
+  (plantuml.overrideAttrs { doCheck = false; })
   # pre-commit
   protobufc
   psrecord
