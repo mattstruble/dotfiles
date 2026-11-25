@@ -1283,6 +1283,8 @@ in
             "!${pkgs.git}/bin/git log refs/snapshots/refs/heads/" + "\$(${pkgs.git}/bin/git rev-parse HEAD)";
           spull =
             "!${pkgs.git}/bin/git stash" + " && ${pkgs.git}/bin/git pull" + " && ${pkgs.git}/bin/git stash pop";
+          # Sign only commits on no remote-tracking ref; refuse (rewriting nothing) when that range has a merge
+          sign-unpushed = "!f() { oldest=\$(git rev-list --reverse HEAD --not --remotes | head -1); [ -n \"\$oldest\" ] || exit 0; if [ -n \"\$(git rev-list --merges HEAD --not --remotes)\" ]; then echo 'sign-unpushed: unpushed commits include a merge; rebasing would flatten it. Sign them manually.' >&2; exit 1; fi; if git rev-parse -q --verify \"\$oldest^\" >/dev/null; then git rebase --exec 'git commit --amend --no-edit -S' \"\$oldest^\"; else git rebase --exec 'git commit --amend --no-edit -S' --root; fi; }; f";
           su = "submodule update --init --recursive";
           undo = "reset --soft HEAD^";
           kd = "difftool --no-symlinks --dir-diff";
