@@ -1,0 +1,1184 @@
+{
+  "doublePressToConfirm": false,
+  "forwardingTimeoutMs": 300000,
+  "permission": {
+    "*": "allow",
+    "bash": {
+      "*": "allow",
+      "git push *": "ask",
+      "git push": "ask",
+      "git -* push*": "ask",
+      "git -c commit.gpgsign=false commit *": "allow",
+      "gh pr create *": "ask",
+      "gh pr merge *": "ask",
+      "gh pr close *": "ask",
+      "gh api * -X*": "ask",
+      "gh api -X*": "ask",
+      "gh api * --method*": "ask",
+      "gh api --method*": "ask",
+      "gh api * -f*": "ask",
+      "gh api -f*": "ask",
+      "gh api * -F*": "ask",
+      "gh api -F*": "ask",
+      "gh api * --field*": "ask",
+      "gh api --field*": "ask",
+      "gh api * --raw-field*": "ask",
+      "gh api --raw-field*": "ask",
+      "gh api * --input*": "ask",
+      "gh api --input*": "ask",
+      "gh release *": "ask",
+      "gh repo *": "ask",
+      "kubectl apply *": "ask",
+      "kubectl * apply *": "ask",
+      "kubectl delete *": "ask",
+      "kubectl * delete *": "ask",
+      "kubectl patch *": "ask",
+      "kubectl * patch *": "ask",
+      "kubectl edit *": "ask",
+      "kubectl * edit *": "ask",
+      "kubectl scale *": "ask",
+      "kubectl * scale *": "ask",
+      "kubectl rollout *": "ask",
+      "kubectl * rollout *": "ask",
+      "kubectl exec *": "ask",
+      "kubectl * exec *": "ask",
+      "kubectl drain *": "ask",
+      "kubectl * drain *": "ask",
+      "kubectl cordon *": "ask",
+      "kubectl * cordon *": "ask",
+      "helm install *": "ask",
+      "helm * install *": "ask",
+      "helm upgrade *": "ask",
+      "helm * upgrade *": "ask",
+      "helm uninstall *": "ask",
+      "helm * uninstall *": "ask",
+      "helm rollback *": "ask",
+      "helm * rollback *": "ask",
+      "aws *": "ask",
+      "ssh *": "ask",
+      "scp *": "ask",
+      "rsync *": "ask",
+      "curl * -X*": "ask",
+      "curl -X*": "ask",
+      "curl * -d*": "ask",
+      "curl -d*": "ask",
+      "curl * --data*": "ask",
+      "curl --data*": "ask",
+      "curl * --request*": "ask",
+      "curl --request*": "ask",
+      "curl * -F*": "ask",
+      "curl -F*": "ask",
+      "curl * --form*": "ask",
+      "curl --form*": "ask",
+      "curl * -T*": "ask",
+      "curl -T*": "ask",
+      "curl * --upload-file*": "ask",
+      "curl --upload-file*": "ask",
+      "curl -?X*": "ask",
+      "curl * -?X*": "ask",
+      "curl -??X*": "ask",
+      "curl * -??X*": "ask",
+      "curl -???X*": "ask",
+      "curl * -???X*": "ask",
+      "curl -????X*": "ask",
+      "curl * -????X*": "ask",
+      "curl -?????X*": "ask",
+      "curl * -?????X*": "ask",
+      "curl -??????X*": "ask",
+      "curl * -??????X*": "ask",
+      "curl -???????X*": "ask",
+      "curl * -???????X*": "ask",
+      "curl -????????X*": "ask",
+      "curl * -????????X*": "ask",
+      "curl -?d*": "ask",
+      "curl * -?d*": "ask",
+      "curl -??d*": "ask",
+      "curl * -??d*": "ask",
+      "curl -???d*": "ask",
+      "curl * -???d*": "ask",
+      "curl -????d*": "ask",
+      "curl * -????d*": "ask",
+      "curl -?????d*": "ask",
+      "curl * -?????d*": "ask",
+      "curl -??????d*": "ask",
+      "curl * -??????d*": "ask",
+      "curl -???????d*": "ask",
+      "curl * -???????d*": "ask",
+      "curl -????????d*": "ask",
+      "curl * -????????d*": "ask",
+      "curl -?F*": "ask",
+      "curl * -?F*": "ask",
+      "curl -??F*": "ask",
+      "curl * -??F*": "ask",
+      "curl -???F*": "ask",
+      "curl * -???F*": "ask",
+      "curl -????F*": "ask",
+      "curl * -????F*": "ask",
+      "curl -?????F*": "ask",
+      "curl * -?????F*": "ask",
+      "curl -??????F*": "ask",
+      "curl * -??????F*": "ask",
+      "curl -???????F*": "ask",
+      "curl * -???????F*": "ask",
+      "curl -????????F*": "ask",
+      "curl * -????????F*": "ask",
+      "curl -?T*": "ask",
+      "curl * -?T*": "ask",
+      "curl -??T*": "ask",
+      "curl * -??T*": "ask",
+      "curl -???T*": "ask",
+      "curl * -???T*": "ask",
+      "curl -????T*": "ask",
+      "curl * -????T*": "ask",
+      "curl -?????T*": "ask",
+      "curl * -?????T*": "ask",
+      "curl -??????T*": "ask",
+      "curl * -??????T*": "ask",
+      "curl -???????T*": "ask",
+      "curl * -???????T*": "ask",
+      "curl -????????T*": "ask",
+      "curl * -????????T*": "ask",
+      "curl * --json*": "ask",
+      "curl --json*": "ask",
+      "curl * -K*": "ask",
+      "curl -K*": "ask",
+      "curl * --config*": "ask",
+      "curl --config*": "ask",
+      "curl -?K*": "ask",
+      "curl * -?K*": "ask",
+      "curl -??K*": "ask",
+      "curl * -??K*": "ask",
+      "curl -???K*": "ask",
+      "curl * -???K*": "ask",
+      "curl -????K*": "ask",
+      "curl * -????K*": "ask",
+      "curl -?????K*": "ask",
+      "curl * -?????K*": "ask",
+      "curl -??????K*": "ask",
+      "curl * -??????K*": "ask",
+      "curl -???????K*": "ask",
+      "curl * -???????K*": "ask",
+      "curl -????????K*": "ask",
+      "curl * -????????K*": "ask",
+      "*/curl * -X*": "ask",
+      "*/curl -X*": "ask",
+      "*/curl * -d*": "ask",
+      "*/curl -d*": "ask",
+      "*/curl * --data*": "ask",
+      "*/curl --data*": "ask",
+      "*/curl * --request*": "ask",
+      "*/curl --request*": "ask",
+      "*/curl * -F*": "ask",
+      "*/curl -F*": "ask",
+      "*/curl * --form*": "ask",
+      "*/curl --form*": "ask",
+      "*/curl * -T*": "ask",
+      "*/curl -T*": "ask",
+      "*/curl * --upload-file*": "ask",
+      "*/curl --upload-file*": "ask",
+      "*/curl -?X*": "ask",
+      "*/curl * -?X*": "ask",
+      "*/curl -??X*": "ask",
+      "*/curl * -??X*": "ask",
+      "*/curl -???X*": "ask",
+      "*/curl * -???X*": "ask",
+      "*/curl -????X*": "ask",
+      "*/curl * -????X*": "ask",
+      "*/curl -?????X*": "ask",
+      "*/curl * -?????X*": "ask",
+      "*/curl -??????X*": "ask",
+      "*/curl * -??????X*": "ask",
+      "*/curl -???????X*": "ask",
+      "*/curl * -???????X*": "ask",
+      "*/curl -????????X*": "ask",
+      "*/curl * -????????X*": "ask",
+      "*/curl -?d*": "ask",
+      "*/curl * -?d*": "ask",
+      "*/curl -??d*": "ask",
+      "*/curl * -??d*": "ask",
+      "*/curl -???d*": "ask",
+      "*/curl * -???d*": "ask",
+      "*/curl -????d*": "ask",
+      "*/curl * -????d*": "ask",
+      "*/curl -?????d*": "ask",
+      "*/curl * -?????d*": "ask",
+      "*/curl -??????d*": "ask",
+      "*/curl * -??????d*": "ask",
+      "*/curl -???????d*": "ask",
+      "*/curl * -???????d*": "ask",
+      "*/curl -????????d*": "ask",
+      "*/curl * -????????d*": "ask",
+      "*/curl -?F*": "ask",
+      "*/curl * -?F*": "ask",
+      "*/curl -??F*": "ask",
+      "*/curl * -??F*": "ask",
+      "*/curl -???F*": "ask",
+      "*/curl * -???F*": "ask",
+      "*/curl -????F*": "ask",
+      "*/curl * -????F*": "ask",
+      "*/curl -?????F*": "ask",
+      "*/curl * -?????F*": "ask",
+      "*/curl -??????F*": "ask",
+      "*/curl * -??????F*": "ask",
+      "*/curl -???????F*": "ask",
+      "*/curl * -???????F*": "ask",
+      "*/curl -????????F*": "ask",
+      "*/curl * -????????F*": "ask",
+      "*/curl -?T*": "ask",
+      "*/curl * -?T*": "ask",
+      "*/curl -??T*": "ask",
+      "*/curl * -??T*": "ask",
+      "*/curl -???T*": "ask",
+      "*/curl * -???T*": "ask",
+      "*/curl -????T*": "ask",
+      "*/curl * -????T*": "ask",
+      "*/curl -?????T*": "ask",
+      "*/curl * -?????T*": "ask",
+      "*/curl -??????T*": "ask",
+      "*/curl * -??????T*": "ask",
+      "*/curl -???????T*": "ask",
+      "*/curl * -???????T*": "ask",
+      "*/curl -????????T*": "ask",
+      "*/curl * -????????T*": "ask",
+      "*/curl * --json*": "ask",
+      "*/curl --json*": "ask",
+      "*/curl * | bash": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "*/curl * | sh": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "*/curl * -K*": "ask",
+      "*/curl -K*": "ask",
+      "*/curl * --config*": "ask",
+      "*/curl --config*": "ask",
+      "*/curl -?K*": "ask",
+      "*/curl * -?K*": "ask",
+      "*/curl -??K*": "ask",
+      "*/curl * -??K*": "ask",
+      "*/curl -???K*": "ask",
+      "*/curl * -???K*": "ask",
+      "*/curl -????K*": "ask",
+      "*/curl * -????K*": "ask",
+      "*/curl -?????K*": "ask",
+      "*/curl * -?????K*": "ask",
+      "*/curl -??????K*": "ask",
+      "*/curl * -??????K*": "ask",
+      "*/curl -???????K*": "ask",
+      "*/curl * -???????K*": "ask",
+      "*/curl -????????K*": "ask",
+      "*/curl * -????????K*": "ask",
+      "command curl * -X*": "ask",
+      "command curl -X*": "ask",
+      "command curl * -d*": "ask",
+      "command curl -d*": "ask",
+      "command curl * --data*": "ask",
+      "command curl --data*": "ask",
+      "command curl * --request*": "ask",
+      "command curl --request*": "ask",
+      "command curl * -F*": "ask",
+      "command curl -F*": "ask",
+      "command curl * --form*": "ask",
+      "command curl --form*": "ask",
+      "command curl * -T*": "ask",
+      "command curl -T*": "ask",
+      "command curl * --upload-file*": "ask",
+      "command curl --upload-file*": "ask",
+      "command curl -?X*": "ask",
+      "command curl * -?X*": "ask",
+      "command curl -??X*": "ask",
+      "command curl * -??X*": "ask",
+      "command curl -???X*": "ask",
+      "command curl * -???X*": "ask",
+      "command curl -????X*": "ask",
+      "command curl * -????X*": "ask",
+      "command curl -?????X*": "ask",
+      "command curl * -?????X*": "ask",
+      "command curl -??????X*": "ask",
+      "command curl * -??????X*": "ask",
+      "command curl -???????X*": "ask",
+      "command curl * -???????X*": "ask",
+      "command curl -????????X*": "ask",
+      "command curl * -????????X*": "ask",
+      "command curl -?d*": "ask",
+      "command curl * -?d*": "ask",
+      "command curl -??d*": "ask",
+      "command curl * -??d*": "ask",
+      "command curl -???d*": "ask",
+      "command curl * -???d*": "ask",
+      "command curl -????d*": "ask",
+      "command curl * -????d*": "ask",
+      "command curl -?????d*": "ask",
+      "command curl * -?????d*": "ask",
+      "command curl -??????d*": "ask",
+      "command curl * -??????d*": "ask",
+      "command curl -???????d*": "ask",
+      "command curl * -???????d*": "ask",
+      "command curl -????????d*": "ask",
+      "command curl * -????????d*": "ask",
+      "command curl -?F*": "ask",
+      "command curl * -?F*": "ask",
+      "command curl -??F*": "ask",
+      "command curl * -??F*": "ask",
+      "command curl -???F*": "ask",
+      "command curl * -???F*": "ask",
+      "command curl -????F*": "ask",
+      "command curl * -????F*": "ask",
+      "command curl -?????F*": "ask",
+      "command curl * -?????F*": "ask",
+      "command curl -??????F*": "ask",
+      "command curl * -??????F*": "ask",
+      "command curl -???????F*": "ask",
+      "command curl * -???????F*": "ask",
+      "command curl -????????F*": "ask",
+      "command curl * -????????F*": "ask",
+      "command curl -?T*": "ask",
+      "command curl * -?T*": "ask",
+      "command curl -??T*": "ask",
+      "command curl * -??T*": "ask",
+      "command curl -???T*": "ask",
+      "command curl * -???T*": "ask",
+      "command curl -????T*": "ask",
+      "command curl * -????T*": "ask",
+      "command curl -?????T*": "ask",
+      "command curl * -?????T*": "ask",
+      "command curl -??????T*": "ask",
+      "command curl * -??????T*": "ask",
+      "command curl -???????T*": "ask",
+      "command curl * -???????T*": "ask",
+      "command curl -????????T*": "ask",
+      "command curl * -????????T*": "ask",
+      "command curl * --json*": "ask",
+      "command curl --json*": "ask",
+      "command curl * | bash": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "command curl * | sh": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "command curl * -K*": "ask",
+      "command curl -K*": "ask",
+      "command curl * --config*": "ask",
+      "command curl --config*": "ask",
+      "command curl -?K*": "ask",
+      "command curl * -?K*": "ask",
+      "command curl -??K*": "ask",
+      "command curl * -??K*": "ask",
+      "command curl -???K*": "ask",
+      "command curl * -???K*": "ask",
+      "command curl -????K*": "ask",
+      "command curl * -????K*": "ask",
+      "command curl -?????K*": "ask",
+      "command curl * -?????K*": "ask",
+      "command curl -??????K*": "ask",
+      "command curl * -??????K*": "ask",
+      "command curl -???????K*": "ask",
+      "command curl * -???????K*": "ask",
+      "command curl -????????K*": "ask",
+      "command curl * -????????K*": "ask",
+      "\\curl * -X*": "ask",
+      "\\curl -X*": "ask",
+      "\\curl * -d*": "ask",
+      "\\curl -d*": "ask",
+      "\\curl * --data*": "ask",
+      "\\curl --data*": "ask",
+      "\\curl * --request*": "ask",
+      "\\curl --request*": "ask",
+      "\\curl * -F*": "ask",
+      "\\curl -F*": "ask",
+      "\\curl * --form*": "ask",
+      "\\curl --form*": "ask",
+      "\\curl * -T*": "ask",
+      "\\curl -T*": "ask",
+      "\\curl * --upload-file*": "ask",
+      "\\curl --upload-file*": "ask",
+      "\\curl -?X*": "ask",
+      "\\curl * -?X*": "ask",
+      "\\curl -??X*": "ask",
+      "\\curl * -??X*": "ask",
+      "\\curl -???X*": "ask",
+      "\\curl * -???X*": "ask",
+      "\\curl -????X*": "ask",
+      "\\curl * -????X*": "ask",
+      "\\curl -?????X*": "ask",
+      "\\curl * -?????X*": "ask",
+      "\\curl -??????X*": "ask",
+      "\\curl * -??????X*": "ask",
+      "\\curl -???????X*": "ask",
+      "\\curl * -???????X*": "ask",
+      "\\curl -????????X*": "ask",
+      "\\curl * -????????X*": "ask",
+      "\\curl -?d*": "ask",
+      "\\curl * -?d*": "ask",
+      "\\curl -??d*": "ask",
+      "\\curl * -??d*": "ask",
+      "\\curl -???d*": "ask",
+      "\\curl * -???d*": "ask",
+      "\\curl -????d*": "ask",
+      "\\curl * -????d*": "ask",
+      "\\curl -?????d*": "ask",
+      "\\curl * -?????d*": "ask",
+      "\\curl -??????d*": "ask",
+      "\\curl * -??????d*": "ask",
+      "\\curl -???????d*": "ask",
+      "\\curl * -???????d*": "ask",
+      "\\curl -????????d*": "ask",
+      "\\curl * -????????d*": "ask",
+      "\\curl -?F*": "ask",
+      "\\curl * -?F*": "ask",
+      "\\curl -??F*": "ask",
+      "\\curl * -??F*": "ask",
+      "\\curl -???F*": "ask",
+      "\\curl * -???F*": "ask",
+      "\\curl -????F*": "ask",
+      "\\curl * -????F*": "ask",
+      "\\curl -?????F*": "ask",
+      "\\curl * -?????F*": "ask",
+      "\\curl -??????F*": "ask",
+      "\\curl * -??????F*": "ask",
+      "\\curl -???????F*": "ask",
+      "\\curl * -???????F*": "ask",
+      "\\curl -????????F*": "ask",
+      "\\curl * -????????F*": "ask",
+      "\\curl -?T*": "ask",
+      "\\curl * -?T*": "ask",
+      "\\curl -??T*": "ask",
+      "\\curl * -??T*": "ask",
+      "\\curl -???T*": "ask",
+      "\\curl * -???T*": "ask",
+      "\\curl -????T*": "ask",
+      "\\curl * -????T*": "ask",
+      "\\curl -?????T*": "ask",
+      "\\curl * -?????T*": "ask",
+      "\\curl -??????T*": "ask",
+      "\\curl * -??????T*": "ask",
+      "\\curl -???????T*": "ask",
+      "\\curl * -???????T*": "ask",
+      "\\curl -????????T*": "ask",
+      "\\curl * -????????T*": "ask",
+      "\\curl * --json*": "ask",
+      "\\curl --json*": "ask",
+      "\\curl * | bash": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "\\curl * | sh": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "\\curl * -K*": "ask",
+      "\\curl -K*": "ask",
+      "\\curl * --config*": "ask",
+      "\\curl --config*": "ask",
+      "\\curl -?K*": "ask",
+      "\\curl * -?K*": "ask",
+      "\\curl -??K*": "ask",
+      "\\curl * -??K*": "ask",
+      "\\curl -???K*": "ask",
+      "\\curl * -???K*": "ask",
+      "\\curl -????K*": "ask",
+      "\\curl * -????K*": "ask",
+      "\\curl -?????K*": "ask",
+      "\\curl * -?????K*": "ask",
+      "\\curl -??????K*": "ask",
+      "\\curl * -??????K*": "ask",
+      "\\curl -???????K*": "ask",
+      "\\curl * -???????K*": "ask",
+      "\\curl -????????K*": "ask",
+      "\\curl * -????????K*": "ask",
+      "wget --post-data*": "ask",
+      "wget * --post-data*": "ask",
+      "wget --post-file*": "ask",
+      "wget * --post-file*": "ask",
+      "npm publish*": "ask",
+      "pnpm publish*": "ask",
+      "uv publish*": "ask",
+      "darwin-rebuild switch*": "ask",
+      "sudo *": "ask",
+      "git branch -D *": "ask",
+      "git branch -d *": "ask",
+      "rm *": "ask",
+      "rmdir *": "ask",
+      "find * -delete*": "ask",
+      "find * -exec rm*": "ask",
+      "xargs rm*": "ask",
+      "git clean *": "ask",
+      "unlink *": "ask",
+      "truncate *": "ask",
+      "cd": "ask",
+      "cd ~": "ask",
+      "cd ~/": "ask",
+      "cd $HOME": "ask",
+      "cd $HOME/": "ask",
+      "cd \"$HOME\"": "ask",
+      "cd \"$HOME/\"": "ask",
+      "cd ${HOME}": "ask",
+      "cd ${HOME}/": "ask",
+      "cd \"${HOME}\"": "ask",
+      "cd \"${HOME}/\"": "ask",
+      "gh repo view *": "allow",
+      "aws s3 ls *": "allow",
+      "aws sts get-caller-identity*": "allow",
+      "aws ec2 describe-*": "allow",
+      "aws ec2 list-*": "allow",
+      "aws ec2 get-*": "allow",
+      "aws iam describe-*": "allow",
+      "aws iam list-*": "allow",
+      "aws iam get-*": "allow",
+      "aws eks describe-*": "allow",
+      "aws eks list-*": "allow",
+      "aws eks get-*": "allow",
+      "aws ecr describe-*": "allow",
+      "aws ecr list-*": "allow",
+      "aws ecr get-*": "allow",
+      "aws ecs describe-*": "allow",
+      "aws ecs list-*": "allow",
+      "aws ecs get-*": "allow",
+      "aws cloudformation describe-*": "allow",
+      "aws cloudformation list-*": "allow",
+      "aws cloudformation get-*": "allow",
+      "aws logs describe-*": "allow",
+      "aws logs list-*": "allow",
+      "aws logs get-*": "allow",
+      "aws cloudwatch describe-*": "allow",
+      "aws cloudwatch list-*": "allow",
+      "aws cloudwatch get-*": "allow",
+      "aws lambda describe-*": "allow",
+      "aws lambda list-*": "allow",
+      "aws lambda get-*": "allow",
+      "aws rds describe-*": "allow",
+      "aws rds list-*": "allow",
+      "aws rds get-*": "allow",
+      "aws route53 describe-*": "allow",
+      "aws route53 list-*": "allow",
+      "aws route53 get-*": "allow",
+      "aws elbv2 describe-*": "allow",
+      "aws elbv2 list-*": "allow",
+      "aws elbv2 get-*": "allow",
+      "aws sqs describe-*": "allow",
+      "aws sqs list-*": "allow",
+      "aws sqs get-*": "allow",
+      "aws sns describe-*": "allow",
+      "aws sns list-*": "allow",
+      "aws sns get-*": "allow",
+      "aws dynamodb describe-*": "allow",
+      "aws dynamodb list-*": "allow",
+      "aws dynamodb get-*": "allow",
+      "aws ssm describe-*": "allow",
+      "aws ssm list-*": "allow",
+      "aws ssm get-*": "allow",
+      "aws kms describe-*": "allow",
+      "aws kms list-*": "allow",
+      "aws kms get-*": "allow",
+      "aws autoscaling describe-*": "allow",
+      "aws autoscaling list-*": "allow",
+      "aws autoscaling get-*": "allow",
+      "aws organizations describe-*": "allow",
+      "aws organizations list-*": "allow",
+      "aws organizations get-*": "allow",
+      "aws s3api *": "ask",
+      "aws s3api get-*": "allow",
+      "aws s3api list-*": "allow",
+      "aws s3api head-*": "allow",
+      "aws * create-*": "ask",
+      "aws * delete-*": "ask",
+      "aws * put-*": "ask",
+      "aws * update-*": "ask",
+      "aws * modify-*": "ask",
+      "aws * terminate-*": "ask",
+      "aws * run-*": "ask",
+      "aws * start-*": "ask",
+      "aws * stop-*": "ask",
+      "aws * reboot-*": "ask",
+      "aws * attach-*": "ask",
+      "aws * detach-*": "ask",
+      "aws * associate-*": "ask",
+      "aws * disassociate-*": "ask",
+      "aws * remove-*": "ask",
+      "aws * add-*": "ask",
+      "aws * tag-*": "ask",
+      "aws * untag-*": "ask",
+      "aws * send-*": "ask",
+      "aws * restore-*": "ask",
+      "aws * import-*": "ask",
+      "aws * set-*": "ask",
+      "aws * reset-*": "ask",
+      "aws * revoke-*": "ask",
+      "aws * authorize-*": "ask",
+      "aws * enable-*": "ask",
+      "aws * disable-*": "ask",
+      "aws * register-*": "ask",
+      "aws * deregister-*": "ask",
+      "aws * invoke*": "ask",
+      "aws * publish*": "ask",
+      "aws s3 cp *": "ask",
+      "aws s3 mv *": "ask",
+      "aws s3 rm *": "ask",
+      "aws s3 sync *": "ask",
+      "aws s3 mb *": "ask",
+      "aws s3 rb *": "ask",
+      "aws *get-secret-value*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *ssm get-parameter*--with-decryption*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *ssm get-parameters*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-session-token*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-federation-token*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *assume-role*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-role-credentials*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-login-password*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-authorization-token*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *eks get-token*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-credentials-for-identity*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-open-id-token*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-cluster-credentials*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *redshift-serverless get-credentials*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-relational-database-master-user-password*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-instance-access-details*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *apigateway get-api-key*--include-value*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "aws *get-password-data*": {
+        "action": "deny",
+        "reason": "This call returns credentials. Ask the user for the specific non-secret value you need."
+      },
+      "git branch -D pi/wf/*": "allow",
+      "git branch -D pi/wf/* ?*": "ask",
+      "git -c commit.gpgsign=false cherry-pick pi/wf/*": "allow",
+      "git cherry-pick --abort": "allow",
+      "git reset --keep HEAD~1": "allow",
+      "git worktree add *": "allow",
+      "git worktree remove *": "allow",
+      "env": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "env | *": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "printenv*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "set": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "export -p*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "/usr/bin/env": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "/bin/env": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "/usr/local/bin/env": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "/opt/homebrew/bin/env": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "/run/current-system/sw/bin/env": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "/usr/bin/printenv*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "/bin/printenv*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "/usr/local/bin/printenv*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "/opt/homebrew/bin/printenv*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "/run/current-system/sw/bin/printenv*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "export": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "typeset -x*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "typeset -px*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "declare -px*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "declare -x*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "gh auth token*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "security find-*-password*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "op item get*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "aws configure export-credentials*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "chmod 777 *": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "curl * | bash": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "curl * | sh": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "wget * | sh": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git clean -fd *": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git push *--force*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git push * -f*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git push -f*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git -C * push *--force*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git -C * push * -f*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git -C * push -f*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git -c * push *--force*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git -c * push * -f*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git -c * push -f*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "git reset --hard *": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -rf /": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -rf /?": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -fr /": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -fr /?": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -Rf /": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -Rf /?": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -fR /": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -fR /?": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -r -f /": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -r -f /?": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -f -r /": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -f -r /?": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -R -f /": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -R -f /?": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -f -R /": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -f -R /?": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "rm -rf ~*": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "sh": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "bash": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      },
+      "zsh": {
+        "action": "deny",
+        "reason": "Blocked by policy. Do not attempt this another way. List it under 'Needs approval' in your final report."
+      }
+    },
+    "edit": "allow",
+    "external_directory_read": {
+      "*": "allow"
+    },
+    "external_directory_write": {
+      "*": "ask",
+      "/tmp/**": "allow",
+      "/private/tmp/**": "allow",
+      "~/.pi/**": "allow",
+      "~/llm-wiki/**": "allow",
+      "~/.local/share/pi/**": "allow",
+      "~/software/*": "allow",
+      "/nix/store/**": "allow"
+    },
+    "fetch_content": "allow",
+    "find": "allow",
+    "grep": "allow",
+    "ls": "allow",
+    "path": {
+      "*": "allow",
+      "~/.aws": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.aws/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.kube": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.kube/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.config/gh": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.config/gh/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.config/op": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.config/op/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.config/sops": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.config/sops/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.config/sops-nix": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.config/sops-nix/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.docker": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.docker/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.netrc": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.anyscale": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.anyscale/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.ssh": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.ssh/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.pi/agent/auth.json": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.pi/agent/mcp-auth.json": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Keychains": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Keychains/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Group Containers/*1password*": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Group Containers/*1password*/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Group Containers/2BUA8C4S2C.com.1password": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Group Containers/2BUA8C4S2C.com.1password/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Application Support/1Password": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Application Support/1Password/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Cookies": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Cookies/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Application Support/Google/Chrome": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Application Support/Google/Chrome/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Application Support/Firefox": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Application Support/Firefox/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Application Support/zen": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/Library/Application Support/zen/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.zsh_history": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.bash_history": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.gnupg": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "~/.gnupg/**": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "*.pem": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "*.key": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "*id_rsa*": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "*id_ed25519*": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "*.direnv*": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "*.envrc": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "*.env": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      },
+      "*.env.*": {
+        "action": "deny",
+        "reason": "This path may hold secrets. Ask the user for the specific non-secret value you need."
+      }
+    },
+    "path_read": {
+      "~/dotfiles/.envrc": "allow",
+      "*.env.example": "allow",
+      "~/.ssh/config": "allow",
+      "~/.ssh/known_hosts": "allow",
+      "~/.docker/run/docker.sock": "allow"
+    },
+    "read": "allow",
+    "skill": {
+      "*": "allow"
+    },
+    "write": "allow"
+  },
+  "permissionReviewLog": true,
+  "promptTimeoutMs": 240000,
+  "yoloMode": false,
+  "commandEffects": {
+    "otool": {
+      "effects": "read"
+    },
+    "df": {
+      "effects": "read"
+    },
+    "du": {
+      "effects": "read"
+    }
+  }
+}
